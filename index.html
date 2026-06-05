@@ -51,7 +51,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .page-header{margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .page-header-left .page-title{font-size:18px;font-weight:600;}
 .page-header-left .page-sub{font-size:12px;color:var(--text3);margin-top:2px;}
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
 .metric-label{font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;}
 .metric-value{font-size:24px;font-weight:600;}
@@ -417,6 +417,7 @@ function renderDashboard(){
     <div class="metric"><div class="metric-label">등록 기관</div><div class="metric-value">${total}</div><div class="metric-sub">개 기관</div></div>
     <div class="metric"><div class="metric-label">관계 형성 중</div><div class="metric-value">${active}</div><div class="metric-sub">건 진행</div></div>
     <div class="metric"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관</div></div>
+    <div class="metric"><div class="metric-label">지원자</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체</div></div>
     <div class="metric"><div class="metric-label">합격자</div><div class="metric-value">${placed}</div><div class="metric-sub">명 취업 완료</div></div>
   `;
   renderTrendChart(currentChartMode);
