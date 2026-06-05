@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V:Dream 기관수급 파이프라인 v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f6f3;--surface:#ffffff;--border:#e8e5df;--border2:#d4cfc6;
+  --text:#1a1917;--text2:#6b6760;--text3:#9e9b96;
+  --accent:#2d5be3;--accent-bg:#eef2fd;
+  --green:#2a8c5e;--green-bg:#e8f5ef;
+  --amber:#b86b0f;--amber-bg:#fdf3e3;
+  --red:#c0392b;--red-bg:#fdf0ee;
+  --purple:#6b3fa0;--purple-bg:#f3effe;
+  --teal:#0f7c75;--teal-bg:#e6f5f4;
+  --radius:10px;--radius-sm:6px;
+}
+html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);}
+.app{display:flex;height:100vh;overflow:hidden;}
+.config-banner{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;}
+.config-box{background:#fff;border-radius:12px;padding:2rem;width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.config-box h2{font-size:16px;font-weight:600;margin-bottom:4px;}
+.config-box p{font-size:12px;color:#666;margin-bottom:16px;line-height:1.6;}
+.config-box label{font-size:11px;color:#666;display:block;margin-bottom:3px;}
+.config-box input{width:100%;font-size:12px;padding:8px 10px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;}
+.config-box .note{font-size:11px;color:#999;margin-top:8px;line-height:1.5;}
+.sidebar{width:204px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0;}
+.logo{padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.logo-title{font-size:14px;font-weight:600;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-size:12px;transition:background .12s;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500;}
+.nav-item i{font-size:15px;width:16px;text-align:center;}
+.nav-section{padding:12px 16px 4px;font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
+.urgent-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--red);color:#fff;border-radius:9px;font-size:10px;font-weight:600;padding:0 4px;margin-left:auto;}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);}
+.conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ccc;margin-right:5px;}
+.conn-dot.ok{background:var(--green);}
+.main{flex:1;overflow-y:auto;background:var(--bg);}
+.page{display:none;padding:24px;animation:fi .15s ease;}
+.page.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-header{margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.page-header-left .page-title{font-size:18px;font-weight:600;}
+.page-header-left .page-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+.metric-label{font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;}
+.metric-value{font-size:24px;font-weight:600;}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.card-header{padding:11px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.card-body{padding:14px 16px;}
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;}
+.stage-col{min-width:155px;flex:1;}
+.stage-head{padding:8px 10px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;border-radius:var(--radius-sm) var(--radius-sm) 0 0;}
+.stage-body{background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:6px;min-height:120px;}
+.p-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:5px;cursor:pointer;transition:border-color .12s;}
+.p-card:hover{border-color:var(--border2);}
+.p-card-name{font-size:12px;font-weight:500;margin-bottom:3px;}
+.p-card-meta{font-size:10px;color:var(--text3);}
+.p-card-warn{margin-top:5px;padding:3px 6px;background:var(--red-bg);border-radius:4px;font-size:10px;color:var(--red);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;white-space:nowrap;}
+.b-gray{background:var(--bg);color:var(--text2);border:1px solid var(--border);}
+.b-blue{background:var(--accent-bg);color:var(--accent);}
+.b-green{background:var(--green-bg);color:var(--green);}
+.b-amber{background:var(--amber-bg);color:var(--amber);}
+.b-red{background:var(--red-bg);color:var(--red);}
+.b-purple{background:var(--purple-bg);color:var(--purple);}
+.b-teal{background:var(--teal-bg);color:var(--teal);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 10px;text-align:left;font-size:10px;font-weight:500;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover td{background:var(--bg);cursor:pointer;}
+.form-section{margin-bottom:16px;}
+.fsec-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;}
+.fg label{font-size:11px;color:var(--text2);}
+.fg input,.fg select,.fg textarea{font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);width:100%;}
+.fg textarea{min-height:64px;resize:vertical;}
+.fg-row{display:grid;gap:10px;}
+.fg-2{grid-template-columns:1fr 1fr;}
+.fg-3{grid-template-columns:1fr 1fr 1fr;}
+.btn{padding:7px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;border:none;transition:opacity .12s;display:inline-flex;align-items:center;gap:5px;}
+.btn:hover{opacity:.82;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-ghost{background:none;color:var(--text2);border:1px solid var(--border);}
+.btn-sm{padding:5px 12px;font-size:11px;}
+.btn-row{display:flex;gap:8px;margin-top:14px;}
+.action-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.action-item:last-child{border-bottom:none;}
+.action-cb{width:17px;height:17px;border:1.5px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;}
+.action-cb.done{background:var(--green);border-color:var(--green);}
+.action-text{flex:1;font-size:12px;}
+.action-text.done{text-decoration:line-through;color:var(--text3);}
+.action-due{font-size:10px;white-space:nowrap;}
+.due-over{color:var(--red);font-weight:500;}
+.due-soon{color:var(--amber);font-weight:500;}
+.due-ok{color:var(--text3);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--surface);border-radius:var(--radius);width:100%;max-width:580px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
+.modal-title{font-size:14px;font-weight:600;}
+.modal-body{padding:16px 20px;}
+.modal-sec-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;}
+.info-row{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.info-row:last-child{border-bottom:none;}
+.info-key{width:90px;flex-shrink:0;color:var(--text3);}
+.member-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--purple-bg);color:var(--purple);border-radius:10px;font-size:10px;font-weight:500;}
+.loading{display:flex;align-items:center;gap:8px;padding:2rem;color:var(--text3);font-size:12px;justify-content:center;}
+.spin{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:2rem;color:var(--text3);font-size:12px;}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1917;color:#fff;padding:10px 18px;border-radius:var(--radius-sm);font-size:12px;z-index:300;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+.toast.show{opacity:1;transform:none;}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+
+/* 명함 사진 업로드 영역 */
+.card-upload-area{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;background:var(--bg);}
+.card-upload-area:hover{border-color:var(--accent);}
+.card-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.card-upload-area i{font-size:28px;color:var(--text3);display:block;margin-bottom:6px;}
+.card-upload-area p{font-size:11px;color:var(--text3);}
+.card-preview{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.card-preview img{width:100%;max-height:200px;object-fit:cover;display:block;}
+.card-preview-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+/* 차트 탭 */
+.chart-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.chart-tab{padding:5px 14px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text2);transition:all .12s;}
+.chart-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="config-banner" class="config-banner" style="display:none;">
+  <div class="config-box">
+    <h2>Supabase 연결 설정</h2>
+    <p>Supabase 프로젝트의 URL과 anon key를 입력하세요.<br>한 번 저장하면 다음부터는 자동으로 연결됩니다.</p>
+    <label>Project URL</label><input id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+    <label>anon (public) key</label><input id="cfg-key" placeholder="sb_publishable_...">
+    <button class="btn btn-primary" onclick="saveConfig()" style="width:100%;justify-content:center;">연결하기</button>
+    <p class="note">Supabase 대시보드 → Settings → API 에서 확인할 수 있어요.</p>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<div class="app">
+<div class="sidebar">
+  <div class="logo"><div class="logo-title">V:Dream</div><div class="logo-sub">기관수급 파이프라인 v3</div></div>
+  <button class="nav-item active" onclick="nav('dashboard')"><i class="ti ti-layout-dashboard"></i>대시보드</button>
+  <button class="nav-item" onclick="nav('pipeline')"><i class="ti ti-layout-kanban"></i>파이프라인</button>
+  <div class="nav-section">기관 관리</div>
+  <button class="nav-item" onclick="nav('orgs')"><i class="ti ti-building"></i>기관 목록</button>
+  <button class="nav-item" onclick="nav('add-org')"><i class="ti ti-plus"></i>기관 등록</button>
+  <div class="nav-section">수급 관리</div>
+  <button class="nav-item" onclick="nav('actions')"><i class="ti ti-checkbox"></i>후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
+  <button class="nav-item" onclick="nav('talent')"><i class="ti ti-users"></i>인재 수급</button>
+  <div class="nav-section">성과</div>
+  <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
+  <div class="sidebar-bottom"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
+</div>
+<div class="main">
+
+<!-- 대시보드 -->
+<div id="p-dashboard" class="page active">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">대시보드</div><div class="page-sub" id="today-date"></div></div>
+  </div>
+  <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
+
+  <!-- 주간/월별 차트 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-header"><i class="ti ti-chart-line" style="color:var(--accent)"></i>기간별 성과 현황</div>
+    <div class="card-body">
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChart('week',this)">주간</button>
+        <button class="chart-tab" onclick="switchChart('month',this)">월별</button>
+      </div>
+      <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
+      <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅 기관수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>수급자수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU 체결</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div class="card"><div class="card-header"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>마감 임박 후속 액션</div><div class="card-body" style="padding:0 16px;" id="dash-actions"><div class="loading"><div class="spin"></div></div></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
+  </div>
+  <div class="card"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
+</div>
+
+<!-- 파이프라인 -->
+<div id="p-pipeline" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">파이프라인</div><div class="page-sub">발굴 → 컨택 → 미팅 → 관계형성 → MOU → 수급</div></div>
+    <button class="btn btn-primary btn-sm" onclick="nav('add-org')"><i class="ti ti-plus"></i> 기관 등록</button>
+  </div>
+  <div class="board" id="board"><div class="loading"><div class="spin"></div>불러오는 중...</div></div>
+</div>
+
+<!-- 기관 목록 -->
+<div id="p-orgs" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">기관 목록</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <select id="filter-cat" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
+        <option value="">전체 유형</option><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option>
+      </select>
+      <select id="filter-stage-orgs" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
+        <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 체결</option><option value="5">수급 완료</option><option value="9">보류</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>기관명</th><th>유형</th><th>발굴경로</th><th>담당팀원</th><th>단계</th><th>마지막 연락</th><th>후속액션</th></tr></thead>
+      <tbody id="org-tbody"><tr><td colspan="7"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 기관 등록 -->
+<div id="p-add-org" class="page">
+  <div class="page-header"><div class="page-header-left"><div class="page-title">기관 등록</div></div></div>
+  <div class="card"><div class="card-body">
+    <div class="form-section">
+      <div class="fsec-title">📇 명함 사진</div>
+      <div id="card-upload-wrap">
+        <div class="card-upload-area" onclick="document.getElementById('card-file').click()">
+          <i class="ti ti-camera"></i>
+          <p>여기를 클릭하거나 사진을 끌어다 놓으세요<br><span style="font-size:10px;color:var(--text3);">JPG, PNG 파일 가능 · 핸드폰으로 찍은 사진도 OK</span></p>
+          <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="fsec-title">기관 기본 정보</div>
+      <div class="fg-row fg-3">
+        <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관"></div>
+        <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
+        <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
+      </div>
+      <div class="fg-row fg-3">
+        <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
+        <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000"></div>
+        <div class="fg"><label>이메일</label><input id="n-email" placeholder="email@org.kr"></div>
+      </div>
+      <div class="fg-row fg-3">
+        <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
+        <div class="fg"><label>동행 여부</label><select id="n-accompany"><option value="">없음</option><option>대표 동행</option><option>2인 이상</option></select></div>
+        <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 체결</option><option value="5">수급 완료</option></select></div>
+      </div>
+      <div class="fg-row fg-3">
+        <div class="fg"><label>미팅 전 메일</label><select id="n-premeil"><option value="0">불필요</option><option value="1">발송 완료</option><option value="2">미발송(요구됨)</option></select></div>
+        <div class="fg"><label>특수학교 직무협의</label><select id="n-school"><option value="0">해당없음</option><option value="1">협의 필요</option><option value="2">협의 완료</option></select></div>
+        <div class="fg"><label>첫 미팅일</label><input id="n-date" type="date"></div>
+      </div>
+      <div class="fg"><label>메모</label><textarea id="n-memo" placeholder="미팅 내용, 기관 니즈, 특이사항 등"></textarea></div>
+    </div>
+    <div class="form-section">
+      <div class="fsec-title">후속 액션 등록</div>
+      <div id="action-form-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addActionField()"><i class="ti ti-plus"></i> 액션 추가</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="save-btn" onclick="saveOrg()"><i class="ti ti-check"></i> 등록 완료</button>
+      <button class="btn btn-ghost" onclick="clearOrgForm()">초기화</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- 후속 액션 -->
+<div id="p-actions" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">후속 액션</div><div class="page-sub">미팅 후 해야 할 일 · 마감일 추적</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="card"><div class="card-header" style="color:var(--red)"><i class="ti ti-alert-circle"></i>마감 초과 / D-3 이내</div><div class="card-body" style="padding:0 16px;" id="actions-urgent"><div class="loading"><div class="spin"></div></div></div></div>
+    <div class="card"><div class="card-header" style="color:var(--text2)"><i class="ti ti-list-check"></i>전체 미완료</div><div class="card-body" style="padding:0 16px;" id="actions-all"><div class="loading"><div class="spin"></div></div></div></div>
+  </div>
+</div>
+
+<!-- 인재 수급 -->
+<div id="p-talent" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">인재 수급</div><div class="page-sub">기관별 지원자 수급 · 합격 추적</div></div>
+    <button class="btn btn-primary btn-sm" onclick="openAddTalent()"><i class="ti ti-plus"></i> 수급 등록</button>
+  </div>
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th>지원자명</th><th>연결 기관</th><th>직무</th><th>담당팀원</th><th>지원일</th><th>상태</th></tr></thead>
+      <tbody id="talent-tbody"><tr><td colspan="6"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 팀원 실적 -->
+<div id="p-team" class="page">
+  <div class="page-header"><div class="page-header-left"><div class="page-title">팀원 실적</div></div></div>
+  <div class="team-grid" id="team-grid"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div></div></div>
+</div>
+
+</div></div>
+
+<!-- 기관 상세 모달 -->
+<div id="modal" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+  <div class="modal-head"><div class="modal-title" id="m-title"></div><button class="btn btn-ghost btn-sm" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="m-body"></div>
+</div>
+</div>
+
+<!-- 수급 등록 모달 -->
+<div id="talent-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+  <div class="modal-head"><div class="modal-title">인재 수급 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <div class="fg-row fg-2"><div class="fg"><label>지원자명 *</label><input id="t-name" placeholder="홍길동"></div><div class="fg"><label>연결 기관 *</label><select id="t-org"><option value="">선택</option></select></div></div>
+    <div class="fg-row fg-2"><div class="fg"><label>직무</label><input id="t-job" placeholder="사무보조"></div><div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div></div>
+    <div class="fg-row fg-2"><div class="fg"><label>지원일</label><input id="t-date" type="date"></div><div class="fg"><label>상태</label><select id="t-status"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>포기</option></select></div></div>
+    <div class="fg"><label>메모</label><textarea id="t-memo" style="min-height:48px;"></textarea></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()">등록</button></div>
+  </div>
+</div>
+</div>
+
+<script>
+const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 체결',5:'수급 완료',9:'보류'};
+const STAGE_CLS={0:'b-gray',1:'b-blue',2:'b-purple',3:'b-amber',4:'b-teal',5:'b-green',9:'b-red'};
+const STAGE_COLORS=['#888780','#2d5be3','#6b3fa0','#b86b0f','#0f7c75','#2a8c5e','#c0392b'];
+const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#fdf0ee'];
+const MEMBERS=['김지현','박서준','이수민','최예진','정현우'];
+const AVATARBG=['#eef2fd','#f3effe','#e8f5ef','#fdf3e3','#e6f5f4'];
+const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
+const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
+
+let sb=null, currentOrgId=null, actionFieldIdx=0;
+let cache={orgs:[],actions:[],talents:[]};
+let cardImageBase64=null;
+let trendChart=null;
+let currentChartMode='week';
+
+function saveConfig(){
+  const url=document.getElementById('cfg-url').value.trim();
+  const key=document.getElementById('cfg-key').value.trim();
+  if(!url||!key){alert('URL과 key를 모두 입력하세요');return;}
+  localStorage.setItem('vd_sb_url',url);localStorage.setItem('vd_sb_key',key);
+  document.getElementById('config-banner').style.display='none';
+  initSupabase(url,key);
+}
+function initSupabase(url,key){
+  sb=supabase.createClient(url,key);
+  document.getElementById('conn-dot').className='conn-dot ok';
+  document.getElementById('conn-label').textContent='DB 연결됨';
+  loadAll();
+}
+async function loadAll(){
+  try{
+    const [o,a,t]=await Promise.all([
+      sb.from('orgs').select('*').order('created_at',{ascending:false}),
+      sb.from('actions').select('*').order('due',{ascending:true}),
+      sb.from('talents').select('*').order('created_at',{ascending:false}),
+    ]);
+    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];
+    updateUrgentCount();renderCurrent();
+  }catch(e){toast('데이터 로딩 오류: '+e.message);}
+}
+function renderCurrent(){
+  const id=document.querySelector('.page.active')?.id;
+  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam};
+  if(id&&map[id])map[id]();
+}
+
+// 유틸
+function dayDiff(d){if(!d)return 9999;const n=new Date();n.setHours(0,0,0,0);return Math.ceil((new Date(d)-n)/864e5);}
+function fDate(d){if(!d)return'—';return d.slice(0,10).replace(/-/g,'.');}
+function today(){return new Date().toISOString().slice(0,10);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function dueClass(d){return d<0?'due-over':d<=3?'due-soon':'due-ok';}
+function dueLabel(d,due){return d<0?`D+${Math.abs(d)}`:d===0?'오늘':d<=3?`D-${d}`:fDate(due);}
+function actionsForOrg(id){return cache.actions.filter(a=>a.org_id===id);}
+function urgentActions(){return cache.actions.filter(a=>!a.done&&dayDiff(a.due)<=3);}
+function updateUrgentCount(){const c=urgentActions().length;const el=document.getElementById('urgent-cnt');el.textContent=c;el.style.display=c?'':'none';}
+
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('p-'+page).classList.add('active');
+  const nm={dashboard:0,pipeline:1,orgs:2,'add-org':3,actions:4,talent:5,team:6};
+  document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
+  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam};
+  if(r[page])r[page]();
+}
+
+// ── 대시보드 ──
+function renderDashboard(){
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const orgs=cache.orgs,acts=cache.actions,tals=cache.talents;
+  const total=orgs.length,mou=orgs.filter(o=>o.stage>=4).length;
+  const active=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
+  const placed=tals.filter(t=>t.status==='합격').length;
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">등록 기관</div><div class="metric-value">${total}</div><div class="metric-sub">개 기관</div></div>
+    <div class="metric"><div class="metric-label">관계 형성 중</div><div class="metric-value">${active}</div><div class="metric-sub">건 진행</div></div>
+    <div class="metric"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관</div></div>
+    <div class="metric"><div class="metric-label">합격자</div><div class="metric-value">${placed}</div><div class="metric-sub">명 취업 완료</div></div>
+  `;
+  renderTrendChart(currentChartMode);
+  const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
+  document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
+    <div class="action-item" style="cursor:default;">
+      <div style="flex:1;"><div class="action-text">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
+      <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
+    </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
+  const stageCounts=[0,1,2,3,4,5,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
+  document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span class="badge ${s.cls}" style="min-width:70px;justify-content:center;">${s.label}</span>
+      <div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${total?Math.round(s.cnt/total*100):0}%;background:currentColor;border-radius:3px;" class="${s.cls}"></div></div>
+      <span style="font-size:11px;font-weight:500;width:18px;text-align:right;">${s.cnt}</span>
+    </div>`).join('');
+  const now=new Date();
+  const needContact=cache.orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
+  document.getElementById('dash-contact').innerHTML=needContact.length?needContact.map(o=>{
+    const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
+    return`<div class="action-item" style="cursor:pointer;" onclick="openOrg(${o.id})">
+      <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
+      <span style="font-weight:500;font-size:12px;flex:1;">${o.name}</span>
+      <span class="member-pill">${o.member||'미배정'}</span>
+      <span style="font-size:10px;color:var(--red);">${days!==null?days+'일 전':'미연락'}</span>
+    </div>`;}).join(''):'<div class="empty" style="padding:1rem 0;">연락 필요 기관 없음 👍</div>';
+}
+
+// ── 주간/월별 차트 ──
+function switchChart(mode, btn){
+  currentChartMode=mode;
+  document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrendChart(mode);
+}
+
+function renderTrendChart(mode){
+  const orgs=cache.orgs, tals=cache.talents;
+  let labels=[], meetData=[], placedData=[], mouData=[];
+
+  if(mode==='week'){
+    // 최근 8주
+    for(let i=7;i>=0;i--){
+      const end=new Date(); end.setDate(end.getDate()-i*7); end.setHours(23,59,59);
+      const start=new Date(end); start.setDate(start.getDate()-6); start.setHours(0,0,0);
+      const label=`${start.getMonth()+1}/${start.getDate()}주`;
+      labels.push(label);
+      meetData.push(orgs.filter(o=>o.date&&new Date(o.date)>=start&&new Date(o.date)<=end).length);
+      placedData.push(tals.filter(t=>t.date&&t.status==='합격'&&new Date(t.date)>=start&&new Date(t.date)<=end).length);
+      mouData.push(orgs.filter(o=>o.stage>=4&&o.date&&new Date(o.date)>=start&&new Date(o.date)<=end).length);
+    }
+  } else {
+    // 최근 6개월
+    for(let i=5;i>=0;i--){
+      const d=new Date(); d.setMonth(d.getMonth()-i);
+      const y=d.getFullYear(), m=d.getMonth();
+      labels.push(`${y}.${String(m+1).padStart(2,'0')}`);
+      meetData.push(orgs.filter(o=>{if(!o.date)return false;const od=new Date(o.date);return od.getFullYear()===y&&od.getMonth()===m;}).length);
+      placedData.push(tals.filter(t=>{if(!t.date||t.status!=='합격')return false;const td=new Date(t.date);return td.getFullYear()===y&&td.getMonth()===m;}).length);
+      mouData.push(orgs.filter(o=>{if(o.stage<4||!o.date)return false;const od=new Date(o.date);return od.getFullYear()===y&&od.getMonth()===m;}).length);
+    }
+  }
+
+  if(trendChart) trendChart.destroy();
+  trendChart=new Chart(document.getElementById('trend-chart'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'미팅 기관수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'수급자수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
+  });
+}
+
+// ── 파이프라인 ──
+function renderPipeline(){
+  const sl=[0,1,2,3,4,5,9];
+  document.getElementById('board').innerHTML=sl.map((s,i)=>{
+    const items=cache.orgs.filter(o=>o.stage===s);
+    return`<div class="stage-col">
+      <div class="stage-head" style="background:${STAGE_BGS[i]};color:${STAGE_COLORS[i]};">${STAGES[s]}<span style="background:${STAGE_COLORS[i]};color:#fff;border-radius:8px;padding:1px 7px;font-size:10px;">${items.length}</span></div>
+      <div class="stage-body">${items.length?items.map(o=>{
+        const oa=actionsForOrg(o.id).filter(a=>!a.done&&dayDiff(a.due)<=3);
+        return`<div class="p-card" onclick="openOrg(${o.id})">
+          ${o.card_image?`<img src="${o.card_image}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;margin-bottom:5px;">`:'' }
+          <div class="p-card-name">${o.name}</div>
+          <div class="p-card-meta">${o.cat||''} · ${o.member||'—'}</div>
+          ${oa.length?`<div class="p-card-warn"><i class="ti ti-alert-triangle"></i> ${oa[0].text}</div>`:''}
+        </div>`;}).join(''):'<div class="empty" style="padding:.5rem 0;font-size:11px;">없음</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 기관 목록 ──
+function renderOrgs(){
+  const fc=document.getElementById('filter-cat').value;
+  const fs=document.getElementById('filter-stage-orgs').value;
+  const now=new Date();
+  let rows=cache.orgs.filter(o=>(fc?o.cat===fc:true)&&(fs!==''?String(o.stage)===fs:true));
+  document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
+    const oa=actionsForOrg(o.id);
+    const pending=oa.filter(a=>!a.done).length,urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
+    const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
+    return`<tr onclick="openOrg(${o.id})">
+      <td style="display:flex;align-items:center;gap:8px;">
+        ${o.card_image?`<img src="${o.card_image}" style="width:32px;height:24px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;">`:'<div style="width:32px;height:24px;background:var(--bg);border-radius:3px;border:1px solid var(--border);flex-shrink:0;"></div>'}
+        <span style="font-weight:500;">${o.name}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:4px;">직무협의</span>':''}
+      </td>
+      <td><span class="badge b-gray">${o.cat||'—'}</span></td>
+      <td style="font-size:11px;color:var(--text3);">${o.source||'—'}</td>
+      <td><span class="member-pill">${o.member||'—'}</span></td>
+      <td><span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span></td>
+      <td style="color:${days>=30?'var(--red)':'var(--text3)'};font-size:11px;">${days!==null?days+'일 전':'—'}</td>
+      <td>${urgent?`<span class="badge b-red">${urgent}건 임박</span>`:pending?`<span class="badge b-amber">${pending}건</span>`:'<span style="color:var(--text3);font-size:11px;">없음</span>'}</td>
+    </tr>`;}).join(''):`<tr><td colspan="7" class="empty">해당 기관 없음</td></tr>`;
+}
+
+// ── 후속 액션 ──
+function renderActions(){
+  const all=cache.actions.map(a=>{const o=cache.orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff);
+  const urgent=all.filter(a=>!a.done&&a.diff<=3);
+  const rest=all.filter(a=>!a.done&&a.diff>3);
+  const ri=a=>`<div class="action-item">
+    <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
+    <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
+    <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
+  </div>`;
+  document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(ri).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
+  document.getElementById('actions-all').innerHTML=rest.length?rest.map(ri).join(''):'<div class="empty" style="padding:1rem 0;">없음</div>';
+}
+async function toggleAction(id,done){
+  await sb.from('actions').update({done:!done}).eq('id',id);
+  const a=cache.actions.find(x=>x.id===id);if(a)a.done=!done;
+  updateUrgentCount();renderActions();toast(!done?'완료 처리됨 ✓':'완료 취소됨');
+}
+
+// ── 인재 수급 ──
+function renderTalent(){
+  document.getElementById('t-org').innerHTML='<option value="">선택</option>'+cache.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+  document.getElementById('talent-tbody').innerHTML=cache.talents.length?cache.talents.map(t=>{
+    const org=cache.orgs.find(o=>o.id===t.org_id);
+    return`<tr><td style="font-weight:500;">${t.name}</td><td style="font-size:11px;">${org?.name||'—'}</td><td style="font-size:11px;">${t.job||'—'}</td><td><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td><td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty">수급 기록 없음</td></tr>';
+}
+function openAddTalent(){renderTalent();document.getElementById('t-date').value=today();document.getElementById('talent-modal').style.display='flex';}
+async function saveTalent(){
+  const name=document.getElementById('t-name').value.trim();
+  const orgId=parseInt(document.getElementById('t-org').value);
+  if(!name||!orgId){toast('지원자명과 기관을 선택하세요');return;}
+  const row={name,org_id:orgId,job:document.getElementById('t-job').value.trim(),member:document.getElementById('t-member').value,date:document.getElementById('t-date').value||null,status:document.getElementById('t-status').value,memo:document.getElementById('t-memo').value.trim()};
+  const {data,error}=await sb.from('talents').insert(row).select().single();
+  if(error){toast('오류: '+error.message);return;}
+  cache.talents.unshift(data);document.getElementById('talent-modal').style.display='none';
+  ['t-name','t-job','t-memo'].forEach(id=>document.getElementById(id).value='');
+  toast('수급 등록 완료!');renderTalent();
+}
+
+// ── 팀원 실적 ──
+function renderTeam(){
+  document.getElementById('team-grid').innerHTML=MEMBERS.map((m,i)=>{
+    const mine=cache.orgs.filter(o=>o.member===m);
+    const mou=mine.filter(o=>o.stage>=4).length;
+    const placed=cache.talents.filter(t=>t.member===m&&t.status==='합격').length;
+    const pending=mine.reduce((a,o)=>a+actionsForOrg(o.id).filter(x=>!x.done).length,0);
+    return`<div class="card"><div class="card-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:${AVATARBG[i]};color:${AVATARTX[i]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">${m[0]}${m[1]}</div>
+        <span style="font-weight:500;">${m}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">담당 기관</span><span style="font-weight:500;">${mine.length}곳</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">MOU 체결</span><span style="font-weight:500;color:var(--teal);">${mou}건</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">합격자</span><span style="font-weight:500;color:var(--green);">${placed}명</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">미완료 액션</span><span style="font-weight:500;color:${pending>0?'var(--amber)':'var(--text3)'};">${pending}건</span></div>
+      </div>
+    </div></div>`;
+  }).join('');
+}
+
+// ── 명함 사진 ──
+function previewCard(event){
+  const file=event.target.files[0];if(!file)return;
+  // 5MB 초과 경고
+  if(file.size>5*1024*1024){toast('사진이 너무 큽니다. 5MB 이하로 올려주세요.');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    cardImageBase64=e.target.result;
+    document.getElementById('card-upload-wrap').innerHTML=`
+      <div class="card-preview">
+        <img src="${cardImageBase64}" alt="명함 사진">
+        <button class="card-preview-del" onclick="removeCardImage()" title="삭제"><i class="ti ti-x"></i></button>
+      </div>`;
+  };
+  reader.readAsDataURL(file);
+}
+function removeCardImage(){
+  cardImageBase64=null;
+  document.getElementById('card-upload-wrap').innerHTML=`
+    <div class="card-upload-area" onclick="document.getElementById('card-file').click()">
+      <i class="ti ti-camera"></i>
+      <p>여기를 클릭하거나 사진을 끌어다 놓으세요<br><span style="font-size:10px;color:var(--text3);">JPG, PNG 파일 가능 · 핸드폰으로 찍은 사진도 OK</span></p>
+      <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
+    </div>`;
+}
+
+// ── 기관 등록 ──
+function addActionField(){
+  actionFieldIdx++;
+  const div=document.createElement('div');
+  div.className='fg-row fg-2';div.style.marginBottom='6px';
+  div.innerHTML=`<div class="fg"><input placeholder="액션 내용 (예: 회사소개서 메일 발송)" data-atext="${actionFieldIdx}"></div><div class="fg"><input type="date" data-adue="${actionFieldIdx}"></div>`;
+  document.getElementById('action-form-list').appendChild(div);
+}
+async function saveOrg(){
+  const name=document.getElementById('n-name').value.trim();
+  if(!name){toast('기관명을 입력하세요');return;}
+  const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
+  const orgRow={
+    name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,
+    contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:document.getElementById('n-email').value.trim(),
+    member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
+    stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
+    date:document.getElementById('n-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
+    card_image:cardImageBase64||null
+  };
+  const {data:org,error}=await sb.from('orgs').insert(orgRow).select().single();
+  if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';return;}
+  cache.orgs.unshift(org);
+  const actionRows=[];
+  document.querySelectorAll('[data-atext]').forEach(el=>{
+    const idx=el.dataset.atext,due=document.querySelector(`[data-adue="${idx}"]`)?.value;
+    if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false});
+  });
+  if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
+  clearOrgForm();btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
+  toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
+}
+function clearOrgForm(){
+  ['n-name','n-contact','n-phone','n-email','n-date','n-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('n-member').value='';
+  document.getElementById('action-form-list').innerHTML='';
+  actionFieldIdx=0;removeCardImage();
+}
+
+// ── 기관 상세 모달 ──
+function openOrg(id){
+  const o=cache.orgs.find(x=>x.id===id);if(!o)return;
+  currentOrgId=id;
+  const now=new Date();
+  const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
+  const oa=actionsForOrg(id);
+  const tals=cache.talents.filter(t=>t.org_id===id);
+  document.getElementById('m-title').textContent=o.name;
+  document.getElementById('m-body').innerHTML=`
+    ${o.card_image?`<div style="margin-bottom:12px;"><img src="${o.card_image}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);" alt="명함 사진"><div style="font-size:10px;color:var(--text3);margin-top:4px;">📇 명함 사진</div></div>`:''}
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
+      <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
+      <span class="badge b-gray">${o.cat||'—'}</span><span class="badge b-gray">${o.source||'—'}</span>
+      ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
+      ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
+      ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
+    </div>
+    <div class="info-row"><span class="info-key">담당자</span><span>${o.contact||'—'}</span></div>
+    <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
+    <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
+    <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
+    <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
+    <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
+    <div class="info-row"><span class="info-key">메모</span><span style="white-space:pre-line;font-size:12px;color:var(--text2);">${o.memo||'—'}</span></div>
+    <div class="modal-sec-title">후속 액션</div>
+    ${oa.length?oa.map(a=>`
+      <div class="action-item" onclick="toggleActionModal(${a.id},${a.done})">
+        <div class="action-cb ${a.done?'done':''}">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
+        <div class="action-text ${a.done?'done':''}" style="flex:1;">${a.text}</div>
+        <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
+      </div>`).join(''):'<div class="empty" style="padding:.5rem 0;">등록된 액션 없음</div>'}
+    <div class="modal-sec-title">액션 추가</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})"><i class="ti ti-plus"></i> 추가</button>
+    </div>
+    ${tals.length?`<div class="modal-sec-title">연결 인재 (${tals.length}명)</div>
+    ${tals.map(t=>`<div class="info-row"><span style="font-weight:500;">${t.name}</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">${t.job||'—'}</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="margin-left:auto;">${t.status}</span></div>`).join('')}`:''}
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+      <select id="m-stage-sel" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
+        ${[0,1,2,3,4,5,9].map(s=>`<option value="${s}"${o.stage===s?' selected':''}>${STAGES[s]}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
+      <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
+    </div>
+  `;
+  document.getElementById('modal').style.display='flex';
+}
+
+async function addActionFromModal(orgId){
+  const text=document.getElementById('new-action-text').value.trim();
+  const due=document.getElementById('new-action-due').value;
+  if(!text){toast('액션 내용을 입력하세요');return;}
+  const {data,error}=await sb.from('actions').insert({org_id:orgId,text,due:due||null,done:false}).select().single();
+  if(error){toast('오류: '+error.message);return;}
+  cache.actions.push(data);
+  toast('액션 추가됨 ✓');updateUrgentCount();openOrg(orgId);
+}
+
+async function toggleActionModal(id,done){
+  await sb.from('actions').update({done:!done}).eq('id',id);
+  const a=cache.actions.find(x=>x.id===id);if(a)a.done=!done;
+  updateUrgentCount();openOrg(currentOrgId);toast(!done?'완료 처리됨 ✓':'완료 취소됨');
+}
+async function updateOrgStage(){
+  const newStage=parseInt(document.getElementById('m-stage-sel').value);
+  await sb.from('orgs').update({stage:newStage}).eq('id',currentOrgId);
+  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o)o.stage=newStage;
+  closeModal();renderCurrent();toast('단계 변경 완료');
+}
+async function markContacted(id){
+  const t=today();
+  await sb.from('orgs').update({lastcontact:t}).eq('id',id);
+  const o=cache.orgs.find(x=>x.id===id);if(o)o.lastcontact=t;
+  openOrg(id);toast('연락 완료 처리됨 ✓');
+}
+function closeModal(){document.getElementById('modal').style.display='none';}
+
+(function init(){
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const url=localStorage.getItem('vd_sb_url'),key=localStorage.getItem('vd_sb_key');
+  if(url&&key){initSupabase(url,key);}
+  else{document.getElementById('config-banner').style.display='flex';document.getElementById('conn-dot').className='conn-dot';document.getElementById('conn-label').textContent='미연결';}
+})();
+</script>
+</body>
+</html>
