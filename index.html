@@ -384,6 +384,21 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 </div>
 
+<!-- 삭제 확인 모달 -->
+<div id="del-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal" style="max-width:420px;">
+  <div class="modal-head"><div class="modal-title" style="color:#dc2626;"><i class="ti ti-alert-triangle"></i> 삭제 확인</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('del-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <p id="del-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem;"></p>
+    <div style="background:#fee2e2;border-radius:6px;padding:10px 12px;font-size:12px;color:#b91c1c;margin-bottom:1.2rem;">⚠️ 삭제된 데이터는 복구할 수 없습니다.</div>
+    <div class="btn-row">
+      <button class="btn" style="background:#dc2626;color:#fff;" onclick="execDelete()"><i class="ti ti-trash"></i> 삭제</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('del-modal').style.display='none'">취소</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- 채용 투입 모달 -->
 <div id="recruit-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
@@ -642,8 +657,8 @@ function renderTalent(){
   document.getElementById('t-org').innerHTML='<option value="">선택</option>'+cache.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
   document.getElementById('talent-tbody').innerHTML=cache.talents.length?cache.talents.map(t=>{
     const org=cache.orgs.find(o=>o.id===t.org_id);
-    return`<tr><td style="font-weight:500;">${t.name}</td><td style="font-size:11px;">${org?.name||'—'}</td><td style="font-size:11px;">${t.job||'—'}</td><td><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td><td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td></tr>`;
-  }).join(''):'<tr><td colspan="6" class="empty">수급 기록 없음</td></tr>';
+    return`<tr><td style="font-weight:500;">${t.name}</td><td style="font-size:11px;">${org?.name||'—'}</td><td style="font-size:11px;">${t.job||'—'}</td><td><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td><td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td><td><button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty">수급 기록 없음</td></tr>';
 }
 function openAddTalent(){renderTalent();document.getElementById('t-date').value=today();document.getElementById('talent-modal').style.display='flex';}
 async function saveTalent(){
@@ -772,10 +787,11 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">메모</span><span style="white-space:pre-line;font-size:12px;color:var(--text2);">${o.memo||'—'}</span></div>
     <div class="modal-sec-title">후속 액션</div>
     ${oa.length?oa.map(a=>`
-      <div class="action-item" onclick="toggleActionModal(${a.id},${a.done})">
-        <div class="action-cb ${a.done?'done':''}">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
-        <div class="action-text ${a.done?'done':''}" style="flex:1;">${a.text}</div>
-        <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
+      <div class="action-item">
+        <div class="action-cb ${a.done?'done':''}" onclick="toggleActionModal(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
+        <div class="action-text ${a.done?'done':''}" style="flex:1;" onclick="toggleActionModal(${a.id},${a.done})">${a.text}</div>
+        <div class="action-due ${dueClass(dayDiff(a.due))}" onclick="toggleActionModal(${a.id},${a.done})">${dueLabel(dayDiff(a.due),a.due)}</div>
+        <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;">등록된 액션 없음</div>'}
     <div class="modal-sec-title">액션 추가</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -791,9 +807,48 @@ function openOrg(id){
       </select>
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
+      <button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>
     </div>
   `;
   document.getElementById('modal').style.display='flex';
+}
+
+// ── 삭제 기능 ──
+let deleteTarget={type:null,id:null,name:null};
+function confirmDeleteOrg(id){
+  const o=cache.orgs.find(x=>x.id===id);
+  deleteTarget={type:'org',id,name:o?.name||'이 기관'};
+  document.getElementById('del-msg').textContent=`"${deleteTarget.name}" 기관과 연결된 모든 액션이 함께 삭제됩니다. 계속하시겠어요?`;
+  document.getElementById('del-modal').style.display='flex';
+}
+function confirmDeleteTalent(id,name){
+  deleteTarget={type:'talent',id,name};
+  document.getElementById('del-msg').textContent=`"${name}" 수급 기록을 삭제하시겠어요?`;
+  document.getElementById('del-modal').style.display='flex';
+}
+async function deleteAction(id){
+  if(!confirm('이 액션을 삭제하시겠어요?'))return;
+  const{error}=await sb.from('actions').delete().eq('id',id);
+  if(error){toast('오류: '+error.message);return;}
+  cache.actions=cache.actions.filter(a=>a.id!==id);
+  updateUrgentCount();openOrg(currentOrgId);toast('액션 삭제됨');
+}
+async function execDelete(){
+  document.getElementById('del-modal').style.display='none';
+  const{type,id}=deleteTarget;
+  if(type==='org'){
+    await sb.from('actions').delete().eq('org_id',id);
+    const{error}=await sb.from('orgs').delete().eq('id',id);
+    if(error){toast('오류: '+error.message);return;}
+    cache.orgs=cache.orgs.filter(o=>o.id!==id);
+    cache.actions=cache.actions.filter(a=>a.org_id!==id);
+    closeModal();renderCurrent();toast('기관 삭제 완료');
+  } else if(type==='talent'){
+    const{error}=await sb.from('talents').delete().eq('id',id);
+    if(error){toast('오류: '+error.message);return;}
+    cache.talents=cache.talents.filter(t=>t.id!==id);
+    renderTalent();toast('수급 기록 삭제 완료');
+  }
 }
 
 async function addActionFromModal(orgId){
