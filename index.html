@@ -141,6 +141,9 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.status-dropdown{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:250;min-width:100px;overflow:hidden;}
+.status-dropdown-item{padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .1s;}
+.status-dropdown-item:hover{background:var(--bg);}
 .metric-clickable{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
 .metric-clickable:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(45,91,227,.1);}
 .mtab-row{display:flex;gap:4px;margin-bottom:14px;}
@@ -340,6 +343,43 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     <div class="fg-row fg-2"><div class="fg"><label>지원일</label><input id="t-date" type="date"></div><div class="fg"><label>상태</label><select id="t-status"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>포기</option></select></div></div>
     <div class="fg"><label>메모</label><textarea id="t-memo" style="min-height:48px;"></textarea></div>
     <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()">등록</button></div>
+  </div>
+</div>
+</div>
+
+<!-- 상태 변경 드롭다운 -->
+<div id="status-dropdown" class="status-dropdown" style="display:none;">
+  <div class="status-dropdown-item" onclick="selectStatus('지원중')"><span class="badge b-blue">지원중</span></div>
+  <div class="status-dropdown-item" onclick="selectStatus('면접')"><span class="badge b-amber">면접</span></div>
+  <div class="status-dropdown-item" onclick="selectStatus('합격')"><span class="badge b-green">합격</span></div>
+  <div class="status-dropdown-item" onclick="selectStatus('불합격')"><span class="badge b-red">불합격</span></div>
+  <div class="status-dropdown-item" onclick="selectStatus('포기')"><span class="badge b-gray">포기</span></div>
+</div>
+
+<!-- 합격 - 입사일 팝업 -->
+<div id="hapgyeok-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal" style="max-width:360px;">
+  <div class="modal-head"><div class="modal-title">합격 처리 - 입사일 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('hapgyeok-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <div class="fg"><label>입사일</label><input id="hapgyeok-date" type="date"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="confirmHapgyeok()"><i class="ti ti-check"></i> 합격 확정</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('hapgyeok-modal').style.display='none'">취소</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 불합격 - 사유 팝업 -->
+<div id="bulhapgyeok-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal" style="max-width:400px;">
+  <div class="modal-head"><div class="modal-title">불합격 처리 - 사유 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <div class="fg"><label>불합격 사유</label><textarea id="bulhapgyeok-reason" placeholder="불합격 사유를 입력하세요" style="min-height:80px;"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="confirmBulhapgyeok()"><i class="ti ti-check"></i> 불합격 확정</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'">취소</button>
+    </div>
   </div>
 </div>
 </div>
@@ -602,7 +642,7 @@ function renderTalent(){
   document.getElementById('t-org').innerHTML='<option value="">선택</option>'+cache.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
   document.getElementById('talent-tbody').innerHTML=cache.talents.length?cache.talents.map(t=>{
     const org=cache.orgs.find(o=>o.id===t.org_id);
-    return`<tr><td style="font-weight:500;">${t.name}</td><td style="font-size:11px;">${org?.name||'—'}</td><td style="font-size:11px;">${t.job||'—'}</td><td><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td><td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></td></tr>`;
+    return`<tr><td style="font-weight:500;">${t.name}</td><td style="font-size:11px;">${org?.name||'—'}</td><td style="font-size:11px;">${t.job||'—'}</td><td><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td><td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td></tr>`;
   }).join(''):'<tr><td colspan="6" class="empty">수급 기록 없음</td></tr>';
 }
 function openAddTalent(){renderTalent();document.getElementById('t-date').value=today();document.getElementById('talent-modal').style.display='flex';}
@@ -785,6 +825,51 @@ async function markContacted(id){
 }
 function closeModal(){document.getElementById('modal').style.display='none';}
 
+// ── 인재 상태 변경 ──
+let statusTargetId=null;
+function openStatusDropdown(id,event){
+  event.stopPropagation();
+  statusTargetId=id;
+  const dd=document.getElementById('status-dropdown');
+  const rect=event.target.getBoundingClientRect();
+  dd.style.top=(rect.bottom+4)+'px';
+  dd.style.left=rect.left+'px';
+  dd.style.display='block';
+}
+function closeStatusDropdown(){
+  document.getElementById('status-dropdown').style.display='none';
+}
+async function selectStatus(newStatus){
+  closeStatusDropdown();
+  if(newStatus==='합격'){
+    document.getElementById('hapgyeok-date').value=today();
+    document.getElementById('hapgyeok-modal').style.display='flex';
+  } else if(newStatus==='불합격'){
+    document.getElementById('bulhapgyeok-reason').value='';
+    document.getElementById('bulhapgyeok-modal').style.display='flex';
+  } else {
+    await updateTalentStatus(statusTargetId,newStatus,{});
+  }
+}
+async function confirmHapgyeok(){
+  const date=document.getElementById('hapgyeok-date').value||null;
+  document.getElementById('hapgyeok-modal').style.display='none';
+  await updateTalentStatus(statusTargetId,'합격',{date});
+}
+async function confirmBulhapgyeok(){
+  const memo=document.getElementById('bulhapgyeok-reason').value.trim();
+  document.getElementById('bulhapgyeok-modal').style.display='none';
+  await updateTalentStatus(statusTargetId,'불합격',{memo});
+}
+async function updateTalentStatus(id,status,extra){
+  const {error}=await sb.from('talents').update({status,...extra}).eq('id',id);
+  if(error){toast('오류: '+error.message);return;}
+  const t=cache.talents.find(x=>x.id===id);
+  if(t){t.status=status;Object.assign(t,extra);}
+  toast('상태 변경: '+status);
+  renderTalent();
+}
+
 // ── 채용 투입 모달 ──
 function openRecruitModal(){
   const list=cache.talents.filter(t=>t.status==='지원중'||t.status==='면접');
@@ -931,6 +1016,7 @@ function renderMetricPeriod(){
 }
 
 (function init(){
+  document.addEventListener('click',closeStatusDropdown);
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   const url=localStorage.getItem('vd_sb_url'),key=localStorage.getItem('vd_sb_key');
   if(url&&key){initSupabase(url,key);}
