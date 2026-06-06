@@ -51,7 +51,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .page-header{margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .page-header-left .page-title{font-size:18px;font-weight:600;}
 .page-header-left .page-sub{font-size:12px;color:var(--text3);margin-top:2px;}
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
 .metric-label{font-size:10px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;}
 .metric-value{font-size:24px;font-weight:600;}
@@ -344,6 +344,14 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 </div>
 
+<!-- 채용 투입 모달 -->
+<div id="recruit-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal modal-wide">
+  <div class="modal-head"><div class="modal-title">채용 투입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('recruit-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="recruit-body"></div>
+</div>
+</div>
+
 <!-- 수급 현황 모달 -->
 <div id="supply-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
@@ -442,12 +450,14 @@ function renderDashboard(){
   const active=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
   const placed=tals.filter(t=>t.status==='합격').length;
   const failed=tals.filter(t=>t.status==='불합격').length;
+  const recruiting=tals.filter(t=>t.status==='지원중'||t.status==='면접').length;
   document.getElementById('metrics').innerHTML=`
     <div class="metric metric-clickable" onclick="openMetricModal('orgs')"><div class="metric-label">등록 기관</div><div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('active')"><div class="metric-label">관계 형성 중</div><div class="metric-value">${active}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('mou')"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">지원자수</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">수급 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">수급 현황</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="openRecruitModal()"><div class="metric-label">채용 투입</div><div class="metric-value">${recruiting}</div><div class="metric-sub">명 진행 중 · 클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">채용 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
   `;
   renderTrendChart(currentChartMode);
   const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
@@ -774,6 +784,25 @@ async function markContacted(id){
   openOrg(id);toast('연락 완료 처리됨 ✓');
 }
 function closeModal(){document.getElementById('modal').style.display='none';}
+
+// ── 채용 투입 모달 ──
+function openRecruitModal(){
+  const list=cache.talents.filter(t=>t.status==='지원중'||t.status==='면접');
+  document.getElementById('recruit-body').innerHTML=list.length?`
+    <table class="tbl"><thead><tr><th>지원자명</th><th>직무</th><th>연결기관</th><th>상태</th><th>지원일</th><th>담당</th></tr></thead>
+    <tbody>${list.map(t=>{
+      const org=cache.orgs.find(o=>o.id===t.org_id);
+      return`<tr>
+        <td style="font-weight:500;">${t.name}</td>
+        <td style="font-size:11px;">${t.job||'—'}</td>
+        <td style="font-size:11px;">${org?.name||'—'}</td>
+        <td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></td>
+        <td style="font-size:11px;color:var(--text3);">${fDate(t.date)}</td>
+        <td><span class="member-pill">${t.member||'—'}</span></td>
+      </tr>`;
+    }).join('')}</tbody></table>`:'<div class="empty">채용 진행 중인 인원 없음</div>';
+  document.getElementById('recruit-modal').style.display='flex';
+}
 
 // ── 수급 현황 모달 ──
 let currentSupplyTab='pass';
