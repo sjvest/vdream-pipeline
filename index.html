@@ -130,8 +130,8 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .card-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .card-upload-area i{font-size:28px;color:var(--text3);display:block;margin-bottom:6px;}
 .card-upload-area p{font-size:11px;color:var(--text3);}
-.card-preview{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
-.card-preview img{width:100%;object-fit:contain;display:block;}
+.card-preview{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);max-width:360px;aspect-ratio:9/5;background:#fff;display:flex;align-items:center;justify-content:center;}
+.card-preview img{width:100%;height:100%;object-fit:contain;display:block;}
 .card-preview-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
 
 /* 차트 탭 */
@@ -755,7 +755,7 @@ function openOrg(id){
   const tals=cache.talents.filter(t=>t.org_id===id);
   document.getElementById('m-title').textContent=o.name;
   document.getElementById('m-body').innerHTML=`
-    ${o.card_image?`<div style="margin-bottom:12px;"><img src="${o.card_image}" style="width:100%;object-fit:contain;border-radius:var(--radius-sm);border:1px solid var(--border);" alt="명함 사진"><div style="font-size:10px;color:var(--text3);margin-top:4px;">📇 명함 사진</div></div>`:''}
+    ${o.card_image?`<div style="max-width:360px;aspect-ratio:9/5;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:4px;"><img src="${o.card_image}" style="width:100%;height:100%;object-fit:contain;display:block;" alt="명함 사진"></div><div style="font-size:10px;color:var(--text3);margin-bottom:12px;">📇 명함 사진</div>`:''}
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span><span class="badge b-gray">${o.source||'—'}</span>
