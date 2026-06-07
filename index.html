@@ -1315,7 +1315,7 @@ function openOrg(id){
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:4px;">
       <input id="log-summary" placeholder="한 줄 요약 (예: 담당자 통화, 미팅 일정 확정)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
-      <input id="log-date" type="date" value="${today()}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
     </div>
     <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
@@ -1345,6 +1345,9 @@ function openOrg(id){
     </div>
   `;
   document.getElementById('modal').style.display='flex';
+  // 날짜 항상 오늘로 세팅
+  const logDateEl=document.getElementById('log-date');
+  if(logDateEl)logDateEl.value=today();
 }
 
 // ── 컨택 히스토리 ──
