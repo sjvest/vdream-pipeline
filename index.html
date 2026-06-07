@@ -871,19 +871,27 @@ function openOrg(id){
 }
 
 // ── 컨택 히스토리 ──
+function fTime(ts){
+  if(!ts)return'';
+  const d=new Date(ts);
+  const h=String(d.getHours()).padStart(2,'0');
+  const m=String(d.getMinutes()).padStart(2,'0');
+  return`${h}:${m}`;
+}
 function renderContactLogs(orgId){
-  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(b.logged_at||b.created_at)-new Date(a.logged_at||a.created_at));
   if(!logs.length)return`<div class="empty" style="padding:.5rem 0;font-size:12px;">컨택 기록 없음</div>`;
   return logs.map(l=>`
     <div class="contact-log-item" id="log-item-${l.id}">
       <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleLogDetail(${l.id})">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
-        <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${fDate(l.date)}</span>
-        <span style="font-size:12px;font-weight:500;flex:1;">${l.summary}</span>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:1px;"></div>
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;min-width:80px;">${fDate(l.date)}</span>
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;background:var(--bg);padding:1px 6px;border-radius:4px;">${fTime(l.logged_at||l.created_at)}</span>
+        <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);">${l.summary}</span>
         ${l.memo?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
         <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
       </div>
-      ${l.memo?`<div id="log-detail-${l.id}" style="display:none;margin:6px 0 4px 16px;font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:4px;padding:8px 10px;">${l.memo}</div>`:''}
+      ${l.memo?`<div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">${l.memo}</div>`:''}
     </div>
   `).join('');
 }
@@ -900,7 +908,8 @@ async function addContactLog(orgId){
   const memo=document.getElementById('log-memo').value.trim();
   const date=document.getElementById('log-date').value||today();
   if(!summary){toast('한 줄 요약을 입력하세요');return;}
-  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date}).select().single();
+  const now=new Date().toISOString();
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.logs.unshift(data);
   // 마지막 연락일 자동 갱신
