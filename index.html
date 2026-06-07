@@ -206,6 +206,18 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </style>
 </head>
 <body>
+<!-- 로그인 화면 -->
+<div id="login-banner" class="config-banner" style="display:none;">
+  <div class="config-box">
+    <h2 style="margin-bottom:4px;">🔐 V:Dream 파이프라인</h2>
+    <p>이메일과 비밀번호로 로그인하세요.</p>
+    <label>이메일</label><input id="login-email" type="email" placeholder="example@vdream.co.kr">
+    <label>비밀번호</label><input id="login-pw" type="password" placeholder="비밀번호 입력">
+    <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;margin-top:4px;">로그인</button>
+    <p class="note" id="login-err" style="color:#c0200f;display:none;margin-top:8px;"></p>
+  </div>
+</div>
+
 <div id="config-banner" class="config-banner" style="display:none;">
   <div class="config-box">
     <h2>Supabase 연결 설정</h2>
@@ -233,7 +245,17 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   <div class="nav-divider"></div>
   <div class="nav-section">성과</div>
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
-  <div class="sidebar-bottom"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
+  <div class="sidebar-bottom">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;" id="user-avatar">?</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);" id="user-email"></div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:none;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer;text-align:center;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">로그아웃</button>
+    <div style="margin-top:8px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
+  </div>
 </div>
 <div class="main">
 
@@ -514,6 +536,7 @@ const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[]};
+let currentUser=null, currentProfile=null;
 let cardImageBase64=null;
 let trendChart=null;
 let currentChartMode='week';
@@ -530,7 +553,46 @@ function initSupabase(url,key){
   sb=supabase.createClient(url,key);
   document.getElementById('conn-dot').className='conn-dot ok';
   document.getElementById('conn-label').textContent='DB 연결됨';
+  checkSession();
+}
+async function checkSession(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){
+    await setUser(session.user);
+    loadAll();
+  } else {
+    document.getElementById('login-banner').style.display='flex';
+  }
+}
+async function setUser(user){
+  currentUser=user;
+  const {data}=await sb.from('profiles').select('name').eq('id',user.id).single();
+  currentProfile=data;
+  const name=data?.name||user.email;
+  const initial=name.charAt(0);
+  document.getElementById('user-avatar').textContent=initial;
+  document.getElementById('user-name').textContent=name;
+  document.getElementById('user-email').textContent=user.email;
+}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!email||!pw){errEl.textContent='이메일과 비밀번호를 입력하세요.';errEl.style.display='block';return;}
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error){errEl.textContent='로그인 실패: '+error.message;errEl.style.display='block';return;}
+  document.getElementById('login-banner').style.display='none';
+  await setUser(data.user);
   loadAll();
+}
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;currentProfile=null;
+  document.getElementById('user-avatar').textContent='?';
+  document.getElementById('user-name').textContent='로그인 필요';
+  document.getElementById('user-email').textContent='';
+  document.getElementById('login-banner').style.display='flex';
 }
 async function loadAll(){
   try{
@@ -819,14 +881,22 @@ function addActionField(){
 async function saveOrg(){
   const name=document.getElementById('n-name').value.trim();
   if(!name){toast('기관명을 입력하세요');return;}
+  // 중복 기관 체크
+  const dup=cache.orgs.find(o=>o.name.trim()===name);
+  if(dup){
+    const reg=dup.created_by_name||'누군가';
+    if(!confirm(`⚠️ "${name}" 기관이 이미 등록되어 있어요!\n\n등록자: ${reg}\n\n그래도 계속 등록하시겠어요?`))return;
+  }
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
     name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,
     contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:document.getElementById('n-email').value.trim(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
     date:document.getElementById('n-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
-    card_image:cardImageBase64||null
+    card_image:cardImageBase64||null,
+    created_by:currentUser?.id||null,created_by_name:myName
   };
   const {data:org,error}=await sb.from('orgs').insert(orgRow).select().single();
   if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';return;}
@@ -834,7 +904,7 @@ async function saveOrg(){
   const actionRows=[];
   document.querySelectorAll('[data-atext]').forEach(el=>{
     const idx=el.dataset.atext,due=document.querySelector(`[data-adue="${idx}"]`)?.value;
-    if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false});
+    if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
   clearOrgForm();btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
@@ -869,6 +939,7 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
     <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
+    <div class="info-row"><span class="info-key">등록자</span><span style="font-size:12px;font-weight:600;color:var(--accent);">${o.created_by_name||'—'}</span></div>
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
     <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
@@ -927,6 +998,7 @@ function renderContactLogs(orgId){
         <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${dateStr}</span>
         <span style="font-size:11px;color:var(--accent);flex-shrink:0;background:var(--accent-bg);padding:1px 7px;border-radius:4px;font-weight:600;">${timeStr}</span>
         <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);">${l.summary}</span>
+        ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
         ${hasMemo?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
         <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
       </div>
@@ -948,16 +1020,14 @@ async function addContactLog(orgId){
   const date=document.getElementById('log-date').value||today();
   if(!summary){toast('한 줄 요약을 입력하세요');return;}
   const now=new Date().toISOString();
-  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now}).select().single();
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.logs.unshift(data);
-  // 마지막 연락일 자동 갱신
   await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
   const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=date;
-  // 입력 초기화
   document.getElementById('log-summary').value='';
   document.getElementById('log-memo').value='';
-  // 히스토리 목록만 업데이트
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
   toast('히스토리 추가됨 ✓');
