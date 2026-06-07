@@ -811,7 +811,7 @@ function renderTalent(){
       <td style="font-size:12px;color:var(--text2);">${fDate(t.date)}</td>
       <td style="font-size:12px;"><span style="color:var(--text3);">${regDate}</span> <span style="background:var(--accent-bg);color:var(--accent);padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;">${regTime}</span></td>
       <td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td>
-      <td><button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:15px;" title="삭제"><i class="ti ti-trash"></i></button></td>
+      <td>${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")}') " style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:15px;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="8" class="empty">수급 기록 없음</td></tr>';
 }
@@ -962,7 +962,7 @@ function openOrg(id){
         <div class="action-cb ${a.done?'done':''}" onclick="toggleActionModal(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
         <div class="action-text ${a.done?'done':''}" style="flex:1;" onclick="toggleActionModal(${a.id},${a.done})">${a.text}</div>
         <div class="action-due ${dueClass(dayDiff(a.due))}" onclick="toggleActionModal(${a.id},${a.done})">${dueLabel(dayDiff(a.due),a.due)}</div>
-        <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
+        ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;">등록된 액션 없음</div>'}
     <div class="modal-sec-title">액션 추가</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -978,7 +978,7 @@ function openOrg(id){
       </select>
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
-      ${(currentUser && o.created_by === currentUser.id) || !o.created_by ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : `<span style="margin-left:auto;font-size:11px;color:var(--text3);">등록자만 삭제 가능</span>`}
+      ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : ''}
     </div>
   `;
   document.getElementById('modal').style.display='flex';
