@@ -98,6 +98,9 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .btn-row{display:flex;gap:8px;margin-top:14px;}
 .action-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
 .action-item:last-child{border-bottom:none;}
+.contact-log-item{padding:8px 0;border-bottom:1px solid var(--border);}
+.contact-log-item:last-child{border-bottom:none;}
+.contact-log-item:hover{background:var(--bg);border-radius:4px;}
 .action-cb{width:17px;height:17px;border:1.5px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;}
 .action-cb.done{background:var(--green);border-color:var(--green);}
 .action-text{flex:1;font-size:12px;}
@@ -440,7 +443,7 @@ const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
 const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
-let cache={orgs:[],actions:[],talents:[]};
+let cache={orgs:[],actions:[],talents:[],logs:[]};
 let cardImageBase64=null;
 let trendChart=null;
 let currentChartMode='week';
@@ -461,12 +464,13 @@ function initSupabase(url,key){
 }
 async function loadAll(){
   try{
-    const [o,a,t]=await Promise.all([
+    const [o,a,t,l]=await Promise.all([
       sb.from('orgs').select('*').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
+      sb.from('contact_logs').select('*').order('date',{ascending:false}),
     ]);
-    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];
+    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];
     updateUrgentCount();renderCurrent();
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
@@ -784,7 +788,14 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
-    <div class="info-row"><span class="info-key">메모</span><span style="white-space:pre-line;font-size:12px;color:var(--text2);">${o.memo||'—'}</span></div>
+    <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
+    <div id="contact-log-list">${renderContactLogs(id)}</div>
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <input id="log-summary" placeholder="한 줄 요약 (예: 담당자 통화, 미팅 일정 확정)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="log-date" type="date" value="${today()}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+    </div>
+    <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
+    <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
     <div class="modal-sec-title">후속 액션</div>
     ${oa.length?oa.map(a=>`
       <div class="action-item">
@@ -813,6 +824,52 @@ function openOrg(id){
   document.getElementById('modal').style.display='flex';
 }
 
+// ── 컨택 히스토리 ──
+function renderContactLogs(orgId){
+  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!logs.length)return`<div class="empty" style="padding:.5rem 0;font-size:12px;">컨택 기록 없음</div>`;
+  return logs.map(l=>`
+    <div class="contact-log-item" id="log-item-${l.id}">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleLogDetail(${l.id})">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
+        <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${fDate(l.date)}</span>
+        <span style="font-size:12px;font-weight:500;flex:1;">${l.summary}</span>
+        ${l.memo?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
+        <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
+      </div>
+      ${l.memo?`<div id="log-detail-${l.id}" style="display:none;margin:6px 0 4px 16px;font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:4px;padding:8px 10px;">${l.memo}</div>`:''}
+    </div>
+  `).join('');
+}
+function toggleLogDetail(id){
+  const el=document.getElementById(`log-detail-${id}`);
+  const icon=document.getElementById(`log-icon-${id}`);
+  if(!el)return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(icon)icon.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
+}
+async function addContactLog(orgId){
+  const summary=document.getElementById('log-summary').value.trim();
+  const memo=document.getElementById('log-memo').value.trim();
+  const date=document.getElementById('log-date').value||today();
+  if(!summary){toast('한 줄 요약을 입력하세요');return;}
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date}).select().single();
+  if(error){toast('오류: '+error.message);return;}
+  cache.logs.unshift(data);
+  // 마지막 연락일 자동 갱신
+  await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
+  const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=date;
+  toast('히스토리 추가됨 ✓');openOrg(orgId);
+}
+async function deleteContactLog(logId,orgId){
+  if(!confirm('이 히스토리를 삭제하시겠어요?'))return;
+  const{error}=await sb.from('contact_logs').delete().eq('id',logId);
+  if(error){toast('오류: '+error.message);return;}
+  cache.logs=cache.logs.filter(l=>l.id!==logId);
+  toast('삭제됨');openOrg(orgId);
+}
+
 // ── 삭제 기능 ──
 let deleteTarget={type:null,id:null,name:null};
 function confirmDeleteOrg(id){
@@ -838,10 +895,12 @@ async function execDelete(){
   const{type,id}=deleteTarget;
   if(type==='org'){
     await sb.from('actions').delete().eq('org_id',id);
+    await sb.from('contact_logs').delete().eq('org_id',id);
     const{error}=await sb.from('orgs').delete().eq('id',id);
     if(error){toast('오류: '+error.message);return;}
     cache.orgs=cache.orgs.filter(o=>o.id!==id);
     cache.actions=cache.actions.filter(a=>a.org_id!==id);
+    cache.logs=cache.logs.filter(l=>l.org_id!==id);
     closeModal();renderCurrent();toast('기관 삭제 완료');
   } else if(type==='talent'){
     const{error}=await sb.from('talents').delete().eq('id',id);
@@ -868,8 +927,9 @@ async function toggleActionModal(id,done){
 }
 async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
-  await sb.from('orgs').update({stage:newStage}).eq('id',currentOrgId);
-  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o)o.stage=newStage;
+  const t=today();
+  await sb.from('orgs').update({stage:newStage,lastcontact:t}).eq('id',currentOrgId);
+  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;}
   closeModal();renderCurrent();toast('단계 변경 완료');
 }
 async function markContacted(id){
