@@ -978,7 +978,7 @@ function openOrg(id){
       </select>
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
-      <button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>
+      ${(currentUser && o.created_by === currentUser.id) || !o.created_by ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : `<span style="margin-left:auto;font-size:11px;color:var(--text3);">등록자만 삭제 가능</span>`}
     </div>
   `;
   document.getElementById('modal').style.display='flex';
