@@ -607,7 +607,7 @@ async function loadAll(){
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
       sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
-      sb.from('profiles').select('id,name').order('name',{ascending:true}),
+      sb.from('profiles').select('id,name,sort_order').order('sort_order',{ascending:true}),
     ]);
     cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];
     updateMemberSelects();
