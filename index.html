@@ -738,7 +738,8 @@ async function doLogout(){
   currentUser=null;currentProfile=null;
   document.getElementById('user-avatar').textContent='?';
   document.getElementById('user-name').textContent='로그인 필요';
-  document.getElementById('user-email').textContent='';
+  document.getElementById('user-status-label').textContent='프로필 설정';
+  document.getElementById('user-status-dot').style.display='none';
   document.getElementById('login-banner').style.display='flex';
 }
 async function loadAll(){
