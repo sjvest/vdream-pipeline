@@ -514,7 +514,7 @@ async function loadAll(){
       sb.from('orgs').select('*').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
-      sb.from('contact_logs').select('*').order('date',{ascending:false}),
+      sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at').order('logged_at',{ascending:false}),
     ]);
     cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];
     updateUrgentCount();renderCurrent();
