@@ -409,7 +409,8 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">지원자명</th>
-        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">연결 기관</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">채널</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">연결 기관/소개자</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">직무</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">담당팀원</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">지원일</th>
@@ -443,9 +444,29 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 <div class="modal">
   <div class="modal-head"><div class="modal-title">인재 수급 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
   <div class="modal-body">
-    <div class="fg-row fg-2"><div class="fg"><label>지원자명 *</label><input id="t-name" placeholder="홍길동"></div><div class="fg"><label>연결 기관 *</label><select id="t-org"><option value="">선택</option></select></div></div>
-    <div class="fg-row fg-2"><div class="fg"><label>직무</label><input id="t-job" placeholder="사무보조"></div><div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div></div>
-    <div class="fg-row fg-2"><div class="fg"><label>지원일</label><input id="t-date" type="date"></div><div class="fg"><label>상태</label><select id="t-status"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>포기</option></select></div></div>
+    <div class="fg-row fg-2">
+      <div class="fg"><label>지원자명 *</label><input id="t-name" placeholder="홍길동"></div>
+      <div class="fg"><label>수급 채널 *</label>
+        <select id="t-channel" onchange="toggleChannelFields()">
+          <option value="기관연계">🏢 기관연계</option>
+          <option value="카페">📋 카페 공고</option>
+          <option value="인스타그램">📱 인스타그램</option>
+          <option value="페이스북">📘 페이스북</option>
+          <option value="소개">🤝 소개</option>
+          <option value="기타온라인">🌐 기타 온라인</option>
+        </select>
+      </div>
+    </div>
+    <div id="t-org-wrap" class="fg"><label>연결 기관</label><select id="t-org"><option value="">선택</option></select></div>
+    <div id="t-referrer-wrap" class="fg" style="display:none;"><label>소개자 (이름/기관)</label><input id="t-referrer" placeholder="예: 서울복지관 김센터장"></div>
+    <div class="fg-row fg-2">
+      <div class="fg"><label>직무</label><input id="t-job" placeholder="사무보조"></div>
+      <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div>
+    </div>
+    <div class="fg-row fg-2">
+      <div class="fg"><label>지원일</label><input id="t-date" type="date"></div>
+      <div class="fg"><label>상태</label><select id="t-status"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>포기</option></select></div>
+    </div>
     <div class="fg"><label>메모</label><textarea id="t-memo" style="min-height:48px;"></textarea></div>
     <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()">등록</button></div>
   </div>
@@ -889,32 +910,62 @@ async function toggleAction(id,done){
 // ── 인재 수급 ──
 function renderTalent(){
   document.getElementById('t-org').innerHTML='<option value="">선택</option>'+cache.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
+  const CHANNEL_BADGE={'기관연계':'b-blue','카페':'b-purple','인스타그램':'b-amber','페이스북':'b-teal','소개':'b-green','기타온라인':'b-gray'};
+  const CHANNEL_ICON={'기관연계':'🏢','카페':'📋','인스타그램':'📱','페이스북':'📘','소개':'🤝','기타온라인':'🌐'};
   document.getElementById('talent-tbody').innerHTML=cache.talents.length?cache.talents.map(t=>{
     const org=cache.orgs.find(o=>o.id===t.org_id);
     const regTime=t.created_at?fTime(t.created_at):'—';
     const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
+    const ch=t.channel||'기관연계';
+    const orgOrRef=ch==='소개'?t.referrer||'—':ch==='기관연계'?org?.name||'—':'—';
     return`<tr>
       <td style="font-weight:700;font-size:13px;">${t.name}</td>
-      <td style="font-size:12px;color:var(--text2);">${org?.name||'—'}</td>
+      <td><span class="badge ${CHANNEL_BADGE[ch]||'b-gray'}" style="font-size:11px;">${CHANNEL_ICON[ch]||''} ${ch}</span></td>
+      <td style="font-size:12px;color:var(--text2);">${orgOrRef}</td>
       <td style="font-size:12px;color:var(--text2);">${t.job||'—'}</td>
       <td><span class="member-pill">${t.member||'—'}</span></td>
       <td style="font-size:12px;color:var(--text2);">${fDate(t.date)}</td>
       <td style="font-size:12px;"><span style="color:var(--text3);">${regDate}</span> <span style="background:var(--accent-bg);color:var(--accent);padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;">${regTime}</span></td>
       <td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td>
-      <td>${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")}') " style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:15px;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}</td>
+      <td>${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:15px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="8" class="empty">수급 기록 없음</td></tr>';
+  }).join(''):'<tr><td colspan="9" class="empty">수급 기록 없음</td></tr>';
 }
-function openAddTalent(){renderTalent();document.getElementById('t-date').value=today();document.getElementById('talent-modal').style.display='flex';}
+function toggleChannelFields(){
+  const ch=document.getElementById('t-channel').value;
+  const isOrg=ch==='기관연계';
+  const isRef=ch==='소개';
+  document.getElementById('t-org-wrap').style.display=isOrg?'':'none';
+  document.getElementById('t-referrer-wrap').style.display=isRef?'':'none';
+}
+function openAddTalent(){
+  renderTalent();
+  document.getElementById('t-date').value=today();
+  document.getElementById('t-channel').value='기관연계';
+  toggleChannelFields();
+  document.getElementById('talent-modal').style.display='flex';
+}
 async function saveTalent(){
   const name=document.getElementById('t-name').value.trim();
-  const orgId=parseInt(document.getElementById('t-org').value);
-  if(!name||!orgId){toast('지원자명과 기관을 선택하세요');return;}
-  const row={name,org_id:orgId,job:document.getElementById('t-job').value.trim(),member:document.getElementById('t-member').value,date:document.getElementById('t-date').value||null,status:document.getElementById('t-status').value,memo:document.getElementById('t-memo').value.trim()};
+  const channel=document.getElementById('t-channel').value;
+  const orgId=channel==='기관연계'?parseInt(document.getElementById('t-org').value):null;
+  const referrer=channel==='소개'?document.getElementById('t-referrer').value.trim():'';
+  if(!name){toast('지원자명을 입력하세요');return;}
+  if(channel==='기관연계'&&!orgId){toast('기관을 선택하세요');return;}
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const row={
+    name,org_id:orgId||null,channel,referrer:referrer||null,
+    job:document.getElementById('t-job').value.trim(),
+    member:document.getElementById('t-member').value,
+    date:document.getElementById('t-date').value||null,
+    status:document.getElementById('t-status').value,
+    memo:document.getElementById('t-memo').value.trim(),
+    created_by:currentUser?.id||null,created_by_name:myName
+  };
   const {data,error}=await sb.from('talents').insert(row).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.talents.unshift(data);document.getElementById('talent-modal').style.display='none';
-  ['t-name','t-job','t-memo'].forEach(id=>document.getElementById(id).value='');
+  ['t-name','t-job','t-memo','t-referrer'].forEach(id=>document.getElementById(id).value='');
   toast('수급 등록 완료!');renderTalent();
 }
 
