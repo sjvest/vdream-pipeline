@@ -914,7 +914,7 @@ function fTime(ts){
   return d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Seoul'});
 }
 function renderContactLogs(orgId){
-  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(b.logged_at||b.created_at)-new Date(a.logged_at||a.created_at));
+  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(a.logged_at||a.created_at)-new Date(b.logged_at||b.created_at));
   if(!logs.length)return`<div class="empty" style="padding:.5rem 0;font-size:12px;">컨택 기록 없음</div>`;
   return logs.map(l=>{
     const timeStr=fTime(l.logged_at||l.created_at);
