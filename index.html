@@ -481,7 +481,15 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
         </select>
       </div>
     </div>
-    <div id="t-org-wrap" class="fg"><label>연결 기관</label><select id="t-org"><option value="">선택</option></select></div>
+    <div id="t-org-wrap" class="fg"><label>연결 기관</label>
+      <div style="position:relative;">
+        <input id="t-org-search" placeholder="기관명 검색..." autocomplete="off"
+          style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"
+          oninput="searchOrg(this.value)" onfocus="searchOrg(this.value)">
+        <input type="hidden" id="t-org">
+        <div id="t-org-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:200;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
+      </div>
+    </div>
     <div id="t-referrer-wrap" class="fg" style="display:none;"><label>소개자 (이름/기관)</label><input id="t-referrer" placeholder="예: 서울복지관 김센터장"></div>
     <div class="fg-row fg-2">
       <div class="fg"><label>직무</label><input id="t-job" placeholder="사무보조"></div>
@@ -1075,7 +1083,6 @@ async function toggleAction(id,done){
 
 // ── 인재 수급 ──
 function renderTalent(){
-  document.getElementById('t-org').innerHTML='<option value="">선택</option>'+cache.orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
   const CHANNEL_BADGE={'기관연계':'b-blue','협단체':'b-teal','특수학교':'b-purple','카페':'b-amber','인스타그램':'b-amber','페이스북':'b-teal','소개':'b-green','기타온라인':'b-gray'};
   const CHANNEL_ICON={'기관연계':'🏢','협단체':'🤲','특수학교':'🏫','카페':'📋','인스타그램':'📱','페이스북':'📘','소개':'🤝','기타온라인':'🌐'};
   document.getElementById('talent-tbody').innerHTML=cache.talents.length?cache.talents.map(t=>{
@@ -1097,7 +1104,28 @@ function renderTalent(){
     </tr>`;
   }).join(''):'<tr><td colspan="9" class="empty">수급 기록 없음</td></tr>';
 }
-function toggleChannelFields(){
+function searchOrg(q){
+  const dd=document.getElementById('t-org-dropdown');
+  const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,10);
+  if(!results.length&&!q){dd.style.display='none';return;}
+  dd.style.display='block';
+  dd.innerHTML=results.length?results.map(o=>`
+    <div onclick="selectOrg(${o.id},'${o.name.replace(/'/g,"\\'")}')"
+      style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      ${o.name} <span style="font-size:11px;color:var(--text3);">${o.cat||''}</span>
+    </div>`).join('')
+    :`<div style="padding:10px 14px;font-size:12px;color:var(--text3);">검색 결과 없음</div>`;
+}
+function selectOrg(id,name){
+  document.getElementById('t-org').value=id;
+  document.getElementById('t-org-search').value=name;
+  document.getElementById('t-org-dropdown').style.display='none';
+}
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#t-org-wrap'))document.getElementById('t-org-dropdown')&&(document.getElementById('t-org-dropdown').style.display='none');
+});
   const ch=document.getElementById('t-channel').value;
   const isOrg=['기관연계','협단체','특수학교'].includes(ch);
   const isRef=ch==='소개';
@@ -1108,6 +1136,8 @@ function openAddTalent(){
   renderTalent();
   document.getElementById('t-date').value=today();
   document.getElementById('t-channel').value='기관연계';
+  document.getElementById('t-org').value='';
+  document.getElementById('t-org-search').value='';
   toggleChannelFields();
   document.getElementById('talent-modal').style.display='flex';
 }
