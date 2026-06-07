@@ -209,8 +209,9 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 <!-- 로그인 화면 -->
 <div id="login-banner" class="config-banner" style="display:none;">
   <div class="config-box">
-    <h2 style="margin-bottom:4px;">🔐 V:Dream 파이프라인</h2>
-    <p>이메일과 비밀번호로 로그인하세요.</p>
+    <img src="logo.png" alt="V:Dream" style="width:160px;height:auto;display:block;margin:0 auto 16px;">
+    <h2 style="margin-bottom:4px;text-align:center;">파이프라인 로그인</h2>
+    <p style="text-align:center;">이메일과 비밀번호로 로그인하세요.</p>
     <label>이메일</label><input id="login-email" type="email" placeholder="example@vdream.co.kr">
     <label>비밀번호</label><input id="login-pw" type="password" placeholder="비밀번호 입력">
     <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;margin-top:4px;">로그인</button>
@@ -231,7 +232,12 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 <div id="toast" class="toast"></div>
 <div class="app">
 <div class="sidebar">
-  <div class="logo"><div class="logo-title">V:Dream</div><div class="logo-sub">기관수급 파이프라인 v5</div></div>
+  <div class="logo" style="padding:16px 18px 14px;">
+    <div style="background:#fff;border-radius:8px;padding:8px 10px;display:inline-block;">
+      <img src="logo.png" alt="V:Dream" style="width:120px;height:auto;display:block;">
+    </div>
+    <div class="logo-sub" style="margin-top:8px;">기관수급 파이프라인</div>
+  </div>
   <button class="nav-item active" onclick="nav('dashboard')"><i class="ti ti-layout-dashboard"></i>대시보드</button>
   <button class="nav-item" onclick="nav('pipeline')"><i class="ti ti-layout-kanban"></i>파이프라인</button>
   <div class="nav-divider"></div>
