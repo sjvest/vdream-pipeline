@@ -799,8 +799,8 @@ function renderDashboard(){
     <div class="metric metric-clickable" onclick="openRecruitModal()"><div class="metric-label">채용 투입</div><div class="metric-value">${recruiting}</div><div class="metric-sub">명 진행 중 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">채용 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
   `;
-  setPeriod('thisweek');
   renderTrendChart(currentChartMode);
+  setPeriod(currentPeriod||'thisweek');
   const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
   document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
     <div class="action-item" style="cursor:default;">
@@ -864,7 +864,6 @@ function getPeriodRange(type){
 }
 function setPeriod(type){
   currentPeriod=type;
-  // 버튼 활성화
   ['thisweek','lastweek','thismonth','lastmonth'].forEach(t=>{
     const btn=document.getElementById('period-btn-'+t);
     if(btn)btn.className='chart-tab'+(t===type?' active':'');
@@ -872,14 +871,17 @@ function setPeriod(type){
   const range=getPeriodRange(type);
   if(!range)return;
   const {start,end}=range;
-  // 날짜 입력 필드 업데이트
+  const startEl=document.getElementById('period-start');
+  const endEl=document.getElementById('period-end');
+  const labelEl=document.getElementById('period-label');
+  const gridEl=document.getElementById('report-grid');
+  if(!startEl||!endEl||!labelEl||!gridEl)return;
   if(type!=='custom'){
-    document.getElementById('period-start').value=start.toISOString().slice(0,10);
-    document.getElementById('period-end').value=end.toISOString().slice(0,10);
+    startEl.value=start.toISOString().slice(0,10);
+    endEl.value=end.toISOString().slice(0,10);
   }
-  // 기간 라벨
   const fmt=d=>d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-  document.getElementById('period-label').textContent=`📅 ${fmt(start)} ~ ${fmt(end)}`;
+  labelEl.textContent=`📅 ${fmt(start)} ~ ${fmt(end)}`;
   renderPeriodReport(start,end);
 }
 function renderPeriodReport(start,end){
