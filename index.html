@@ -541,7 +541,7 @@ const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
 const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
-let cache={orgs:[],actions:[],talents:[],logs:[]};
+let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[]};
 let currentUser=null, currentProfile=null;
 let cardImageBase64=null;
 let trendChart=null;
@@ -602,13 +602,15 @@ async function doLogout(){
 }
 async function loadAll(){
   try{
-    const [o,a,t,l]=await Promise.all([
+    const [o,a,t,l,p]=await Promise.all([
       sb.from('orgs').select('*').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
-      sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at').order('logged_at',{ascending:false}),
+      sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
+      sb.from('profiles').select('id,name').order('name',{ascending:true}),
     ]);
-    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];
+    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];
+    updateMemberSelects();
     updateUrgentCount();renderCurrent();
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
@@ -829,22 +831,36 @@ async function saveTalent(){
 }
 
 // ── 팀원 실적 ──
+function updateMemberSelects(){
+  const names=cache.profiles.map(p=>p.name);
+  const opts='<option value="">선택</option>'+names.map(n=>`<option>${n}</option>`).join('');
+  ['n-member','t-member'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
 function renderTeam(){
-  document.getElementById('team-grid').innerHTML=MEMBERS.map((m,i)=>{
-    const mine=cache.orgs.filter(o=>o.member===m);
+  const profiles=cache.profiles;
+  if(!profiles.length){document.getElementById('team-grid').innerHTML='<div class="empty">팀원 정보 없음</div>';return;}
+  const colors=['#eef2ff','#f9f5ff','#ecfdf3','#fffaeb','#f0fdf9'];
+  const txcolors=['#3b6ef8','#6941c6','#027a48','#b54708','#107569'];
+  document.getElementById('team-grid').innerHTML=profiles.map((p,i)=>{
+    const name=p.name;
+    const mine=cache.orgs.filter(o=>o.member===name||o.created_by_name===name);
     const mou=mine.filter(o=>o.stage>=4).length;
-    const placed=cache.talents.filter(t=>t.member===m&&t.status==='합격').length;
+    const placed=cache.talents.filter(t=>t.member===name&&t.status==='합격').length;
     const pending=mine.reduce((a,o)=>a+actionsForOrg(o.id).filter(x=>!x.done).length,0);
+    const logs=cache.logs.filter(l=>l.created_by_name===name).length;
+    const bg=colors[i%colors.length];
+    const tx=txcolors[i%txcolors.length];
     return`<div class="card"><div class="card-body">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:${AVATARBG[i]};color:${AVATARTX[i]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;">${m[0]}${m[1]}</div>
-        <span style="font-weight:500;">${m}</span>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:${bg};color:${tx};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;">${name[0]}</div>
+        <span style="font-weight:700;font-size:14px;">${name}</span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
-        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">담당 기관</span><span style="font-weight:500;">${mine.length}곳</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">MOU 체결</span><span style="font-weight:500;color:var(--teal);">${mou}건</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">합격자</span><span style="font-weight:500;color:var(--green);">${placed}명</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">미완료 액션</span><span style="font-weight:500;color:${pending>0?'var(--amber)':'var(--text3)'};">${pending}건</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">담당 기관</span><span style="font-weight:700;">${mine.length}곳</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">MOU 체결</span><span style="font-weight:700;color:var(--teal);">${mou}건</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">합격자</span><span style="font-weight:700;color:var(--green);">${placed}명</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">컨택 히스토리</span><span style="font-weight:700;color:var(--accent);">${logs}건</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:var(--text3);">미완료 액션</span><span style="font-weight:700;color:${pending>0?'var(--amber)':'var(--text3)'};">${pending}건</span></div>
       </div>
     </div></div>`;
   }).join('');
