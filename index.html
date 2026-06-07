@@ -1128,6 +1128,7 @@ function selectOrg(id,name){
 document.addEventListener('click',e=>{
   if(!e.target.closest('#t-org-wrap'))document.getElementById('t-org-dropdown')&&(document.getElementById('t-org-dropdown').style.display='none');
 });
+function toggleChannelFields(){
   const ch=document.getElementById('t-channel').value;
   const isOrg=['기관연계','협단체','특수학교'].includes(ch);
   const isRef=ch==='소개';
