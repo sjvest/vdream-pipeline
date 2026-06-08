@@ -518,6 +518,11 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       <div class="fg"><label>담당자 직책</label><input id="cold-position" placeholder="예: 팀장, 센터장, 과장"></div>
     </div>
     <div class="fg-row fg-3">
+      <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000"></div>
+      <div class="fg"><label>기관 이메일</label><input id="cold-email" type="email" placeholder="contact@org.kr"></div>
+      <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..."></div>
+    </div>
+    <div class="fg-row fg-3">
       <div class="fg"><label>컨택 방법</label>
         <select id="cold-method" onchange="updateColdTemplate()">
           <option value="전화">📞 전화</option>
@@ -1711,9 +1716,10 @@ async function renderCold(){
   // 박스 배경색 결정
   function getCardBg(c){
     const latest=latestByOrg[c.org_name];
-    if(!latest||latest.id!==c.id)return'var(--surface)'; // 최신이 아니면 일반색
-    if(c.result==='긍정적')return'#ecfdf3'; // 초록
-    if(c.result==='재연락 필요')return'#fffaeb'; // 주황
+    if(!latest||latest.id!==c.id)return'var(--surface)';
+    if(c.result==='긍정적')return'#ecfdf3';
+    if(c.result==='재연락 필요')return'#fffaeb';
+    if(c.result==='부재중')return'#fefce8';
     return'var(--surface)';
   }
   function getCardBorder(c){
@@ -1721,6 +1727,7 @@ async function renderCold(){
     if(!latest||latest.id!==c.id)return'var(--border)';
     if(c.result==='긍정적')return'#6ce9a6';
     if(c.result==='재연락 필요')return'#fcd34d';
+    if(c.result==='부재중')return'#fde68a';
     return'var(--border)';
   }
 
@@ -1740,7 +1747,13 @@ async function renderCold(){
               ${latestByOrg[c.org_name]?.id===c.id&&c.result==='긍정적'?'<span style="font-size:10px;color:#027a48;font-weight:700;">🌟 관심 기관</span>':''}
             </div>
             <div style="font-size:12px;font-weight:600;color:var(--text);">${c.summary||''}</div>
-            ${c.memo?`<div style="font-size:12px;color:var(--text3);margin-top:3px;white-space:pre-line;">${c.memo}</div>`:''}
+            ${c.phone||c.email||c.address?`
+            <div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;">
+              ${c.phone?`<span style="font-size:11px;color:var(--text2);"><i class="ti ti-phone" style="font-size:10px;"></i> ${c.phone}</span>`:''}
+              ${c.email?`<span style="font-size:11px;color:var(--accent);"><i class="ti ti-mail" style="font-size:10px;"></i> ${c.email}</span>`:''}
+              ${c.address?`<span style="font-size:11px;color:var(--text3);"><i class="ti ti-map-pin" style="font-size:10px;"></i> ${c.address}</span>`:''}
+            </div>`:''}
+            ${c.memo?`<div style="font-size:12px;color:var(--text3);margin-top:5px;white-space:pre-line;background:rgba(0,0,0,.03);padding:7px 10px;border-radius:5px;">${c.memo}</div>`:''}
             <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text3);">
               <span>${fDate(c.logged_at?.slice(0,10))} ${fTime(c.logged_at)}</span>
               ${c.created_by_name?`<span style="color:var(--accent);font-weight:600;">${c.created_by_name}</span>`:''}
@@ -1774,7 +1787,7 @@ function updateColdTemplate(){
   if(!memo)applyColdTemplate(document.getElementById('cold-method').value);
 }
 function openAddCold(){
-  ['cold-org','cold-person','cold-position','cold-summary','cold-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('cold-cat').value='복지관';
   document.getElementById('cold-method').value='전화';
   document.getElementById('cold-result').value='부재중';
@@ -1796,6 +1809,9 @@ async function saveCold(){
     cat:document.getElementById('cold-cat').value,
     contact_person:document.getElementById('cold-person').value.trim(),
     position:document.getElementById('cold-position').value.trim(),
+    phone:document.getElementById('cold-phone').value.trim(),
+    email:document.getElementById('cold-email').value.trim(),
+    address:document.getElementById('cold-address').value.trim(),
     method:document.getElementById('cold-method').value,
     result:document.getElementById('cold-result').value,
     member:document.getElementById('cold-member').value,
