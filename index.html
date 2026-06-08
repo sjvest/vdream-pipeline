@@ -449,9 +449,23 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">후속 액션</div><div class="page-sub">미팅 후 해야 할 일 · 마감일 추적</div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div class="card"><div class="card-header" style="color:var(--red)"><i class="ti ti-alert-circle"></i>마감 초과 / D-3 이내</div><div class="card-body" style="padding:0 16px;" id="actions-urgent"><div class="loading"><div class="spin"></div></div></div></div>
-    <div class="card"><div class="card-header" style="color:var(--text2)"><i class="ti ti-list-check"></i>전체 미완료</div><div class="card-body" style="padding:0 16px;" id="actions-all"><div class="loading"><div class="spin"></div></div></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header" style="color:var(--red)"><i class="ti ti-alert-circle"></i>마감 초과 / D-3 이내</div>
+        <div class="card-body" style="padding:0 16px;" id="actions-urgent"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header" style="color:var(--text2)"><i class="ti ti-list-check"></i>전체 미완료</div>
+        <div class="card-body" style="padding:0 16px;" id="actions-all"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-header" style="color:var(--green)"><i class="ti ti-circle-check"></i>완료된 액션 <span id="done-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
+        <div class="card-body" style="padding:0 16px;" id="actions-done"><div class="loading"><div class="spin"></div></div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1649,13 +1663,30 @@ function renderActions(){
   const all=cache.actions.map(a=>{const o=cache.orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff);
   const urgent=all.filter(a=>!a.done&&a.diff<=3);
   const rest=all.filter(a=>!a.done&&a.diff>3);
-  const ri=a=>`<div class="action-item">
-    <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
-    <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
-    <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
-  </div>`;
-  document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(ri).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
-  document.getElementById('actions-all').innerHTML=rest.length?rest.map(ri).join(''):'<div class="empty" style="padding:1rem 0;">없음</div>';
+  const done=all.filter(a=>a.done).sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
+
+  const ri=(a,isDone=false)=>`
+    <div class="action-item" style="${isDone?'opacity:.7':''}">
+      <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done})">
+        ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+      </div>
+      <div style="flex:1;">
+        <div class="action-text ${a.done?'done':''}">${a.text}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}</div>
+      </div>
+      <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
+    </div>`;
+
+  document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
+  document.getElementById('actions-all').innerHTML=rest.length?rest.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">없음</div>';
+
+  // 완료된 액션
+  const doneEl=document.getElementById('actions-done');
+  const doneCount=document.getElementById('done-count');
+  if(doneEl){
+    doneCount.textContent=`총 ${done.length}건`;
+    doneEl.innerHTML=done.length?done.map(a=>ri(a,true)).join(''):'<div class="empty" style="padding:1rem 0;">완료된 액션 없음</div>';
+  }
 }
 async function toggleAction(id,done){
   await sb.from('actions').update({done:!done}).eq('id',id);
@@ -2508,13 +2539,22 @@ function openOrg(id){
     <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
     <div class="modal-sec-title">후속 액션</div>
-    ${oa.length?oa.map(a=>`
+    ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
-        <div class="action-cb ${a.done?'done':''}" onclick="toggleActionModal(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
-        <div class="action-text ${a.done?'done':''}" style="flex:1;" onclick="toggleActionModal(${a.id},${a.done})">${a.text}</div>
-        <div class="action-due ${dueClass(dayDiff(a.due))}" onclick="toggleActionModal(${a.id},${a.done})">${dueLabel(dayDiff(a.due),a.due)}</div>
+        <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
+        <div class="action-text" style="flex:1;">${a.text}</div>
+        <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
-      </div>`).join(''):'<div class="empty" style="padding:.5rem 0;">등록된 액션 없음</div>'}
+      </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 ✓</div>'}
+    ${oa.filter(a=>a.done).length?`
+    <div style="font-size:11px;font-weight:700;color:var(--green);margin:12px 0 6px;display:flex;align-items:center;gap:4px;"><i class="ti ti-circle-check"></i> 완료된 액션 (${oa.filter(a=>a.done).length}건)</div>
+    ${oa.filter(a=>a.done).map(a=>`
+      <div class="action-item" style="opacity:.7;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:4px;">
+        <div class="action-cb done" onclick="toggleActionModal(${a.id},${a.done})"><i class="ti ti-check" style="font-size:10px;color:#fff;"></i></div>
+        <div class="action-text done" style="flex:1;">${a.text}</div>
+        <div style="font-size:10px;color:var(--green);font-weight:600;">완료</div>
+        ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
+      </div>`).join('')}`:''}
     <div class="modal-sec-title">액션 추가</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
