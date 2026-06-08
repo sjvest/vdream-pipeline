@@ -3029,9 +3029,9 @@ async function uploadTalentFiles(event){
     const path=`talent-${currentTalentId}/${Date.now()}_${file.name}`;
     const{data,error}=await sb.storage.from('talent-files').upload(path,file,{upsert:true});
     if(error){toast('오류: '+error.message);continue;}
-    const{data:urlData}=sb.storage.from('talent-files').getPublicUrl(path);
+    const publicUrl=`https://kpmhawrpkzshjlmjvnev.supabase.co/storage/v1/object/public/talent-files/${path}`;
     const size=file.size>1024*1024?`${(file.size/1024/1024).toFixed(1)}MB`:`${(file.size/1024).toFixed(0)}KB`;
-    uploaded.push({name:file.name,url:urlData.publicUrl,path,size});
+    uploaded.push({name:file.name,url:publicUrl,path,size});
   }
   const newFiles=[...(t.files||[]),...uploaded];
   const{error}=await sb.from('talents').update({files:newFiles}).eq('id',currentTalentId);
