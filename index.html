@@ -2547,22 +2547,6 @@ function applyDraft(type,data){
   }
 }
 let confirmCallback=null;
-function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
-  const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
-  const t=iconMap[type]||iconMap.danger;
-  document.getElementById('confirm-icon').style.background=t.bg;
-  document.getElementById('confirm-icon').style.color=t.color;
-  document.getElementById('confirm-icon').textContent=t.icon;
-  document.getElementById('confirm-title').textContent=title;
-  document.getElementById('confirm-sub').textContent=sub||'';
-  document.getElementById('confirm-msg').textContent=msg;
-  document.getElementById('confirm-ok-btn').textContent=okLabel;
-  document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
-  confirmCallback=onOk;
-  document.getElementById('confirm-modal').style.display='flex';
-}
-function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
-function executeConfirm(){closeConfirm();if(confirmCallback)confirmCallback();}
 
 function showDraftStatus(){
   const el=document.getElementById('draft-status');
@@ -2587,6 +2571,7 @@ function showDraftSaving(){
   el.style.border='1px solid var(--border)';
   el.textContent='⏳ 저장 중...';
 }
+function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
   const t=iconMap[type]||iconMap.danger;
   document.getElementById('confirm-icon').style.background=t.bg;
@@ -2600,8 +2585,6 @@ function showDraftSaving(){
   confirmCallback=onOk;
   document.getElementById('confirm-modal').style.display='flex';
 }
-function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
-function executeConfirm(){closeConfirm();if(confirmCallback)confirmCallback();}
 
 // ── 감사 로그 ──
 async function writeAuditLog(action,targetType,targetName,detail={}){
