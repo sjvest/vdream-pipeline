@@ -458,10 +458,45 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
     <div class="form-section" id="member-history-section" style="display:none;">
-      <div class="fsec-title">👤 담당자 변경 이력</div>
-      <div id="member-history-list" style="margin-bottom:12px;font-size:12px;color:var(--text3);">이력 없음</div>
-      <div class="fg"><label>변경 사유 (담당자 바뀔 경우 입력)</label>
-        <input id="n-member-reason" placeholder="예: 담당자 퇴사, 업무 재배분 등" autocomplete="off">
+      <div class="fsec-title">👤 담당자 관리</div>
+      <!-- 현재 담당자 목록 -->
+      <div id="contacts-list" style="margin-bottom:14px;"></div>
+      <!-- 변경/추가 선택 -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="contact-mode-change" onclick="setContactMode('change')"
+          class="btn btn-sm" style="border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-weight:600;">
+          🔄 담당자 변경
+        </button>
+        <button id="contact-mode-add" onclick="setContactMode('add')"
+          class="btn btn-sm" style="border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-weight:600;">
+          ➕ 담당자 추가
+        </button>
+      </div>
+      <!-- 변경 모드 -->
+      <div id="contact-change-wrap" style="display:none;background:var(--bg);border-radius:var(--radius-sm);padding:14px;border:1.5px solid var(--amber);">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:10px;">담당자 변경</div>
+        <div class="fg-row fg-3">
+          <div class="fg"><label>새 담당자명</label><input id="new-contact-name" placeholder="홍길동 팀장" autocomplete="off"></div>
+          <div class="fg"><label>연락처</label><input id="new-contact-phone" placeholder="02-0000-0000" autocomplete="off"></div>
+          <div class="fg"><label>이메일</label><input id="new-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
+        </div>
+        <div class="fg"><label>변경 사유 *</label><input id="new-contact-reason" placeholder="예: 담당자 퇴사, 업무 재배분 등" autocomplete="off"></div>
+        <button onclick="applyContactChange()" class="btn btn-primary btn-sm"><i class="ti ti-check"></i> 변경 적용</button>
+      </div>
+      <!-- 추가 모드 -->
+      <div id="contact-add-wrap" style="display:none;background:var(--bg);border-radius:var(--radius-sm);padding:14px;border:1.5px solid var(--accent);">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">담당자 추가</div>
+        <div class="fg-row fg-3">
+          <div class="fg"><label>담당자명</label><input id="add-contact-name" placeholder="홍길동 팀장" autocomplete="off"></div>
+          <div class="fg"><label>연락처</label><input id="add-contact-phone" placeholder="02-0000-0000" autocomplete="off"></div>
+          <div class="fg"><label>이메일</label><input id="add-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
+        </div>
+        <button onclick="applyContactAdd()" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> 추가</button>
+      </div>
+      <!-- 변경 이력 -->
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">변경 이력</div>
+        <div id="member-history-list" style="font-size:12px;color:var(--text3);">이력 없음</div>
       </div>
     </div>
     <div class="form-section">
@@ -2342,7 +2377,71 @@ function clearColdFilter(){
 }
 // ── 기관 수정 모드 ──
 let editOrgId=null;
-let orgEditSelectedIdx=-1;
+let currentContacts=[];
+function setContactMode(mode){
+  document.getElementById('contact-change-wrap').style.display=mode==='change'?'block':'none';
+  document.getElementById('contact-add-wrap').style.display=mode==='add'?'block':'none';
+  const changeBtn=document.getElementById('contact-mode-change');
+  const addBtn=document.getElementById('contact-mode-add');
+  changeBtn.style.background=mode==='change'?'var(--amber-bg)':'var(--surface)';
+  changeBtn.style.borderColor=mode==='change'?'var(--amber)':'var(--border)';
+  changeBtn.style.color=mode==='change'?'var(--amber)':'var(--text2)';
+  addBtn.style.background=mode==='add'?'var(--accent-bg)':'var(--surface)';
+  addBtn.style.borderColor=mode==='add'?'var(--accent)':'var(--border)';
+  addBtn.style.color=mode==='add'?'var(--accent)':'var(--text2)';
+}
+function renderContactsList(){
+  const list=document.getElementById('contacts-list');
+  if(!list)return;
+  if(!currentContacts.length){list.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:8px;">등록된 담당자 없음</div>';return;}
+  list.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+    ${currentContacts.map((c,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+        <div style="flex:1;">
+          <span style="font-weight:700;font-size:13px;">${c.name}</span>
+          ${c.phone?`<span style="font-size:11px;color:var(--text3);margin-left:8px;">${c.phone}</span>`:''}
+          ${c.email?`<span style="font-size:11px;color:var(--accent);margin-left:8px;">${c.email}</span>`:''}
+          ${c.status==='변경됨'?`<span class="badge b-amber" style="font-size:10px;margin-left:6px;">이전 담당자</span>`:''}
+        </div>
+        ${c.status!=='변경됨'?`<button onclick="removeContact(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;"><i class="ti ti-trash"></i></button>`:''}
+      </div>`).join('')}
+  </div>`;
+}
+function removeContact(idx){
+  currentContacts.splice(idx,1);
+  renderContactsList();
+}
+function applyContactChange(){
+  const name=document.getElementById('new-contact-name').value.trim();
+  const phone=document.getElementById('new-contact-phone').value.trim();
+  const email=document.getElementById('new-contact-email').value.trim();
+  const reason=document.getElementById('new-contact-reason').value.trim();
+  if(!name){toast('새 담당자명을 입력하세요');return;}
+  if(!reason){toast('변경 사유를 입력하세요');return;}
+  // 기존 담당자 변경됨 처리
+  currentContacts=currentContacts.map(c=>c.status!=='변경됨'?{...c,status:'변경됨',reason,changedDate:today()}:c);
+  // 새 담당자 추가
+  currentContacts.push({name,phone,email,status:'현재',addedDate:today()});
+  // 폼 기본 담당자 필드도 업데이트
+  document.getElementById('n-contact').value=name;
+  document.getElementById('n-phone').value=phone;
+  renderContactsList();
+  // 초기화
+  ['new-contact-name','new-contact-phone','new-contact-email','new-contact-reason'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('contact-change-wrap').style.display='none';
+  toast('담당자 변경 적용됨 ✓');
+}
+function applyContactAdd(){
+  const name=document.getElementById('add-contact-name').value.trim();
+  const phone=document.getElementById('add-contact-phone').value.trim();
+  const email=document.getElementById('add-contact-email').value.trim();
+  if(!name){toast('담당자명을 입력하세요');return;}
+  currentContacts.push({name,phone,email,status:'현재',addedDate:today()});
+  renderContactsList();
+  ['add-contact-name','add-contact-phone','add-contact-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('contact-add-wrap').style.display='none';
+  toast('담당자 추가됨 ✓');
+}
 function handleOrgEditKey(e){
   const dd=document.getElementById('org-edit-dropdown');
   const items=dd.querySelectorAll('[data-org-id]');
@@ -2420,9 +2519,15 @@ function loadOrgForEdit(orgId){
   }
   // 담당자 이력 표시
   const history=o.member_history||[];
+  currentContacts=o.contacts||[];
+  // contacts 없으면 기존 contact 필드로 초기화
+  if(!currentContacts.length&&o.contact){
+    currentContacts=[{name:o.contact,phone:o.phone||'',email:o.email||'',status:'현재'}];
+  }
   const histSection=document.getElementById('member-history-section');
   const histList=document.getElementById('member-history-list');
   histSection.style.display='';
+  renderContactsList();
   histList.innerHTML=history.length?history.slice().reverse().map(h=>`
     <div style="padding:7px 10px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:12px;">
       <span style="font-weight:600;">${h.from||'—'} → ${h.to}</span>
@@ -2441,6 +2546,7 @@ function clearEditMode(){
   document.getElementById('save-btn').innerHTML='<i class="ti ti-check"></i> 등록 완료';
   document.getElementById('org-edit-search').value='';
   document.getElementById('member-history-section').style.display='none';
+  currentContacts=[];
   clearOrgForm();
 }
 // 외부 클릭 시 드롭다운 닫기
@@ -3009,8 +3115,10 @@ async function saveOrg(){
   // ── 수정 모드 ──
   if(editOrgId){
     const prevOrg=cache.orgs.find(o=>o.id===editOrgId);
+    // contacts 저장
+    orgRow.contacts=currentContacts;
     // 담당자 변경 이력 기록
-    const reason=document.getElementById('n-member-reason').value.trim();
+    const reason=document.getElementById('new-contact-reason')?.value?.trim()||'';
     if(prevOrg&&orgRow.member&&prevOrg.member!==orgRow.member){
       const history=[...(prevOrg.member_history||[]),{from:prevOrg.member,to:orgRow.member,date:today(),reason}];
       orgRow.member_history=history;
@@ -3106,7 +3214,17 @@ function openOrg(id){
         <button onclick="document.getElementById('source-edit-wrap').style.display='none'" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;cursor:pointer;">취소</button>
       </div>
     </div>
-    <div class="info-row"><span class="info-key">담당자</span><span>${o.contact||'—'}</span></div>
+    <div class="info-row"><span class="info-key">담당자</span>
+      <div style="flex:1;">
+        ${(o.contacts&&o.contacts.length)?o.contacts.filter(c=>c.status!=='변경됨').map(c=>`
+          <div style="margin-bottom:4px;">
+            <span style="font-weight:600;">${c.name}</span>
+            ${c.phone?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${c.phone}</span>`:''}
+            ${c.email?`<span style="font-size:11px;color:var(--accent);margin-left:6px;">${c.email}</span>`:''}
+          </div>`).join('')
+        :`<span>${o.contact||'—'}</span>`}
+      </div>
+    </div>
     <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
     <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
