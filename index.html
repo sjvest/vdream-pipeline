@@ -3011,24 +3011,36 @@ function renderTalentFiles(talent){
   if(!el)return;
   const files=talent?.files||[];
   if(!files.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">첨부 파일 없음</div>';return;}
-  el.innerHTML=files.map((f,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:5px;">
+  el.innerHTML=files.map((f,i)=>{
+    const viewable=['application/pdf','image/jpeg','image/jpg','image/png','image/gif','image/webp'].includes(f.type);
+    return`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:5px;">
       <i class="ti ti-file" style="font-size:14px;color:var(--accent);flex-shrink:0;"></i>
       <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
       <span style="font-size:10px;color:var(--text3);flex-shrink:0;">${f.size||''}</span>
-      <button onclick="downloadTalentFile(${i})" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--accent);font-size:11px;padding:3px 8px;flex-shrink:0;"><i class="ti ti-download"></i></button>
+      <button onclick="downloadTalentFile(${i})" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--accent);font-size:11px;padding:3px 8px;flex-shrink:0;">
+        <i class="ti ti-${viewable?'eye':'download'}"></i> ${viewable?'보기':'다운'}
+      </button>
       <button onclick="deleteTalentFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;flex-shrink:0;"><i class="ti ti-trash"></i></button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function downloadTalentFile(idx){
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
   const f=t.files[idx];
   if(!f)return;
-  const a=document.createElement('a');
-  a.href=f.data||f.url;
-  a.download=f.name;
-  a.click();
+  const viewTypes=['application/pdf','image/jpeg','image/jpg','image/png','image/gif','image/webp'];
+  if(viewTypes.includes(f.type)){
+    // 바로 새 탭에서 열기
+    const w=window.open();
+    w.document.write(`<iframe src="${f.data}" style="width:100%;height:100%;border:none;" frameborder="0"></iframe>`);
+  } else {
+    // 다운로드
+    const a=document.createElement('a');
+    a.href=f.data||f.url;
+    a.download=f.name;
+    a.click();
+  }
 }
 async function uploadTalentFiles(event){
   const files=Array.from(event.target.files);
