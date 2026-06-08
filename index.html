@@ -392,7 +392,33 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       <div class="fg-row fg-3">
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000"></div>
-        <div class="fg"><label>이메일</label><input id="n-email" placeholder="email@org.kr"></div>
+        <div class="fg"><label>이메일</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div contenteditable="true" id="n-email" readonly onfocus="this.removeAttribute('readonly')"
+              style="flex:2;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:42px;line-height:1.5;cursor:text;color:var(--text);"
+              placeholder="이메일 앞부분"></div>
+            <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
+            <select id="n-email-domain" onchange="toggleOrgEmailCustom()" style="font-size:11px;padding:10px 6px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:110px;">
+              <option value="">직접입력</option>
+              <option value="naver.com">naver.com</option>
+              <option value="gmail.com">gmail.com</option>
+              <option value="daum.net">daum.net</option>
+              <option value="kakao.com">kakao.com</option>
+              <option value="nate.com">nate.com</option>
+              <option value="hanmail.net">hanmail.net</option>
+              <option value="hotmail.com">hotmail.com</option>
+              <option value="outlook.com">outlook.com</option>
+              <option value="yahoo.com">yahoo.com</option>
+              <option value="go.kr">go.kr</option>
+              <option value="or.kr">or.kr</option>
+              <option value="co.kr">co.kr</option>
+              <option value="Korea.kr">Korea.kr</option>
+              <option value="org">org</option>
+            </select>
+            <input id="n-email-custom" placeholder="도메인" readonly onfocus="this.removeAttribute('readonly')"
+              style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:120px;">
+          </div>
+        </div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
@@ -1846,7 +1872,20 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
-function toggleColdType(){
+function toggleOrgEmailCustom(){
+  const domain=document.getElementById('n-email-domain').value;
+  const custom=document.getElementById('n-email-custom');
+  custom.style.display=domain===''?'block':'none';
+}
+function getOrgEmailValue(){
+  const localEl=document.getElementById('n-email');
+  const local=(localEl?.textContent||'').trim();
+  if(!local)return'';
+  const domain=document.getElementById('n-email-domain').value;
+  const custom=document.getElementById('n-email-custom').value.trim();
+  const finalDomain=domain||custom;
+  return finalDomain?`${local}@${finalDomain}`:local;
+}
   const type=document.getElementById('cold-contact-type').value;
   const isOrg=type==='기관';
   const catWrap=document.getElementById('cold-cat-wrap');
@@ -2388,7 +2427,7 @@ async function saveOrg(){
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
     name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,
-    contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:document.getElementById('n-email').value.trim(),
+    contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
     date:document.getElementById('n-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
@@ -2408,7 +2447,11 @@ async function saveOrg(){
   toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
 }
 function clearOrgForm(){
-  ['n-name','n-contact','n-phone','n-email','n-date','n-memo'].forEach(id=>document.getElementById(id).value='');
+  ['n-name','n-contact','n-phone','n-date','n-memo'].forEach(id=>document.getElementById(id).value='');
+  const emailEl=document.getElementById('n-email');
+  if(emailEl)emailEl.textContent='';
+  document.getElementById('n-email-domain').value='naver.com';
+  document.getElementById('n-email-custom').style.display='none';
   document.getElementById('n-member').value='';
   document.getElementById('action-form-list').innerHTML='';
   actionFieldIdx=0;removeCardImage();
