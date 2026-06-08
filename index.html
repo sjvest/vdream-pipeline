@@ -543,12 +543,12 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     <div class="fg"><label>기관 이메일</label>
       <div style="display:flex;align-items:center;gap:6px;" id="cold-email-wrap">
         <div contenteditable="true" id="cold-email-local" 
-          style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:42px;line-height:1.5;cursor:text;color:var(--text);"
+          style="flex:2;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:42px;line-height:1.5;cursor:text;color:var(--text);"
           data-placeholder="이메일 앞부분"
           onfocus="if(!this.textContent)this.style.color='var(--text)'"
           onblur="if(!this.textContent)this.style.color='var(--text3)'"></div>
         <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
-        <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+        <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:11px;padding:10px 6px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:110px;">
           <option value="">직접입력</option>
           <option value="naver.com">naver.com</option>
           <option value="gmail.com">gmail.com</option>
