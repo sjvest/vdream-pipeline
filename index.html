@@ -1895,7 +1895,8 @@ function openAddCold(){
   document.getElementById('cold-email-domain').value='naver.com';
   document.getElementById('cold-email-custom').style.display='none';
   document.getElementById('cold-cat').value='복지관';
-  document.getElementById('cold-cat').closest('.fg').style.display='';
+  const catWrap=document.getElementById('cold-cat-wrap');
+  if(catWrap)catWrap.style.display='';
   toggleColdType();
   document.getElementById('cold-method').value='전화';
   document.getElementById('cold-result').value='부재중';
