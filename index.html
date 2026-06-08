@@ -2679,6 +2679,7 @@ async function removeCardImage(orgId){
   toast('명함 삭제 완료');
   openOrg(orgId);
 }
+async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
   const t=today();
   await sb.from('orgs').update({stage:newStage,lastcontact:t}).eq('id',currentOrgId);
