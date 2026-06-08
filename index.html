@@ -499,6 +499,15 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   </div>
   <div class="modal-body">
     <div class="fg-row fg-2">
+      <div class="fg"><label>컨택 대상 유형</label>
+        <select id="cold-contact-type" onchange="toggleColdType()">
+          <option value="기관">🏢 기관/단체</option>
+          <option value="재직자">👔 재직자</option>
+          <option value="구직자">🔍 구직자</option>
+          <option value="부모님">👨‍👩‍👧 부모님/보호자</option>
+          <option value="기타개인">👤 기타 개인</option>
+        </select>
+      </div>
       <div class="fg"><label>기관 유형</label>
         <select id="cold-cat">
           <option value="복지관">복지관</option>
@@ -511,11 +520,10 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
           <option value="기타">기타</option>
         </select>
       </div>
-      <div class="fg"><label>기관명 *</label><input id="cold-org" placeholder="컨택한 기관명"></div>
     </div>
     <div class="fg-row fg-2">
-      <div class="fg"><label>담당자 이름</label><input id="cold-person" placeholder="통화한 담당자 이름"></div>
-      <div class="fg"><label>담당자 직책</label><input id="cold-position" placeholder="예: 팀장, 센터장, 과장"></div>
+      <div class="fg"><label id="cold-org-label">기관명 *</label><input id="cold-org" placeholder="컨택한 기관명 또는 개인명"></div>
+      <div class="fg"><label id="cold-person-label">담당자 이름</label><input id="cold-person" placeholder="통화한 담당자 이름"></div>
     </div>
     <div class="fg-row fg-3">
       <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000"></div>
@@ -1762,7 +1770,8 @@ async function renderCold(){
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
               <span style="font-size:13px;font-weight:700;">${c.org_name}</span>
-              ${c.cat?`<span class="badge b-gray" style="font-size:10px;">${c.cat}</span>`:''}
+              ${c.contact_type&&c.contact_type!=='기관'?`<span class="badge b-purple" style="font-size:10px;">${c.contact_type}</span>`:''}
+              ${c.cat&&c.contact_type==='기관'?`<span class="badge b-gray" style="font-size:10px;">${c.cat}</span>`:''}
               ${c.contact_person?`<span style="font-size:11px;color:var(--text3);">${c.contact_person}${c.position?' · '+c.position:''}</span>`:''}
               <span class="badge ${RESULT_CLS[c.result]||'b-gray'}" style="font-size:10px;">${c.result}</span>
               ${c.converted_org_id?'<span class="badge b-teal" style="font-size:10px;">✓ 기관 등록됨</span>':''}
@@ -1795,6 +1804,23 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
+function toggleColdType(){
+  const type=document.getElementById('cold-contact-type').value;
+  const isOrg=type==='기관';
+  const catEl=document.getElementById('cold-cat');
+  if(catEl)catEl.closest('.fg').style.display=isOrg?'':'none';
+  // 라벨 변경
+  const orgLabel=document.getElementById('cold-org-label');
+  const personLabel=document.getElementById('cold-person-label');
+  if(orgLabel){
+    const labels={기관:'기관명 *',재직자:'재직자 이름 *',구직자:'구직자 이름 *',부모님:'보호자 이름 *',기타개인:'이름 *'};
+    orgLabel.textContent=labels[type]||'이름 *';
+  }
+  if(personLabel){
+    const labels={기관:'담당자 이름',재직자:'소속 기관',구직자:'희망 직종',부모님:'자녀 이름',기타개인:'관계'};
+    personLabel.textContent=labels[type]||'담당자';
+  }
+}
 function toggleEmailCustom(){
   const domain=document.getElementById('cold-email-domain').value;
   const custom=document.getElementById('cold-email-custom');
@@ -1824,9 +1850,12 @@ function updateColdTemplate(){
 }
 function openAddCold(){
   ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-local','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('cold-contact-type').value='기관';
   document.getElementById('cold-email-domain').value='naver.com';
   document.getElementById('cold-email-custom').style.display='none';
   document.getElementById('cold-cat').value='복지관';
+  document.getElementById('cold-cat').closest('.fg').style.display='';
+  toggleColdType();
   document.getElementById('cold-method').value='전화';
   document.getElementById('cold-result').value='부재중';
   document.getElementById('cold-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===(currentProfile?.name||'')?` selected`:``}>${p.name}</option>`).join('');
@@ -1844,6 +1873,7 @@ async function saveCold(){
   const loggedAt=document.getElementById('cold-date').value?new Date(document.getElementById('cold-date').value).toISOString():new Date().toISOString();
   const row={
     org_name:orgName,
+    contact_type:document.getElementById('cold-contact-type').value,
     cat:document.getElementById('cold-cat').value,
     contact_person:document.getElementById('cold-person').value.trim(),
     position:document.getElementById('cold-position').value.trim(),
