@@ -2426,6 +2426,7 @@ document.addEventListener('click',e=>{
     if(dd)dd.style.display='none';
   }
 });
+function toggleOrgEmailCustom(){
   const domain=document.getElementById('n-email-domain').value;
   const custom=document.getElementById('n-email-custom');
   custom.style.display=domain===''?'block':'none';
