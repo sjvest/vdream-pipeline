@@ -2482,6 +2482,7 @@ function loadDraft(type){
     const raw=localStorage.getItem(DRAFT_KEYS[type]);
     if(!raw)return;
     const data=JSON.parse(raw);
+    if(!data.savedAt)return;
     const savedAt=new Date(data.savedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
     showConfirm({
       title:'임시저장 내용 발견',
@@ -2489,14 +2490,16 @@ function loadDraft(type){
       msg:'작성하다 나간 내용이 있어요. 불러올까요?\n\n(취소하면 임시저장 내용이 삭제돼요)',
       type:'info',okLabel:'불러오기',
       onOk:()=>{
-        applyDraft(type,data);
-        toast('임시저장 내용 불러옴 ✓');
+        setTimeout(()=>{
+          applyDraft(type,data);
+          toast('임시저장 내용 불러옴 ✓');
+        },100);
       }
     });
-    // 확인 버튼 눌러서 불러오거나 취소하면 삭제
+    // 취소 버튼 누르면 draft 삭제
     const origClose=closeConfirm;
-    window._draftType=type;
-  }catch(e){}
+    window._pendingDraftClear=type;
+  }catch(e){console.log('draft load error',e);}
 }
 function clearDraft(type){
   try{localStorage.removeItem(DRAFT_KEYS[type]);}catch(e){}
@@ -2584,6 +2587,16 @@ function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
   confirmCallback=onOk;
   document.getElementById('confirm-modal').style.display='flex';
+}
+function closeConfirm(){
+  document.getElementById('confirm-modal').style.display='none';
+  if(window._pendingDraftClear){clearDraft(window._pendingDraftClear);window._pendingDraftClear=null;}
+  confirmCallback=null;
+}
+function executeConfirm(){
+  window._pendingDraftClear=null; // 확인 누르면 draft 유지
+  closeConfirm();
+  if(confirmCallback)confirmCallback();
 }
 
 // ── 감사 로그 ──
