@@ -519,7 +519,30 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     </div>
     <div class="fg-row fg-3">
       <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000"></div>
-      <div class="fg"><label>기관 이메일</label><input id="cold-email" type="email" placeholder="contact@org.kr"></div>
+      <div class="fg"><label>기관 이메일</label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input id="cold-email-local" placeholder="contact" style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+          <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
+          <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+            <option value="">직접입력</option>
+            <option value="gmail.com">gmail.com</option>
+            <option value="naver.com">naver.com</option>
+            <option value="daum.net">daum.net</option>
+            <option value="kakao.com">kakao.com</option>
+            <option value="nate.com">nate.com</option>
+            <option value="hanmail.net">hanmail.net</option>
+            <option value="hotmail.com">hotmail.com</option>
+            <option value="outlook.com">outlook.com</option>
+            <option value="yahoo.com">yahoo.com</option>
+            <option value="Korea.kr">Korea.kr</option>
+            <option value="go.kr">go.kr</option>
+            <option value="or.kr">or.kr</option>
+            <option value="co.kr">co.kr</option>
+            <option value="org">org</option>
+          </select>
+          <input id="cold-email-custom" placeholder="직접입력" style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:120px;">
+        </div>
+      </div>
       <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..."></div>
     </div>
     <div class="fg-row fg-3">
@@ -1772,6 +1795,19 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
+function toggleEmailCustom(){
+  const domain=document.getElementById('cold-email-domain').value;
+  const custom=document.getElementById('cold-email-custom');
+  custom.style.display=domain===''?'block':'none';
+}
+function getEmailValue(){
+  const local=document.getElementById('cold-email-local').value.trim();
+  if(!local)return'';
+  const domain=document.getElementById('cold-email-domain').value;
+  const custom=document.getElementById('cold-email-custom').value.trim();
+  const finalDomain=domain||custom;
+  return finalDomain?`${local}@${finalDomain}`:local;
+}
 function applyColdTemplate(type){
   const templates={
     전화:`[통화 결과] \n[담당자 반응] \n[관심 분야] \n[다음 액션] \n[특이사항] `,
@@ -1787,7 +1823,9 @@ function updateColdTemplate(){
   if(!memo)applyColdTemplate(document.getElementById('cold-method').value);
 }
 function openAddCold(){
-  ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-local','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('cold-email-domain').value='naver.com';
+  document.getElementById('cold-email-custom').style.display='none';
   document.getElementById('cold-cat').value='복지관';
   document.getElementById('cold-method').value='전화';
   document.getElementById('cold-result').value='부재중';
@@ -1810,7 +1848,7 @@ async function saveCold(){
     contact_person:document.getElementById('cold-person').value.trim(),
     position:document.getElementById('cold-position').value.trim(),
     phone:document.getElementById('cold-phone').value.trim(),
-    email:document.getElementById('cold-email').value.trim(),
+    email:getEmailValue(),
     address:document.getElementById('cold-address').value.trim(),
     method:document.getElementById('cold-method').value,
     result:document.getElementById('cold-result').value,
