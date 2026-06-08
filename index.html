@@ -432,6 +432,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>미팅 전 메일</label><select id="n-premeil"><option value="0">불필요</option><option value="1">발송 완료</option><option value="2">미발송(요구됨)</option></select></div>
         <div class="fg"><label>특수학교 직무협의</label><select id="n-school"><option value="0">해당없음</option><option value="1">협의 필요</option><option value="2">협의 완료</option></select></div>
         <div class="fg"><label>첫 미팅일</label><input id="n-date" type="date"></div>
+        <div class="fg"><label>MOU 예정일</label><input id="n-mou-date" type="date"></div>
       </div>
       <div class="fg"><label>메모</label><textarea id="n-memo" placeholder="미팅 내용, 기관 니즈, 특이사항 등"></textarea></div>
     </div>
@@ -1691,7 +1692,9 @@ function renderOrgs(){
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
       <td style="padding:14px 16px;font-size:12px;color:#64748b;">${o.source||'—'}</td>
       <td style="padding:14px 16px;"><span class="member-pill">${o.member||'—'}</span></td>
-      <td style="padding:14px 16px;"><span class="badge ${STAGE_CLS[o.stage]}" style="font-size:11px;">${STAGES[o.stage]}</span></td>
+      <td style="padding:14px 16px;"><span class="badge ${STAGE_CLS[o.stage]}" style="font-size:11px;">${STAGES[o.stage]}</span>
+        ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
+      </td>
       <td style="padding:14px 16px;font-size:12px;font-weight:600;color:${daysColor};">${daysLabel}</td>
       <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;">⚠ ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
     </tr>`;}).join(''):`<tr><td colspan="7" class="empty">해당 기관 없음</td></tr>`;
@@ -2762,7 +2765,7 @@ async function saveOrg(){
     contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
-    date:document.getElementById('n-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
+    date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
     card_image:cardImageBase64||null,
     created_by:currentUser?.id||null,created_by_name:myName
   };
@@ -2779,7 +2782,7 @@ async function saveOrg(){
   toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
 }
 function clearOrgForm(){
-  ['n-name','n-contact','n-phone','n-date','n-memo'].forEach(id=>document.getElementById(id).value='');
+  ['n-name','n-contact','n-phone','n-date','n-mou-date','n-memo'].forEach(id=>document.getElementById(id).value='');
   const emailEl=document.getElementById('n-email');
   if(emailEl)emailEl.textContent='';
   document.getElementById('n-email-domain').value='naver.com';
@@ -2829,6 +2832,18 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
     <div class="info-row"><span class="info-key">등록자</span><span style="font-size:12px;font-weight:600;color:var(--accent);">${o.created_by_name||'—'}</span></div>
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
+    ${o.mou_date||o.stage===4?`
+    <div class="info-row">
+      <span class="info-key">MOU 예정일</span>
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        ${o.mou_date?`
+          <span style="font-weight:600;">${fDate(o.mou_date)}</span>
+          ${(()=>{const days=Math.floor((new Date(o.mou_date)-new Date())/864e5);return days>=0?`<span style="background:${days<=7?'#fee2e2':'#eff4ff'};color:${days<=7?'#dc2626':'#3b6ef8'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D-${days}</span>`:`<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D+${Math.abs(days)} 초과</span>`;})()}
+        `:'<span style="color:var(--text3);font-size:12px;">미설정</span>'}
+        <input type="date" id="mou-date-input" value="${o.mou_date||''}" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+        <button onclick="saveMouDate(${id})" class="btn btn-primary btn-sm"><i class="ti ti-check"></i> 저장</button>
+      </div>
+    </div>`:''}
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
     <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
@@ -3026,6 +3041,14 @@ async function removeCardImage(orgId){
   if(o)o.card_image=null;
   toast('명함 삭제 완료');
   openOrg(orgId);
+}
+async function saveMouDate(orgId){
+  const dateVal=document.getElementById('mou-date-input').value;
+  const{error}=await sb.from('orgs').update({mou_date:dateVal||null}).eq('id',orgId);
+  if(error){toast('오류: '+error.message);return;}
+  const o=cache.orgs.find(x=>x.id===orgId);
+  if(o)o.mou_date=dateVal||null;
+  toast('MOU 예정일 저장됨 ✓');openOrg(orgId);
 }
 async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
