@@ -541,8 +541,12 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     </div>
     <!-- 5행: 이메일 -->
     <div class="fg"><label>기관 이메일</label>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <input id="cold-email-local" placeholder="이메일 앞부분" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:0;">
+      <div style="display:flex;align-items:center;gap:6px;" id="cold-email-wrap">
+        <div contenteditable="true" id="cold-email-local" 
+          style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:42px;line-height:1.5;cursor:text;color:var(--text);"
+          data-placeholder="이메일 앞부분"
+          onfocus="if(!this.textContent)this.style.color='var(--text)'"
+          onblur="if(!this.textContent)this.style.color='var(--text3)'"></div>
         <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
         <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
           <option value="">직접입력</option>
@@ -561,7 +565,8 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
           <option value="Korea.kr">Korea.kr</option>
           <option value="org">org</option>
         </select>
-        <input id="cold-email-custom" placeholder="도메인 입력" readonly onfocus="this.removeAttribute('readonly')" style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:130px;">
+        <input id="cold-email-custom" placeholder="도메인 입력" autocomplete="off"
+          style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:130px;">
       </div>
     </div>
     <!-- 6행: 컨택방법 + 결과 + 담당팀원 -->
@@ -1856,7 +1861,8 @@ function toggleEmailCustom(){
   custom.style.display=domain===''?'block':'none';
 }
 function getEmailValue(){
-  const local=document.getElementById('cold-email-local').value.trim();
+  const localEl=document.getElementById('cold-email-local');
+  const local=(localEl?.textContent||'').trim();
   if(!local)return'';
   const domain=document.getElementById('cold-email-domain').value;
   const custom=document.getElementById('cold-email-custom').value.trim();
@@ -1878,7 +1884,7 @@ function updateColdTemplate(){
   if(!memo)applyColdTemplate(document.getElementById('cold-method').value);
 }
 function openAddCold(){
-  ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-local','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); const emailLocal=document.getElementById('cold-email-local');if(emailLocal)emailLocal.textContent='';
   document.getElementById('cold-contact-type').value='기관';
   document.getElementById('cold-email-domain').value='naver.com';
   document.getElementById('cold-email-custom').style.display='none';
