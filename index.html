@@ -2492,6 +2492,7 @@ function loadDraft(type){
       onOk:()=>{
         setTimeout(()=>{
           applyDraft(type,data);
+          clearDraft(type);
           toast('임시저장 내용 불러옴 ✓');
         },100);
       }
@@ -2594,9 +2595,11 @@ function closeConfirm(){
   confirmCallback=null;
 }
 function executeConfirm(){
-  window._pendingDraftClear=null; // 확인 누르면 draft 유지
-  closeConfirm();
+  const draftType=window._pendingDraftClear;
+  window._pendingDraftClear=null;
+  document.getElementById('confirm-modal').style.display='none';
   if(confirmCallback)confirmCallback();
+  confirmCallback=null;
 }
 
 // ── 감사 로그 ──
