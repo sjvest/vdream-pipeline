@@ -733,6 +733,7 @@ async function changePassword(){
   document.getElementById('new-pw-confirm').value='';
   toast('비밀번호가 변경됐어요 ✓');
 }
+async function clearStatus(){
   if(!currentUser)return;
   await sb.from('profiles').update({status:'',status_emoji:''}).eq('id',currentUser.id);
   currentProfile={...currentProfile,status:'',status_emoji:''};
