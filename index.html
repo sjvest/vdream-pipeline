@@ -269,6 +269,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <i class="ti ti-settings" style="font-size:13px;color:rgba(255,255,255,.3);flex-shrink:0;"></i>
     </div>
+    <button onclick="openAuditLog()" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.3);font-size:10px;cursor:pointer;text-align:center;margin-bottom:4px;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">📋 수정/삭제 로그</button>
     <button onclick="doLogout()" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.3);font-size:10px;cursor:pointer;text-align:center;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">로그아웃</button>
     <div style="margin-top:8px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
   </div>
@@ -1173,6 +1174,37 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <p id="pw-err" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px;"></p>
       <button class="btn btn-ghost btn-sm" onclick="changePassword()"><i class="ti ti-lock"></i> 비밀번호 변경</button>
     </div>
+  </div>
+</div>
+</div>
+
+<!-- 수정/삭제 확인 모달 -->
+<div id="confirm-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;" onclick="if(event.target===this)closeConfirm()">
+<div style="background:var(--surface);border-radius:var(--radius);padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <div id="confirm-icon" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;"></div>
+    <div>
+      <div id="confirm-title" style="font-size:15px;font-weight:800;margin-bottom:2px;"></div>
+      <div id="confirm-sub" style="font-size:12px;color:var(--text3);"></div>
+    </div>
+  </div>
+  <div id="confirm-msg" style="font-size:13px;color:var(--text2);background:var(--bg);padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:20px;line-height:1.6;"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button onclick="closeConfirm()" class="btn btn-ghost">취소</button>
+    <button id="confirm-ok-btn" onclick="executeConfirm()" class="btn btn-primary">확인</button>
+  </div>
+</div>
+</div>
+
+<!-- 감사 로그 모달 -->
+<div id="audit-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal modal-wide" style="max-width:700px;max-height:88vh;overflow-y:auto;">
+  <div class="modal-head">
+    <div class="modal-title">📋 수정/삭제 로그</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('audit-modal').style.display='none'"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div id="audit-list"><div class="loading"><div class="spin"></div></div></div>
   </div>
 </div>
 </div>
@@ -2375,7 +2407,63 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
-// ── 기관 수정 모드 ──
+// ── 확인 모달 ──
+let confirmCallback=null;
+function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
+  const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
+  const t=iconMap[type]||iconMap.danger;
+  document.getElementById('confirm-icon').style.background=t.bg;
+  document.getElementById('confirm-icon').style.color=t.color;
+  document.getElementById('confirm-icon').textContent=t.icon;
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-sub').textContent=sub||'';
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok-btn').textContent=okLabel;
+  document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
+  confirmCallback=onOk;
+  document.getElementById('confirm-modal').style.display='flex';
+}
+function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
+function executeConfirm(){closeConfirm();if(confirmCallback)confirmCallback();}
+
+// ── 감사 로그 ──
+async function writeAuditLog(action,targetType,targetName,detail={}){
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  await sb.from('audit_logs').insert({
+    action,target_type:targetType,target_name:targetName,
+    detail,created_by:currentUser?.id||null,created_by_name:myName
+  });
+}
+async function openAuditLog(){
+  document.getElementById('audit-modal').style.display='flex';
+  document.getElementById('audit-list').innerHTML='<div class="loading"><div class="spin"></div>불러오는 중...</div>';
+  const{data,error}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(100);
+  if(error){document.getElementById('audit-list').innerHTML='<div class="empty">오류 발생</div>';return;}
+  const ACTION_ICON={수정:'✏️',삭제:'🗑️',등록:'➕'};
+  const ACTION_COLOR={수정:'var(--amber)',삭제:'var(--red)',등록:'var(--green)'};
+  document.getElementById('audit-list').innerHTML=data.length?`
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${data.map(l=>{
+        const detail=l.detail||{};
+        return`<div style="display:flex;gap:12px;padding:12px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid ${ACTION_COLOR[l.action]||'var(--border)'};">
+          <div style="font-size:20px;flex-shrink:0;">${ACTION_ICON[l.action]||'📝'}</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:12px;font-weight:700;color:${ACTION_COLOR[l.action]||'var(--text)'};">${l.action}</span>
+              <span style="font-size:12px;font-weight:700;">${l.target_name||'—'}</span>
+              <span class="badge b-gray" style="font-size:10px;">${l.target_type||'—'}</span>
+            </div>
+            ${detail.reason?`<div style="font-size:12px;color:var(--text2);margin-bottom:3px;">사유: ${detail.reason}</div>`:''}
+            ${detail.changes?`<div style="font-size:11px;color:var(--text3);">${detail.changes}</div>`:''}
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">
+              <span style="font-weight:600;color:var(--accent);">${l.created_by_name||'—'}</span>
+              · ${new Date(l.created_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`:'<div class="empty">로그 없음</div>';
+}
 let editOrgId=null;
 let currentContacts=[];
 function setContactMode(mode){
@@ -2682,10 +2770,18 @@ async function saveCold(){
   renderCold();
 }
 async function deleteCold(id){
-  if(!confirm('이 컨택 기록을 삭제하시겠어요?'))return;
-  const{error}=await sb.from('cold_contacts').delete().eq('id',id);
-  if(error){toast('오류: '+error.message);return;}
-  toast('삭제 완료');renderCold();
+  const c=cache.cold.find(x=>x.id===id);
+  showConfirm({
+    title:'컨택 기록 삭제',sub:`"${c?.org_name}" 컨택 기록을 삭제합니다`,
+    msg:'이 컨택 기록을 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?',
+    type:'danger',okLabel:'삭제',
+    onOk:async()=>{
+      const{error}=await sb.from('cold_contacts').delete().eq('id',id);
+      if(error){toast('오류: '+error.message);return;}
+      toast('삭제 완료');renderCold();
+      writeAuditLog('삭제','콜드컨택',c?.org_name||'—');
+    }
+  });
 }
 function convertToOrg(coldId,orgName){
   // 기관 등록 페이지로 이동하면서 기관명 자동 입력
@@ -2886,11 +2982,19 @@ async function saveJob(){
   renderJobs();
 }
 async function deleteJob(){
-  if(!confirm('이 채용 건을 삭제하시겠어요?'))return;
-  const{error}=await sb.from('jobs').delete().eq('id',currentJobId);
-  if(error){toast('오류: '+error.message);return;}
-  document.getElementById('job-modal').style.display='none';
-  toast('삭제 완료');renderJobs();
+  const j=cache.jobs.find(x=>x.id===currentJobId);
+  showConfirm({
+    title:'채용 건 삭제',sub:`"${j?.company}" 채용 건을 삭제합니다`,
+    msg:'이 채용 건을 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?',
+    type:'danger',okLabel:'삭제',
+    onOk:async()=>{
+      const{error}=await sb.from('jobs').delete().eq('id',currentJobId);
+      if(error){toast('오류: '+error.message);return;}
+      document.getElementById('job-modal').style.display='none';
+      toast('삭제 완료');renderJobs();
+      writeAuditLog('삭제','채용건',j?.company||'—');
+    }
+  });
 }
 
 // ── 행사 관리 ──
@@ -3016,11 +3120,19 @@ async function saveEvent(){
   renderEvents();
 }
 async function deleteEvent(){
-  if(!confirm('이 행사를 삭제하시겠어요?'))return;
-  const{error}=await sb.from('events').delete().eq('id',currentEventId);
-  if(error){toast('오류: '+error.message);return;}
-  document.getElementById('event-modal').style.display='none';
-  toast('삭제 완료');renderEvents();
+  const e=cache.events.find(x=>x.id===currentEventId);
+  showConfirm({
+    title:'행사 삭제',sub:`"${e?.name}" 행사를 삭제합니다`,
+    msg:'이 행사를 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?',
+    type:'danger',okLabel:'삭제',
+    onOk:async()=>{
+      const{error}=await sb.from('events').delete().eq('id',currentEventId);
+      if(error){toast('오류: '+error.message);return;}
+      document.getElementById('event-modal').style.display='none';
+      toast('삭제 완료');renderEvents();
+      writeAuditLog('삭제','행사',e?.name||'—');
+    }
+  });
 }
 
 function renderTeam(){
@@ -3114,21 +3226,28 @@ async function saveOrg(){
 
   // ── 수정 모드 ──
   if(editOrgId){
-    const prevOrg=cache.orgs.find(o=>o.id===editOrgId);
-    // contacts 저장
-    orgRow.contacts=currentContacts;
-    // 담당자 변경 이력 기록
-    const reason=document.getElementById('new-contact-reason')?.value?.trim()||'';
-    if(prevOrg&&orgRow.member&&prevOrg.member!==orgRow.member){
-      const history=[...(prevOrg.member_history||[]),{from:prevOrg.member,to:orgRow.member,date:today(),reason}];
-      orgRow.member_history=history;
-    }
-    const{error}=await sb.from('orgs').update(orgRow).eq('id',editOrgId);
-    if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 수정 완료';return;}
-    if(prevOrg)Object.assign(prevOrg,orgRow);
-    clearEditMode();
+    showConfirm({
+      title:'기관 정보 수정',sub:`"${name}" 정보를 수정합니다`,
+      msg:`입력한 내용으로 기관 정보가 업데이트돼요.\n\n계속하시겠어요?`,
+      type:'warning',okLabel:'수정',
+      onOk:async()=>{
+        const prevOrg=cache.orgs.find(o=>o.id===editOrgId);
+        orgRow.contacts=currentContacts;
+        const reason=document.getElementById('new-contact-reason')?.value?.trim()||'';
+        if(prevOrg&&orgRow.member&&prevOrg.member!==orgRow.member){
+          const history=[...(prevOrg.member_history||[]),{from:prevOrg.member,to:orgRow.member,date:today(),reason}];
+          orgRow.member_history=history;
+        }
+        const{error}=await sb.from('orgs').update(orgRow).eq('id',editOrgId);
+        if(error){toast('오류: '+error.message);return;}
+        if(prevOrg)Object.assign(prevOrg,orgRow);
+        writeAuditLog('수정','기관',name,{changes:`담당팀원: ${orgRow.member}, 단계: ${STAGES[orgRow.stage]}`,reason});
+        clearEditMode();
+        btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
+        toast(`"${name}" 수정 완료 ✓`);updateUrgentCount();nav('orgs');
+      }
+    });
     btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
-    toast(`"${name}" 수정 완료 ✓`);updateUrgentCount();nav('orgs');
     return;
   }
 
@@ -3362,14 +3481,35 @@ async function deleteContactLog(logId,orgId){
 let deleteTarget={type:null,id:null,name:null};
 function confirmDeleteOrg(id){
   const o=cache.orgs.find(x=>x.id===id);
-  deleteTarget={type:'org',id,name:o?.name||'이 기관'};
-  document.getElementById('del-msg').textContent=`"${deleteTarget.name}" 기관과 연결된 모든 액션이 함께 삭제됩니다. 계속하시겠어요?`;
-  document.getElementById('del-modal').style.display='flex';
+  showConfirm({
+    title:'기관 삭제',sub:`"${o?.name}" 기관을 삭제합니다`,
+    msg:`이 기관과 연결된 모든 액션, 컨택 히스토리가 함께 삭제됩니다.\n\n정말 삭제하시겠어요?`,
+    type:'danger',okLabel:'삭제',
+    onOk:async()=>{
+      await sb.from('actions').delete().eq('org_id',id);
+      await sb.from('contact_logs').delete().eq('org_id',id);
+      await sb.from('orgs').delete().eq('id',id);
+      cache.orgs=cache.orgs.filter(o=>o.id!==id);
+      cache.actions=cache.actions.filter(a=>a.org_id!==id);
+      cache.logs=cache.logs.filter(l=>l.org_id!==id);
+      closeModal();renderCurrent();toast('기관 삭제 완료');
+      writeAuditLog('삭제','기관',o?.name||'—',{reason:'관리자 삭제'});
+    }
+  });
 }
 function confirmDeleteTalent(id,name){
-  deleteTarget={type:'talent',id,name};
-  document.getElementById('del-msg').textContent=`"${name}" 수급 기록을 삭제하시겠어요?`;
-  document.getElementById('del-modal').style.display='flex';
+  showConfirm({
+    title:'수급 기록 삭제',sub:`"${name}" 지원자 기록을 삭제합니다`,
+    msg:`이 수급 기록을 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?`,
+    type:'danger',okLabel:'삭제',
+    onOk:async()=>{
+      const{error}=await sb.from('talents').delete().eq('id',id);
+      if(error){toast('오류: '+error.message);return;}
+      cache.talents=cache.talents.filter(t=>t.id!==id);
+      renderTalent();toast('수급 기록 삭제 완료');
+      writeAuditLog('삭제','수급',name,{reason:'관리자 삭제'});
+    }
+  });
 }
 async function deleteAction(id){
   if(!confirm('이 액션을 삭제하시겠어요?'))return;
