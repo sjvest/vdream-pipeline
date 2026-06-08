@@ -388,7 +388,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div style="position:relative;">
         <input id="org-edit-search" placeholder="기관명 입력해서 검색..." autocomplete="off"
           style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"
-          oninput="searchOrgForEdit(this.value)" onfocus="searchOrgForEdit(this.value)">
+          oninput="searchOrgForEdit(this.value)" onfocus="searchOrgForEdit(this.value)"
+          onkeydown="handleOrgEditKey(event)">
         <div id="org-edit-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:9999;max-height:220px;overflow-y:auto;margin-top:2px;"></div>
       </div>
     </div>
@@ -2341,13 +2342,37 @@ function clearColdFilter(){
 }
 // ── 기관 수정 모드 ──
 let editOrgId=null;
+let orgEditSelectedIdx=-1;
+function handleOrgEditKey(e){
+  const dd=document.getElementById('org-edit-dropdown');
+  const items=dd.querySelectorAll('[data-org-id]');
+  if(e.key==='ArrowDown'){
+    orgEditSelectedIdx=Math.min(orgEditSelectedIdx+1,items.length-1);
+    items.forEach((el,i)=>el.style.background=i===orgEditSelectedIdx?'#e0e7ff':'');
+    e.preventDefault();
+  } else if(e.key==='ArrowUp'){
+    orgEditSelectedIdx=Math.max(orgEditSelectedIdx-1,0);
+    items.forEach((el,i)=>el.style.background=i===orgEditSelectedIdx?'#e0e7ff':'');
+    e.preventDefault();
+  } else if(e.key==='Enter'){
+    if(orgEditSelectedIdx>=0&&items[orgEditSelectedIdx]){
+      items[orgEditSelectedIdx].click();
+    } else if(items.length===1){
+      items[0].click();
+    }
+    e.preventDefault();
+  } else if(e.key==='Escape'){
+    dd.style.display='none';
+  }
+}
 function searchOrgForEdit(q){
   const dd=document.getElementById('org-edit-dropdown');
   if(!q){dd.style.display='none';return;}
   const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,8);
   dd.style.display='block';
+  orgEditSelectedIdx=-1;
   dd.innerHTML=results.length?results.map(o=>`
-    <div onclick="loadOrgForEdit(${o.id})"
+    <div data-org-id="${o.id}" onclick="loadOrgForEdit(${o.id})"
       style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
       onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <span style="font-weight:700;">${o.name}</span>
