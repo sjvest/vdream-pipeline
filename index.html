@@ -1419,6 +1419,7 @@ async function loadAll(){
     cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
+    startOrgDraftTimer();
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
 function renderCurrent(){
@@ -1444,7 +1445,7 @@ function nav(page){
   document.getElementById('p-'+page).classList.add('active');
   const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6};
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
-  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics};
+  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg};
   if(r[page])r[page]();
 }
 
@@ -2407,7 +2408,139 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
-// ── 확인 모달 ──
+// ── 임시저장 ──
+const DRAFT_KEYS={org:'draft_org',cold:'draft_cold',job:'draft_job',event:'draft_event'};
+function saveDraft(type){
+  try{
+    let data={};
+    if(type==='org'){
+      data={
+        name:document.getElementById('n-name')?.value||'',
+        cat:document.getElementById('n-cat')?.value||'',
+        source:document.getElementById('n-source')?.value||'',
+        contact:document.getElementById('n-contact')?.value||'',
+        phone:document.getElementById('n-phone')?.value||'',
+        email:(document.getElementById('n-email')?.textContent||'').trim(),
+        emailDomain:document.getElementById('n-email-domain')?.value||'',
+        member:document.getElementById('n-member')?.value||'',
+        stage:document.getElementById('n-stage')?.value||'0',
+        date:document.getElementById('n-date')?.value||'',
+        mou_date:document.getElementById('n-mou-date')?.value||'',
+        memo:document.getElementById('n-memo')?.value||'',
+        savedAt:new Date().toISOString()
+      };
+    } else if(type==='cold'){
+      data={
+        contact_type:document.getElementById('cold-contact-type')?.value||'',
+        org:document.getElementById('cold-org')?.value||'',
+        person:document.getElementById('cold-person')?.value||'',
+        phone:document.getElementById('cold-phone')?.value||'',
+        address:document.getElementById('cold-address')?.value||'',
+        method:document.getElementById('cold-method')?.value||'',
+        result:document.getElementById('cold-result')?.value||'',
+        summary:document.getElementById('cold-summary')?.value||'',
+        memo:document.getElementById('cold-memo')?.value||'',
+        savedAt:new Date().toISOString()
+      };
+    } else if(type==='job'){
+      data={
+        company:document.getElementById('job-company')?.value||'',
+        title:document.getElementById('job-title')?.value||'',
+        headcount:document.getElementById('job-headcount')?.value||'',
+        deadline:document.getElementById('job-deadline')?.value||'',
+        member:document.getElementById('job-member')?.value||'',
+        disability:document.getElementById('job-disability')?.value||'',
+        location:document.getElementById('job-location')?.value||'',
+        requirements:document.getElementById('job-requirements')?.value||'',
+        notes:document.getElementById('job-notes')?.value||'',
+        savedAt:new Date().toISOString()
+      };
+    } else if(type==='event'){
+      data={
+        name:document.getElementById('ev-name')?.value||'',
+        date:document.getElementById('ev-date')?.value||'',
+        location:document.getElementById('ev-location')?.value||'',
+        host:document.getElementById('ev-host')?.value||'',
+        category:document.getElementById('ev-category')?.value||'',
+        goal_cards:document.getElementById('ev-goal-cards')?.value||'',
+        goal_meetings:document.getElementById('ev-goal-meetings')?.value||'',
+        notes:document.getElementById('ev-notes')?.value||'',
+        savedAt:new Date().toISOString()
+      };
+    }
+    if(Object.values(data).some(v=>v&&v!==data.savedAt))
+      localStorage.setItem(DRAFT_KEYS[type],JSON.stringify(data));
+  }catch(e){}
+}
+function loadDraft(type){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEYS[type]);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    const savedAt=new Date(data.savedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
+    showConfirm({
+      title:'임시저장 내용 발견',
+      sub:`${savedAt} 에 저장된 내용이 있어요`,
+      msg:'작성하다 나간 내용이 있어요. 불러올까요?\n\n(취소하면 임시저장 내용이 삭제돼요)',
+      type:'info',okLabel:'불러오기',
+      onOk:()=>{
+        applyDraft(type,data);
+        toast('임시저장 내용 불러옴 ✓');
+      }
+    });
+    // 확인 버튼 눌러서 불러오거나 취소하면 삭제
+    const origClose=closeConfirm;
+    window._draftType=type;
+  }catch(e){}
+}
+function clearDraft(type){
+  try{localStorage.removeItem(DRAFT_KEYS[type]);}catch(e){}
+}
+function applyDraft(type,data){
+  if(type==='org'){
+    if(data.name)document.getElementById('n-name').value=data.name;
+    if(data.cat)document.getElementById('n-cat').value=data.cat;
+    if(data.source)document.getElementById('n-source').value=data.source;
+    if(data.contact)document.getElementById('n-contact').value=data.contact;
+    if(data.phone)document.getElementById('n-phone').value=data.phone;
+    if(data.email){const el=document.getElementById('n-email');if(el)el.textContent=data.email;}
+    if(data.emailDomain)document.getElementById('n-email-domain').value=data.emailDomain;
+    if(data.member)document.getElementById('n-member').value=data.member;
+    if(data.stage)document.getElementById('n-stage').value=data.stage;
+    if(data.date)document.getElementById('n-date').value=data.date;
+    if(data.mou_date)document.getElementById('n-mou-date').value=data.mou_date;
+    if(data.memo)document.getElementById('n-memo').value=data.memo;
+  } else if(type==='cold'){
+    if(data.contact_type){document.getElementById('cold-contact-type').value=data.contact_type;toggleColdType();}
+    if(data.org)document.getElementById('cold-org').value=data.org;
+    if(data.person)document.getElementById('cold-person').value=data.person;
+    if(data.phone)document.getElementById('cold-phone').value=data.phone;
+    if(data.address)document.getElementById('cold-address').value=data.address;
+    if(data.method)document.getElementById('cold-method').value=data.method;
+    if(data.result)document.getElementById('cold-result').value=data.result;
+    if(data.summary)document.getElementById('cold-summary').value=data.summary;
+    if(data.memo)document.getElementById('cold-memo').value=data.memo;
+  } else if(type==='job'){
+    if(data.company)document.getElementById('job-company').value=data.company;
+    if(data.title)document.getElementById('job-title').value=data.title;
+    if(data.headcount)document.getElementById('job-headcount').value=data.headcount;
+    if(data.deadline)document.getElementById('job-deadline').value=data.deadline;
+    if(data.member)document.getElementById('job-member').value=data.member;
+    if(data.disability)document.getElementById('job-disability').value=data.disability;
+    if(data.location)document.getElementById('job-location').value=data.location;
+    if(data.requirements)document.getElementById('job-requirements').value=data.requirements;
+    if(data.notes)document.getElementById('job-notes').value=data.notes;
+  } else if(type==='event'){
+    if(data.name)document.getElementById('ev-name').value=data.name;
+    if(data.date)document.getElementById('ev-date').value=data.date;
+    if(data.location)document.getElementById('ev-location').value=data.location;
+    if(data.host)document.getElementById('ev-host').value=data.host;
+    if(data.category)document.getElementById('ev-category').value=data.category;
+    if(data.goal_cards)document.getElementById('ev-goal-cards').value=data.goal_cards;
+    if(data.goal_meetings)document.getElementById('ev-goal-meetings').value=data.goal_meetings;
+    if(data.notes)document.getElementById('ev-notes').value=data.notes;
+  }
+}
 let confirmCallback=null;
 function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
@@ -2466,6 +2599,21 @@ async function openAuditLog(){
 }
 let editOrgId=null;
 let currentContacts=[];
+function renderAddOrg(){
+  const memberSel=document.getElementById('n-member');
+  if(memberSel){
+    memberSel.innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===(currentProfile?.name||'')?` selected`:''}>${p.name}</option>`).join('');
+  }
+  if(!editOrgId)setTimeout(()=>loadDraft('org'),300);
+}
+let orgDraftTimer=null;
+function startOrgDraftTimer(){
+  if(orgDraftTimer)clearInterval(orgDraftTimer);
+  orgDraftTimer=setInterval(()=>{
+    if(document.getElementById('p-add-org')?.classList.contains('active')&&!editOrgId)
+      saveDraft('org');
+  },3000);
+}
 function setContactMode(mode){
   document.getElementById('contact-change-wrap').style.display=mode==='change'?'block':'none';
   document.getElementById('contact-add-wrap').style.display=mode==='add'?'block':'none';
@@ -2737,6 +2885,8 @@ function openAddCold(){
   const local=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
   document.getElementById('cold-date').value=local;
   document.getElementById('cold-modal').style.display='flex';
+  // 임시저장 체크
+  setTimeout(()=>loadDraft('cold'),200);
 }
 async function saveCold(){
   const orgName=document.getElementById('cold-org').value.trim();
@@ -2766,6 +2916,7 @@ async function saveCold(){
   const{error}=await sb.from('cold_contacts').insert(row);
   if(error){toast('오류: '+error.message);return;}
   document.getElementById('cold-modal').style.display='none';
+  clearDraft('cold');
   toast('컨택 기록 추가됨 ✓');
   renderCold();
 }
@@ -2930,6 +3081,7 @@ function openAddJob(){
   document.getElementById('job-severity').value='상관없음';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option>${p.name}</option>`).join('');
   document.getElementById('job-modal').style.display='flex';
+  setTimeout(()=>loadDraft('job'),200);
 }
 function openEditJob(id){
   currentJobId=id;
@@ -2978,6 +3130,7 @@ async function saveJob(){
     if(error){toast('오류: '+error.message);return;}
   }
   document.getElementById('job-modal').style.display='none';
+  if(!currentJobId)clearDraft('job');
   toast(currentJobId?'수정 완료 ✓':'채용 건 등록 완료 ✓');
   renderJobs();
 }
@@ -3270,7 +3423,7 @@ async function saveOrg(){
     if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
-  clearOrgForm();btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
+  clearOrgForm();clearDraft('org');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
   toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
 }
 function clearOrgForm(){
