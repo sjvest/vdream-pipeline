@@ -351,7 +351,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <option value="">전체 유형</option><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option>
       </select>
       <select id="filter-stage-orgs" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
-        <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 체결</option><option value="5">수급 완료</option><option value="9">보류</option>
+        <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">수급 완료</option><option value="9">보류</option>
       </select>
     </div>
   </div>
@@ -426,7 +426,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
         <div class="fg"><label>동행 여부</label><select id="n-accompany"><option value="">없음</option><option>대표 동행</option><option>2인 이상</option></select></div>
-        <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 체결</option><option value="5">수급 완료</option></select></div>
+        <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">수급 완료</option></select></div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>미팅 전 메일</label><select id="n-premeil"><option value="0">불필요</option><option value="1">발송 완료</option><option value="2">미발송(요구됨)</option></select></div>
@@ -1150,10 +1150,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 
 <script>
-const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 체결',5:'수급 완료',9:'보류'};
-const STAGE_CLS={0:'b-gray',1:'b-blue',2:'b-purple',3:'b-amber',4:'b-teal',5:'b-green',9:'b-red'};
-const STAGE_COLORS=['#888780','#2d5be3','#6b3fa0','#b86b0f','#0f7c75','#2a8c5e','#c0392b'];
-const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#fdf0ee'];
+const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'수급 완료',9:'보류'};
+const STAGE_CLS={0:'b-gray',1:'b-blue',2:'b-purple',3:'b-amber',4:'b-teal',5:'b-green',6:'b-green',9:'b-red'};
+const STAGE_COLORS=['#888780','#2d5be3','#6b3fa0','#b86b0f','#0f7c75','#2a8c5e','#107569','#c0392b'];
+const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#d1fae5','#fdf0ee'];
 const MEMBERS=['김지현','박서준','이수민','최예진','정현우'];
 const AVATARBG=['#eef2fd','#f3effe','#e8f5ef','#fdf3e3','#e6f5f4'];
 const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
@@ -1440,7 +1440,7 @@ function renderDashboard(){
       <div style="flex:1;"><div class="action-text">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
       <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
     </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
-  const stageCounts=[0,1,2,3,4,5,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
+  const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
   document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
       <span class="badge ${s.cls}" style="min-width:70px;justify-content:center;">${s.label}</span>
@@ -1532,7 +1532,7 @@ function renderPeriodReport(start,end){
   // 4. MOU 진행중
   const mouProgress=cache.orgs.filter(o=>o.stage===4);
   // 5. MOU 완료(수급완료)
-  const mouDone=cache.orgs.filter(o=>o.stage===5);
+  const mouDone=cache.orgs.filter(o=>o.stage===5);  // MOU완료
   // 6. 온라인 유입 (해당 기간)
   const onlineChannels=['카페','인스타그램','페이스북','기타온라인'];
   const onlineTalents=cache.talents.filter(t=>inRange(t.created_at)&&onlineChannels.includes(t.channel));
@@ -1552,7 +1552,7 @@ function renderPeriodReport(start,end){
   document.getElementById('report-grid').innerHTML=
     statCard('📞','신규 컨택 시도',newOrgs.length,'var(--accent)')+
     statCard('📝','컨택 히스토리',newLogs.length,'var(--purple)')+
-    statCard('🤝','MOU 진행중',mouProgress.length,'var(--amber)')+
+    statCard('🤝','MOU 예정',mouProgress.length,'var(--amber)')+
     statCard('✅','MOU 완료',mouDone.length,'var(--green)');
 
   // 상세 테이블
@@ -1654,7 +1654,7 @@ function renderTrendChart(mode){
 
 // ── 파이프라인 ──
 function renderPipeline(){
-  const sl=[0,1,2,3,4,5,9];
+  const sl=[0,1,2,3,4,5,6,9];
   document.getElementById('board').innerHTML=sl.map((s,i)=>{
     const items=cache.orgs.filter(o=>o.stage===s);
     return`<div class="stage-col">
@@ -1926,8 +1926,8 @@ function renderAnalytics(){
   `;
 
   // ── 기관 파이프라인 ──
-  const STAGE_NAMES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 체결',5:'수급 완료',9:'보류'};
-  const stageData=[0,1,2,3,4,5].map(s=>({name:STAGE_NAMES[s],count:cache.orgs.filter(o=>o.stage===s&&(filterMember?o.member===filterMember:true)).length}));
+  const STAGE_NAMES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'수급 완료',9:'보류'};
+  const stageData=[0,1,2,3,4,5,6].map(s=>({name:STAGE_NAMES[s],count:cache.orgs.filter(o=>o.stage===s&&(filterMember?o.member===filterMember:true)).length}));
   const maxStage=Math.max(...stageData.map(x=>x.count),1);
   document.getElementById('an-pipeline').innerHTML=`
     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -2838,9 +2838,14 @@ function openOrg(id){
     </div>
     <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
-    ${o.stage>=4?`
+    ${o.stage===4?`
     <div class="modal-sec-title" style="color:var(--teal);">📋 MOU 준비 체크리스트</div>
     <div id="mou-checklist-wrap">${renderMouChecklist(o)}</div>`:''}
+    ${o.stage===5?`
+    <div style="background:var(--green-bg);border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <i class="ti ti-circle-check" style="color:var(--green);font-size:18px;"></i>
+      <span style="font-size:13px;font-weight:700;color:var(--green);">MOU 완료! 체크리스트가 모두 완료됐어요 🎉</span>
+    </div>`:''}
     <div class="modal-sec-title">후속 액션</div>
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
@@ -2868,7 +2873,7 @@ function openOrg(id){
     ${tals.map(t=>`<div class="info-row"><span style="font-weight:500;">${t.name}</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">${t.job||'—'}</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="margin-left:auto;">${t.status}</span></div>`).join('')}`:''}
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
       <select id="m-stage-sel" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
-        ${[0,1,2,3,4,5,9].map(s=>`<option value="${s}"${o.stage===s?' selected':''}>${STAGES[s]}</option>`).join('')}
+        ${[0,1,2,3,4,5,6,9].map(s=>`<option value="${s}"${o.stage===s?' selected':''}>${STAGES[s]}</option>`).join('')}
       </select>
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
