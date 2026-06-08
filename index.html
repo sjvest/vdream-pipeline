@@ -1886,6 +1886,7 @@ function getOrgEmailValue(){
   const finalDomain=domain||custom;
   return finalDomain?`${local}@${finalDomain}`:local;
 }
+function toggleColdType(){
   const type=document.getElementById('cold-contact-type').value;
   const isOrg=type==='기관';
   const catWrap=document.getElementById('cold-cat-wrap');
