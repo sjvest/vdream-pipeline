@@ -2928,7 +2928,12 @@ function openOrg(id){
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span>
-      <span class="badge b-gray" style="cursor:pointer;" onclick="toggleSourceEdit(${id})" title="클릭해서 수정">${o.source||'발굴경로 없음'} ✏️</span>
+      <span class="badge b-gray" onclick="toggleSourceEdit(${id})" title="클릭해서 발굴경로 수정"
+        style="cursor:pointer;border:1.5px dashed #94a3b8;display:inline-flex;align-items:center;gap:4px;padding:3px 10px;"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+        onmouseout="this.style.borderColor='#94a3b8';this.style.color=''">
+        ${o.source||'발굴경로'} <i class="ti ti-pencil" style="font-size:10px;"></i>
+      </span>
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
