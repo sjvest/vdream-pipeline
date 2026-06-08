@@ -3370,12 +3370,12 @@ function previewCard(event){
     document.getElementById('card-upload-wrap').innerHTML=`
       <div class="card-preview">
         <img src="${cardImageBase64}" alt="명함 사진">
-        <button class="card-preview-del" onclick="removeCardImage()" title="삭제"><i class="ti ti-x"></i></button>
+        <button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button>
       </div>`;
   };
   reader.readAsDataURL(file);
 }
-function removeCardImage(){
+function clearCardPreview(){
   cardImageBase64=null;
   document.getElementById('card-upload-wrap').innerHTML=`
     <div class="card-upload-area" onclick="document.getElementById('card-file').click()">
@@ -3463,7 +3463,7 @@ function clearOrgForm(){
   document.getElementById('n-email-custom').style.display='none';
   document.getElementById('n-member').value='';
   document.getElementById('action-form-list').innerHTML='';
-  actionFieldIdx=0;removeCardImage();
+  actionFieldIdx=0;clearCardPreview();
 }
 
 // ── 기관 상세 모달 ──
