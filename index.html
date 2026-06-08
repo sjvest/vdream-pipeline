@@ -250,6 +250,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   <button class="nav-item" onclick="nav('talent')"><i class="ti ti-users"></i>인재 수급</button>
   <div class="nav-divider"></div>
   <div class="nav-section">성과</div>
+  <button class="nav-item" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리</button>
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">
@@ -446,6 +447,104 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 
 <!-- 팀원 실적 -->
+<!-- 행사 관리 페이지 -->
+<div id="p-events" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">행사 관리</div><div class="page-sub">외부 행사 참여 기록 · 성과 추적</div></div>
+    <button class="btn btn-primary" onclick="openAddEvent()"><i class="ti ti-plus"></i> 행사 등록</button>
+  </div>
+
+  <!-- 행사 요약 카드 -->
+  <div id="event-metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;"></div>
+
+  <!-- 행사 목록 -->
+  <div class="card">
+    <div class="card-header"><i class="ti ti-calendar-event" style="color:var(--accent)"></i>행사 목록</div>
+    <table class="tbl">
+      <thead><tr style="background:#f1f4f9;">
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">행사명</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">날짜</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">장소</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">유형</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">참여팀원</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">명함/미팅</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">발굴 기관</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">수급</th>
+      </tr></thead>
+      <tbody id="event-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 행사 등록/상세 모달 -->
+<div id="event-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal modal-wide">
+  <div class="modal-head">
+    <div class="modal-title" id="event-modal-title">행사 등록</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('event-modal').style.display='none'"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="form-section">
+      <div class="fsec-title">기본 정보</div>
+      <div class="fg-row fg-2">
+        <div class="fg"><label>행사명 *</label><input id="ev-name" placeholder="예: 2026 장애인 취업박람회"></div>
+        <div class="fg"><label>행사 유형</label>
+          <select id="ev-category">
+            <option>전국 행사</option>
+            <option>구청/시청 행사</option>
+            <option>연합·협단체 행사</option>
+            <option>장애인 모임</option>
+            <option>취업박람회</option>
+            <option>문화·예술 행사</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg-row fg-2">
+        <div class="fg"><label>날짜 *</label><input id="ev-date" type="date"></div>
+        <div class="fg"><label>장소</label><input id="ev-location" placeholder="예: 서울 올림픽공원 체조경기장"></div>
+      </div>
+      <div class="fg-row fg-2">
+        <div class="fg"><label>주최기관</label><input id="ev-host" placeholder="예: 한국장애인고용공단"></div>
+        <div class="fg"><label>행사 규모</label>
+          <select id="ev-scale">
+            <option>소규모 (50명 이하)</option>
+            <option>중규모 (50~200명)</option>
+            <option>대규모 (200명 이상)</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>참여 팀원</label>
+        <div id="ev-members-check" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fsec-title">목표 KPI</div>
+      <div class="fg-row fg-2">
+        <div class="fg"><label>목표 명함 수집 수</label><input id="ev-goal-cards" type="number" placeholder="0" min="0"></div>
+        <div class="fg"><label>목표 미팅 약속 수</label><input id="ev-goal-meetings" type="number" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <div class="form-section" id="ev-result-section">
+      <div class="fsec-title">결과 (행사 후 입력)</div>
+      <div class="fg-row fg-2">
+        <div class="fg"><label>실제 명함 수집 수</label><input id="ev-result-cards" type="number" placeholder="0" min="0"></div>
+        <div class="fg"><label>실제 미팅 약속 수</label><input id="ev-result-meetings" type="number" placeholder="0" min="0"></div>
+      </div>
+      <div class="fg"><label>특이사항 / 메모</label><textarea id="ev-notes" placeholder="행사 후기, 주요 접촉 인물, 다음 행사 건의사항 등"></textarea></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEvent()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('event-modal').style.display='none'">취소</button>
+      <button id="ev-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteEvent()"><i class="ti ti-trash"></i> 삭제</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <div id="p-team" class="page">
   <div class="page-header"><div class="page-header-left"><div class="page-title">팀원 실적</div></div></div>
   <div class="team-grid" id="team-grid"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div></div></div>
@@ -641,7 +740,7 @@ const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
 const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
-let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[]};
+let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[]};
 let currentUser=null, currentProfile=null;
 let cardImageBase64=null;
 let trendChart=null;
@@ -780,7 +879,7 @@ async function loadAll(){
 }
 function renderCurrent(){
   const id=document.querySelector('.page.active')?.id;
-  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam};
+  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents};
   if(id&&map[id])map[id]();
 }
 
@@ -801,7 +900,7 @@ function nav(page){
   document.getElementById('p-'+page).classList.add('active');
   const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6};
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
-  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam};
+  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents};
   if(r[page])r[page]();
 }
 
@@ -1197,6 +1296,121 @@ function updateMemberSelects(){
   const opts='<option value="">선택</option>'+names.map(n=>`<option>${n}</option>`).join('');
   ['n-member','t-member'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+// ── 행사 관리 ──
+let currentEventId=null;
+async function renderEvents(){
+  const{data,error}=await sb.from('events').select('*').order('date',{ascending:false});
+  if(error){toast('오류: '+error.message);return;}
+  cache.events=data||[];
+
+  // 요약 카드
+  const total=cache.events.length;
+  const totalCards=cache.events.reduce((a,e)=>a+(e.result_cards||0),0);
+  const totalMeetings=cache.events.reduce((a,e)=>a+(e.result_meetings||0),0);
+  const orgLinked=cache.orgs.filter(o=>o.source==='행사·전시회').length;
+  document.getElementById('event-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">총 참여 행사</div><div class="metric-value">${total}</div><div class="metric-sub">회</div></div>
+    <div class="metric"><div class="metric-label">수집 명함</div><div class="metric-value">${totalCards}</div><div class="metric-sub">장 누적</div></div>
+    <div class="metric"><div class="metric-label">미팅 약속</div><div class="metric-value">${totalMeetings}</div><div class="metric-sub">건 누적</div></div>
+    <div class="metric"><div class="metric-label">행사 발굴 기관</div><div class="metric-value">${orgLinked}</div><div class="metric-sub">개 기관</div></div>
+  `;
+
+  // 행사 목록
+  document.getElementById('event-tbody').innerHTML=cache.events.length?cache.events.map(e=>{
+    const members=(e.members||[]).join(', ')||'—';
+    const cards=e.result_cards!=null?`${e.result_cards}/${e.goal_cards||0}장`:'미입력';
+    const meetings=e.result_meetings!=null?`${e.result_meetings}/${e.goal_meetings||0}건`:'미입력';
+    const linked=cache.orgs.filter(o=>o.event_id===e.id).length;
+    const recruited=cache.talents.filter(t=>t.event_id===e.id).length;
+    const CAT_CLS={'전국 행사':'b-red','구청/시청 행사':'b-blue','연합·협단체 행사':'b-teal','장애인 모임':'b-green','취업박람회':'b-purple','문화·예술 행사':'b-amber','기타':'b-gray'};
+    return`<tr onclick="openEvent(${e.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      <td style="padding:13px 16px;font-weight:700;">${e.name}</td>
+      <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${fDate(e.date)}</td>
+      <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${e.location||'—'}</td>
+      <td style="padding:13px 16px;"><span class="badge ${CAT_CLS[e.category]||'b-gray'}" style="font-size:11px;">${e.category||'—'}</span></td>
+      <td style="padding:13px 16px;font-size:12px;">${members}</td>
+      <td style="padding:13px 16px;font-size:12px;">명함 ${cards} · 미팅 ${meetings}</td>
+      <td style="padding:13px 16px;"><span class="badge b-blue" style="font-size:11px;">${linked}개</span></td>
+      <td style="padding:13px 16px;"><span class="badge b-green" style="font-size:11px;">${recruited}명</span></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="8" class="empty">등록된 행사 없음</td></tr>`;
+}
+function openAddEvent(){
+  currentEventId=null;
+  document.getElementById('event-modal-title').textContent='행사 등록';
+  document.getElementById('ev-delete-btn').style.display='none';
+  ['ev-name','ev-location','ev-host','ev-notes'].forEach(id=>document.getElementById(id).value='');
+  ['ev-goal-cards','ev-goal-meetings','ev-result-cards','ev-result-meetings'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ev-date').value=today();
+  document.getElementById('ev-category').value='전국 행사';
+  document.getElementById('ev-scale').value='중규모 (50~200명)';
+  // 팀원 체크박스
+  document.getElementById('ev-members-check').innerHTML=cache.profiles.map(p=>`
+    <label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
+      <input type="checkbox" value="${p.name}" style="width:14px;height:14px;"> ${p.name}
+    </label>`).join('');
+  document.getElementById('event-modal').style.display='flex';
+}
+function openEvent(id){
+  currentEventId=id;
+  const e=cache.events.find(x=>x.id===id);if(!e)return;
+  document.getElementById('event-modal-title').textContent=e.name;
+  document.getElementById('ev-delete-btn').style.display=currentUser?.email==='sjvest@vdream.co.kr'?'':'none';
+  document.getElementById('ev-name').value=e.name||'';
+  document.getElementById('ev-date').value=e.date||'';
+  document.getElementById('ev-location').value=e.location||'';
+  document.getElementById('ev-host').value=e.host||'';
+  document.getElementById('ev-category').value=e.category||'전국 행사';
+  document.getElementById('ev-scale').value=e.scale||'중규모 (50~200명)';
+  document.getElementById('ev-goal-cards').value=e.goal_cards||'';
+  document.getElementById('ev-goal-meetings').value=e.goal_meetings||'';
+  document.getElementById('ev-result-cards').value=e.result_cards!=null?e.result_cards:'';
+  document.getElementById('ev-result-meetings').value=e.result_meetings!=null?e.result_meetings:'';
+  document.getElementById('ev-notes').value=e.notes||'';
+  document.getElementById('ev-members-check').innerHTML=cache.profiles.map(p=>`
+    <label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
+      <input type="checkbox" value="${p.name}" ${(e.members||[]).includes(p.name)?'checked':''} style="width:14px;height:14px;"> ${p.name}
+    </label>`).join('');
+  document.getElementById('event-modal').style.display='flex';
+}
+async function saveEvent(){
+  const name=document.getElementById('ev-name').value.trim();
+  const date=document.getElementById('ev-date').value;
+  if(!name||!date){toast('행사명과 날짜를 입력하세요');return;}
+  const members=Array.from(document.querySelectorAll('#ev-members-check input:checked')).map(el=>el.value);
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const row={
+    name,date,location:document.getElementById('ev-location').value.trim(),
+    host:document.getElementById('ev-host').value.trim(),
+    category:document.getElementById('ev-category').value,
+    scale:document.getElementById('ev-scale').value,
+    members,
+    goal_cards:parseInt(document.getElementById('ev-goal-cards').value)||0,
+    goal_meetings:parseInt(document.getElementById('ev-goal-meetings').value)||0,
+    result_cards:document.getElementById('ev-result-cards').value!==''?parseInt(document.getElementById('ev-result-cards').value):null,
+    result_meetings:document.getElementById('ev-result-meetings').value!==''?parseInt(document.getElementById('ev-result-meetings').value):null,
+    notes:document.getElementById('ev-notes').value.trim(),
+    created_by:currentUser?.id||null,created_by_name:myName
+  };
+  if(currentEventId){
+    const{error}=await sb.from('events').update(row).eq('id',currentEventId);
+    if(error){toast('오류: '+error.message);return;}
+  } else {
+    const{error}=await sb.from('events').insert(row);
+    if(error){toast('오류: '+error.message);return;}
+  }
+  document.getElementById('event-modal').style.display='none';
+  toast(currentEventId?'행사 수정 완료 ✓':'행사 등록 완료 ✓');
+  renderEvents();
+}
+async function deleteEvent(){
+  if(!confirm('이 행사를 삭제하시겠어요?'))return;
+  const{error}=await sb.from('events').delete().eq('id',currentEventId);
+  if(error){toast('오류: '+error.message);return;}
+  document.getElementById('event-modal').style.display='none';
+  toast('삭제 완료');renderEvents();
+}
+
 function renderTeam(){
   const profiles=cache.profiles;
   if(!profiles.length){document.getElementById('team-grid').innerHTML='<div class="empty">팀원 정보 없음</div>';return;}
