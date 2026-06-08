@@ -530,29 +530,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..."></div>
     </div>
     <div class="fg"><label>기관 이메일</label>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <input id="cold-email-local" placeholder="이메일 앞부분" autocomplete="new-password" type="search" style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:0;">
-        <span style="font-size:13px;color:var(--text3);font-weight:600;flex-shrink:0;">@</span>
-        <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
-          <option value="">직접입력</option>
-          <option value="gmail.com">gmail.com</option>
-          <option value="naver.com">naver.com</option>
-          <option value="daum.net">daum.net</option>
-          <option value="kakao.com">kakao.com</option>
-          <option value="nate.com">nate.com</option>
-          <option value="hanmail.net">hanmail.net</option>
-          <option value="hotmail.com">hotmail.com</option>
-          <option value="outlook.com">outlook.com</option>
-          <option value="yahoo.com">yahoo.com</option>
-          <option value="Korea.kr">Korea.kr</option>
-          <option value="go.kr">go.kr</option>
-          <option value="or.kr">or.kr</option>
-          <option value="co.kr">co.kr</option>
-          <option value="org">org</option>
-        </select>
-        <input id="cold-email-custom" placeholder="직접입력" style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:130px;">
-      </div>
-    </div>
+      <input id="cold-email-local" placeholder="예: contact@naver.com" autocomplete="off" data-form-type="other" style="font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:100%;"></div>
     <div class="fg-row fg-3">
       <div class="fg"><label>컨택 방법</label>
         <select id="cold-method" onchange="updateColdTemplate()">
@@ -1827,12 +1805,7 @@ function toggleEmailCustom(){
   custom.style.display=domain===''?'block':'none';
 }
 function getEmailValue(){
-  const local=document.getElementById('cold-email-local').value.trim();
-  if(!local)return'';
-  const domain=document.getElementById('cold-email-domain').value;
-  const custom=document.getElementById('cold-email-custom').value.trim();
-  const finalDomain=domain||custom;
-  return finalDomain?`${local}@${finalDomain}`:local;
+  return document.getElementById('cold-email-local').value.trim();
 }
 function applyColdTemplate(type){
   const templates={
@@ -1851,8 +1824,6 @@ function updateColdTemplate(){
 function openAddCold(){
   ['cold-org','cold-person','cold-position','cold-summary','cold-memo','cold-phone','cold-email-local','cold-email-custom','cold-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('cold-contact-type').value='기관';
-  document.getElementById('cold-email-domain').value='naver.com';
-  document.getElementById('cold-email-custom').style.display='none';
   document.getElementById('cold-cat').value='복지관';
   document.getElementById('cold-cat').closest('.fg').style.display='';
   toggleColdType();
