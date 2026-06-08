@@ -373,7 +373,27 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 <!-- 기관 등록 -->
 <div id="p-add-org" class="page">
-  <div class="page-header"><div class="page-header-left"><div class="page-title">기관 등록</div></div></div>
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title" id="add-org-title">기관 등록</div>
+      <div class="page-sub" id="add-org-sub">새 기관을 등록합니다</div>
+    </div>
+    <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()"><i class="ti ti-x"></i> 신규 등록으로 전환</button>
+  </div>
+
+  <!-- 기관 검색 (수정 모드) -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-body">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🔍 등록된 기관 불러오기 (수정할 기관 검색)</div>
+      <div style="position:relative;">
+        <input id="org-edit-search" placeholder="기관명 입력해서 검색..." autocomplete="off"
+          style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"
+          oninput="searchOrgForEdit(this.value)" onfocus="searchOrgForEdit(this.value)">
+        <div id="org-edit-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:200;max-height:220px;overflow-y:auto;margin-top:2px;"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="card"><div class="card-body">
     <div class="form-section">
       <div class="fsec-title">📇 명함 사진</div>
@@ -435,6 +455,14 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>MOU 예정일</label><input id="n-mou-date" type="date"></div>
       </div>
       <div class="fg"><label>메모</label><textarea id="n-memo" placeholder="미팅 내용, 기관 니즈, 특이사항 등"></textarea></div>
+    </div>
+    <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
+    <div class="form-section" id="member-history-section" style="display:none;">
+      <div class="fsec-title">👤 담당자 변경 이력</div>
+      <div id="member-history-list" style="margin-bottom:12px;font-size:12px;color:var(--text3);">이력 없음</div>
+      <div class="fg"><label>변경 사유 (담당자 바뀔 경우 입력)</label>
+        <input id="n-member-reason" placeholder="예: 담당자 퇴사, 업무 재배분 등" autocomplete="off">
+      </div>
     </div>
     <div class="form-section">
       <div class="fsec-title">후속 액션 등록</div>
@@ -2312,7 +2340,92 @@ function clearColdFilter(){
   ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
-function toggleOrgEmailCustom(){
+// ── 기관 수정 모드 ──
+let editOrgId=null;
+function searchOrgForEdit(q){
+  const dd=document.getElementById('org-edit-dropdown');
+  if(!q){dd.style.display='none';return;}
+  const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,8);
+  dd.style.display='block';
+  dd.innerHTML=results.length?results.map(o=>`
+    <div onclick="loadOrgForEdit(${o.id})"
+      style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      <span style="font-weight:700;">${o.name}</span>
+      <span class="badge ${STAGE_CLS[o.stage]}" style="font-size:10px;margin-left:6px;">${STAGES[o.stage]}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;">${o.member||'담당자 없음'}</span>
+    </div>`).join('')
+  :`<div style="padding:10px 14px;font-size:12px;color:var(--text3);">검색 결과 없음</div>`;
+}
+function loadOrgForEdit(orgId){
+  editOrgId=orgId;
+  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
+  // 검색창 닫기
+  document.getElementById('org-edit-dropdown').style.display='none';
+  document.getElementById('org-edit-search').value=o.name;
+  // 타이틀 변경
+  document.getElementById('add-org-title').textContent='기관 정보 수정';
+  document.getElementById('add-org-sub').textContent=`"${o.name}" 정보를 수정합니다`;
+  document.getElementById('edit-mode-clear').style.display='';
+  document.getElementById('save-btn').innerHTML='<i class="ti ti-check"></i> 수정 완료';
+  // 폼에 데이터 채우기
+  document.getElementById('n-name').value=o.name||'';
+  document.getElementById('n-cat').value=o.cat||'복지관';
+  document.getElementById('n-source').value=o.source||'서칭';
+  document.getElementById('n-contact').value=o.contact||'';
+  document.getElementById('n-phone').value=o.phone||'';
+  document.getElementById('n-stage').value=o.stage||0;
+  document.getElementById('n-member').value=o.member||'';
+  document.getElementById('n-accompany').value=o.accompany||'';
+  document.getElementById('n-premeil').value=o.premeil||0;
+  document.getElementById('n-school').value=o.school||0;
+  document.getElementById('n-date').value=o.date||'';
+  document.getElementById('n-mou-date').value=o.mou_date||'';
+  document.getElementById('n-memo').value=o.memo||'';
+  // 이메일 채우기
+  const emailEl=document.getElementById('n-email');
+  if(emailEl&&o.email){
+    const parts=o.email.split('@');
+    emailEl.textContent=parts[0]||'';
+    if(parts[1]){
+      const domainSel=document.getElementById('n-email-domain');
+      const opts=Array.from(domainSel.options).map(op=>op.value);
+      if(opts.includes(parts[1])){domainSel.value=parts[1];}
+      else{domainSel.value='';document.getElementById('n-email-custom').value=parts[1];document.getElementById('n-email-custom').style.display='block';}
+    }
+  }
+  // 담당자 이력 표시
+  const history=o.member_history||[];
+  const histSection=document.getElementById('member-history-section');
+  const histList=document.getElementById('member-history-list');
+  histSection.style.display='';
+  histList.innerHTML=history.length?history.slice().reverse().map(h=>`
+    <div style="padding:7px 10px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:12px;">
+      <span style="font-weight:600;">${h.from||'—'} → ${h.to}</span>
+      <span style="color:var(--text3);margin-left:8px;">${fDate(h.date)}</span>
+      ${h.reason?`<div style="color:var(--text3);margin-top:2px;">사유: ${h.reason}</div>`:''}
+    </div>`).join(''):'<div style="color:var(--text3);font-size:12px;">변경 이력 없음</div>';
+  // 스크롤 상단
+  document.getElementById('p-add-org').scrollTop=0;
+  toast(`"${o.name}" 불러옴 ✓`);
+}
+function clearEditMode(){
+  editOrgId=null;
+  document.getElementById('add-org-title').textContent='기관 등록';
+  document.getElementById('add-org-sub').textContent='새 기관을 등록합니다';
+  document.getElementById('edit-mode-clear').style.display='none';
+  document.getElementById('save-btn').innerHTML='<i class="ti ti-check"></i> 등록 완료';
+  document.getElementById('org-edit-search').value='';
+  document.getElementById('member-history-section').style.display='none';
+  clearOrgForm();
+}
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#org-edit-search')&&!e.target.closest('#org-edit-dropdown')){
+    const dd=document.getElementById('org-edit-dropdown');
+    if(dd)dd.style.display='none';
+  }
+});
   const domain=document.getElementById('n-email-domain').value;
   const custom=document.getElementById('n-email-custom');
   custom.style.display=domain===''?'block':'none';
@@ -2858,12 +2971,6 @@ function addActionField(){
 async function saveOrg(){
   const name=document.getElementById('n-name').value.trim();
   if(!name){toast('기관명을 입력하세요');return;}
-  // 중복 기관 체크
-  const dup=cache.orgs.find(o=>o.name.trim()===name);
-  if(dup){
-    const reg=dup.created_by_name||'누군가';
-    if(!confirm(`⚠️ "${name}" 기관이 이미 등록되어 있어요!\n\n등록자: ${reg}\n\n그래도 계속 등록하시겠어요?`))return;
-  }
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
@@ -2871,10 +2978,37 @@ async function saveOrg(){
     contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
-    date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,lastcontact:today(),memo:document.getElementById('n-memo').value.trim(),
-    card_image:cardImageBase64||null,
-    created_by:currentUser?.id||null,created_by_name:myName
+    date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,memo:document.getElementById('n-memo').value.trim(),
   };
+
+  // ── 수정 모드 ──
+  if(editOrgId){
+    const prevOrg=cache.orgs.find(o=>o.id===editOrgId);
+    // 담당자 변경 이력 기록
+    const reason=document.getElementById('n-member-reason').value.trim();
+    if(prevOrg&&orgRow.member&&prevOrg.member!==orgRow.member){
+      const history=[...(prevOrg.member_history||[]),{from:prevOrg.member,to:orgRow.member,date:today(),reason}];
+      orgRow.member_history=history;
+    }
+    const{error}=await sb.from('orgs').update(orgRow).eq('id',editOrgId);
+    if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 수정 완료';return;}
+    if(prevOrg)Object.assign(prevOrg,orgRow);
+    clearEditMode();
+    btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
+    toast(`"${name}" 수정 완료 ✓`);updateUrgentCount();nav('orgs');
+    return;
+  }
+
+  // ── 신규 등록 모드 ──
+  const dup=cache.orgs.find(o=>o.name.trim()===name);
+  if(dup){
+    const reg=dup.created_by_name||'누군가';
+    if(!confirm(`⚠️ "${name}" 기관이 이미 등록되어 있어요!\n\n등록자: ${reg}\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';return;}
+  }
+  orgRow.card_image=cardImageBase64||null;
+  orgRow.lastcontact=today();
+  orgRow.created_by=currentUser?.id||null;
+  orgRow.created_by_name=myName;
   const {data:org,error}=await sb.from('orgs').insert(orgRow).select().single();
   if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';return;}
   cache.orgs.unshift(org);
