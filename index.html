@@ -3014,27 +3014,41 @@ function renderTalentFiles(talent){
   el.innerHTML=files.map((f,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:5px;">
       <i class="ti ti-file" style="font-size:14px;color:var(--accent);flex-shrink:0;"></i>
-      <a href="${f.url}" target="_blank" style="flex:1;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</a>
+      <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
       <span style="font-size:10px;color:var(--text3);flex-shrink:0;">${f.size||''}</span>
-      <button onclick="deleteTalentFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
+      <button onclick="downloadTalentFile(${i})" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--accent);font-size:11px;padding:3px 8px;flex-shrink:0;"><i class="ti ti-download"></i></button>
+      <button onclick="deleteTalentFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;flex-shrink:0;"><i class="ti ti-trash"></i></button>
     </div>`).join('');
+}
+function downloadTalentFile(idx){
+  const t=cache.talents.find(x=>x.id===currentTalentId);
+  if(!t)return;
+  const f=t.files[idx];
+  if(!f)return;
+  const a=document.createElement('a');
+  a.href=f.data||f.url;
+  a.download=f.name;
+  a.click();
 }
 async function uploadTalentFiles(event){
   const files=Array.from(event.target.files);
   if(!files.length)return;
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
-  toast('업로드 중...');
+  const MAX_SIZE=5*1024*1024; // 5MB
   const uploaded=[];
   for(const file of files){
-    const ext=file.name.split('.').pop();
-    const path=`talent-${currentTalentId}/${Date.now()}_${file.name}`;
-    const{data,error}=await sb.storage.from('talent-files').upload(path,file,{upsert:true});
-    if(error){toast('오류: '+error.message);continue;}
-    const publicUrl=`https://kpmhawrpkzshjlmjvnev.supabase.co/storage/v1/object/public/talent-files/${path}`;
+    if(file.size>MAX_SIZE){toast(`${file.name} 파일이 5MB를 초과해요`);continue;}
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result);
+      r.onerror=rej;
+      r.readAsDataURL(file);
+    });
     const size=file.size>1024*1024?`${(file.size/1024/1024).toFixed(1)}MB`:`${(file.size/1024).toFixed(0)}KB`;
-    uploaded.push({name:file.name,url:publicUrl,path,size});
+    uploaded.push({name:file.name,data:base64,size,type:file.type,uploadedAt:new Date().toISOString()});
   }
+  if(!uploaded.length)return;
   const newFiles=[...(t.files||[]),...uploaded];
   const{error}=await sb.from('talents').update({files:newFiles}).eq('id',currentTalentId);
   if(error){toast('저장 오류: '+error.message);return;}
@@ -3051,8 +3065,6 @@ async function deleteTalentFile(idx){
     msg:'이 파일을 삭제하면 복구할 수 없어요. 삭제하시겠어요?',
     type:'danger',okLabel:'삭제',
     onOk:async()=>{
-      const file=t.files[idx];
-      if(file?.path)await sb.storage.from('talent-files').remove([file.path]);
       const newFiles=t.files.filter((_,i)=>i!==idx);
       await sb.from('talents').update({files:newFiles}).eq('id',currentTalentId);
       t.files=newFiles;
