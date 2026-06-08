@@ -1820,6 +1820,61 @@ async function saveTalent(){
   toast('수급 등록 완료!');renderTalent();
 }
 
+// ── MOU 체크리스트 ──
+const MOU_ITEMS=[
+  {id:'contract_draft',group:'내부 준비',label:'협약서 정제 — 초안 바탕으로 자사 공식 양식에 맞게 편집 및 검수'},
+  {id:'contract_print',group:'내부 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
+  {id:'contract_cover',group:'내부 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
+  {id:'logo_request',group:'상대 기관 조율',label:'CI(로고) 수급 — 상대 기관 고화질 로고 파일 요청'},
+  {id:'banner_confirm',group:'상대 기관 조율',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
+  {id:'attendee_list',group:'상대 기관 조율',label:'참석자 명단 — 양측 최종 참석자 명단(성함/직급) 확인'},
+  {id:'ceremony_order',group:'상대 기관 조율',label:'식순 및 사회 — 당일 식순 및 진행 주체 확정'},
+  {id:'seal_method',group:'상대 기관 조율',label:'날인 방식 확정 — 직인 날인 or 친필 서명 확인'},
+  {id:'contract_final',group:'당일 점검',label:'협약서 최종본 2부 & 커버 2개'},
+  {id:'company_seal',group:'당일 점검',label:'회사 직인/인감 및 인패드 지참'},
+  {id:'banner_bring',group:'당일 점검',label:'제작된 현수막 지참 (자사 제작 시)'},
+  {id:'business_card',group:'당일 점검',label:'참석자 명함 준비'},
+];
+function renderMouChecklist(org){
+  const checklist=org.mou_checklist||{};
+  const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
+  const groups=['내부 준비','상대 기관 조율','당일 점검'];
+  return`
+    <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:var(--teal);">진행률</span>
+        <span style="font-size:13px;font-weight:800;color:var(--teal);">${done} / ${MOU_ITEMS.length}</span>
+      </div>
+      <div style="background:rgba(255,255,255,.5);border-radius:20px;height:8px;overflow:hidden;">
+        <div style="width:${Math.round(done/MOU_ITEMS.length*100)}%;height:100%;background:var(--teal);border-radius:20px;transition:width .3s;"></div>
+      </div>
+    </div>
+    ${groups.map(g=>{
+      const items=MOU_ITEMS.filter(i=>i.group===g);
+      return`<div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
+        ${items.map(item=>`
+          <div onclick="toggleMouItem('${item.id}')" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;cursor:pointer;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+            <div style="width:18px;height:18px;border-radius:4px;border:2px solid ${checklist[item.id]?'var(--teal)':'var(--border)'};background:${checklist[item.id]?'var(--teal)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+              ${checklist[item.id]?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+            </div>
+            <span style="font-size:12px;color:${checklist[item.id]?'var(--text3)':'var(--text)'};text-decoration:${checklist[item.id]?'line-through':'none'};line-height:1.4;">${item.label}</span>
+          </div>`).join('')}
+      </div>`;
+    }).join('')}`;
+}
+async function toggleMouItem(itemId){
+  const o=cache.orgs.find(x=>x.id===currentOrgId);if(!o)return;
+  const checklist={...o.mou_checklist||{}};
+  checklist[itemId]=!checklist[itemId];
+  const{error}=await sb.from('orgs').update({mou_checklist:checklist}).eq('id',currentOrgId);
+  if(error){toast('오류: '+error.message);return;}
+  o.mou_checklist=checklist;
+  // 체크리스트만 리렌더링
+  const wrap=document.getElementById('mou-checklist-wrap');
+  if(wrap)wrap.innerHTML=renderMouChecklist(o);
+}
+
 // ── 데이터 분석 ──
 let anPeriod='thisweek';
 function setAnalyticsPeriod(type){
@@ -2783,6 +2838,9 @@ function openOrg(id){
     </div>
     <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
+    ${o.stage>=4?`
+    <div class="modal-sec-title" style="color:var(--teal);">📋 MOU 준비 체크리스트</div>
+    <div id="mou-checklist-wrap">${renderMouChecklist(o)}</div>`:''}
     <div class="modal-sec-title">후속 액션</div>
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
