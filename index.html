@@ -2927,10 +2927,20 @@ function openOrg(id){
       </label>`}
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
-      <span class="badge b-gray">${o.cat||'—'}</span><span class="badge b-gray">${o.source||'—'}</span>
+      <span class="badge b-gray">${o.cat||'—'}</span>
+      <span class="badge b-gray" style="cursor:pointer;" onclick="toggleSourceEdit(${id})" title="클릭해서 수정">${o.source||'발굴경로 없음'} ✏️</span>
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
+    </div>
+    <div id="source-edit-wrap" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-sm);border:1.5px solid var(--accent);">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">발굴 경로 수정</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        ${['서칭','행사·전시회','명함·소개','인바운드'].map(s=>`
+          <button onclick="saveOrgSource(${id},'${s}')" style="padding:6px 14px;border-radius:20px;border:1.5px solid ${o.source===s?'var(--accent)':'var(--border)'};background:${o.source===s?'var(--accent)':'var(--surface)'};color:${o.source===s?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer;">${s}</button>
+        `).join('')}
+        <button onclick="document.getElementById('source-edit-wrap').style.display='none'" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;cursor:pointer;">취소</button>
+      </div>
     </div>
     <div class="info-row"><span class="info-key">담당자</span><span>${o.contact||'—'}</span></div>
     <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
@@ -3143,6 +3153,18 @@ async function removeCardImage(orgId){
   const o=cache.orgs.find(x=>x.id===orgId);
   if(o)o.card_image=null;
   toast('명함 삭제 완료');
+  openOrg(orgId);
+}
+function toggleSourceEdit(orgId){
+  const wrap=document.getElementById('source-edit-wrap');
+  if(wrap)wrap.style.display=wrap.style.display==='none'?'block':'none';
+}
+async function saveOrgSource(orgId,source){
+  const{error}=await sb.from('orgs').update({source}).eq('id',orgId);
+  if(error){toast('오류: '+error.message);return;}
+  const o=cache.orgs.find(x=>x.id===orgId);
+  if(o)o.source=source;
+  toast('발굴경로 수정됨 ✓');
   openOrg(orgId);
 }
 async function saveMouDate(orgId){
