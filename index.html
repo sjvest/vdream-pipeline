@@ -458,8 +458,24 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   <!-- 요약 카드 -->
   <div id="job-metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;"></div>
 
-  <!-- 채용 건 목록 -->
-  <div id="job-list"></div>
+  <!-- 채용 건 테이블 -->
+  <div class="card">
+    <div class="card-header"><i class="ti ti-briefcase" style="color:var(--accent)"></i>채용 건 목록</div>
+    <table class="tbl">
+      <thead><tr style="background:#f1f4f9;">
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">고객사</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">직무</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">담당자</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">마감일</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">D-day</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">진행 현황</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">확보 인원 업데이트</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">상태</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;"></th>
+      </tr></thead>
+      <tbody id="job-tbody"><tr><td colspan="9"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- 채용 건 등록/수정 모달 -->
@@ -1421,66 +1437,69 @@ async function renderJobs(){
   const urgent=active.filter(j=>j.deadline&&Math.floor((new Date(j.deadline)-now)/864e5)<=7).length;
   const totalTarget=active.reduce((a,j)=>a+(j.headcount||0),0);
   const totalCurrent=active.reduce((a,j)=>a+(j.current_count||0),0);
+  const remaining=totalTarget-totalCurrent;
   document.getElementById('job-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">진행중 채용 건</div><div class="metric-value">${active.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">D-7 이내 마감</div><div class="metric-value" style="color:var(--red);">${urgent}</div><div class="metric-sub">건 긴급</div></div>
-    <div class="metric"><div class="metric-label">전체 목표 인원</div><div class="metric-value">${totalTarget}</div><div class="metric-sub">명 / 확보 ${totalCurrent}명</div></div>
+    <div class="metric"><div class="metric-label">미충원 인원</div><div class="metric-value" style="color:${remaining>0?'var(--amber)':'var(--green)'};">${remaining}</div><div class="metric-sub">명 (목표 ${totalTarget}명 중)</div></div>
     <div class="metric"><div class="metric-label">완료 채용 건</div><div class="metric-value" style="color:var(--green);">${done}</div><div class="metric-sub">건</div></div>
   `;
 
-  // 채용 건 카드 목록
-  if(!cache.jobs.length){
-    document.getElementById('job-list').innerHTML='<div class="empty">등록된 채용 건 없음</div>';
-    return;
-  }
-
-  // 진행중 먼저, 완료/보류/취소 나중에
+  // 테이블 렌더링
   const sorted=[...cache.jobs].sort((a,b)=>{
     const order={진행중:0,보류:1,완료:2,취소:3};
-    return(order[a.status]||0)-(order[b.status]||0);
+    return(order[a.status]||0)-(order[b.status]||0)||new Date(a.deadline)-new Date(b.deadline);
   });
 
-  document.getElementById('job-list').innerHTML=sorted.map(j=>{
+  const STATUS_CLS2={진행중:'b-amber',완료:'b-green',보류:'b-gray',취소:'b-red'};
+
+  document.getElementById('job-tbody').innerHTML=sorted.length?sorted.map(j=>{
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
     const pct=j.headcount?Math.min(100,Math.round((j.current_count||0)/j.headcount*100)):0;
-    const daysColor=days!==null?(days<0?'var(--red)':days<=7?'var(--amber)':'var(--text3)'):'var(--text3)';
-    const daysLabel=days===null?'마감일 없음':days<0?`D+${Math.abs(days)} 초과`:days===0?'오늘 마감':`D-${days}`;
-    const STATUS_COLOR={진행중:'var(--amber)',완료:'var(--green)',보류:'var(--text3)',취소:'var(--red)'};
+    const remain=Math.max(0,(j.headcount||0)-(j.current_count||0));
+    const daysColor=days===null?'var(--text3)':days<0?'var(--red)':days<=7?'var(--amber)':'var(--green)';
+    const daysLabel=days===null?'—':days<0?`D+${Math.abs(days)} 초과`:days===0?'오늘 마감!':days<=7?`🚨 D-${days}`:`D-${days}`;
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
-    return`
-    <div class="card" style="margin-bottom:12px;${j.status!=='진행중'?'opacity:.7':''}">
-      <div class="card-body">
-        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
-          <div style="flex:1;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              <span style="font-size:15px;font-weight:800;">${j.company}</span>
-              <span class="badge b-gray" style="font-size:11px;">${j.job_title}</span>
-              <span style="font-size:11px;font-weight:700;color:${STATUS_COLOR[j.status]||'var(--text3)'};">${j.status}</span>
-            </div>
-            <div style="display:flex;gap:12px;font-size:12px;color:var(--text2);flex-wrap:wrap;">
-              ${j.member?`<span>👤 ${j.member}</span>`:''}
-              ${j.disability_type?`<span>♿ ${j.disability_type}</span>`:''}
-              ${j.work_type?`<span>🏢 ${j.work_type}</span>`:''}
-              ${j.location?`<span>📍 ${j.location}</span>`:''}
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:20px;font-weight:800;color:${daysColor};">${daysLabel}</div>
-            <div style="font-size:11px;color:var(--text3);">${j.deadline?fDate(j.deadline):''}</div>
-          </div>
-          <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;color:var(--text2);flex-shrink:0;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i> 수정</button>
-        </div>
-        <!-- 진행률 바 -->
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="flex:1;background:var(--bg);border-radius:20px;height:10px;overflow:hidden;">
+    // 드롭다운 옵션 (0 ~ headcount)
+    const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
+    return`<tr style="${j.status!=='진행중'?'opacity:.65':''}">
+      <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
+      <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
+      <td style="padding:13px 16px;"><span class="member-pill">${j.member||'—'}</span></td>
+      <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.deadline?fDate(j.deadline):'—'}</td>
+      <td style="padding:13px 16px;font-weight:800;color:${daysColor};">${daysLabel}</td>
+      <td style="padding:13px 16px;min-width:160px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;background:#f1f4f9;border-radius:20px;height:8px;overflow:hidden;">
             <div style="width:${pct}%;height:100%;background:${barColor};border-radius:20px;transition:width .3s;"></div>
           </div>
-          <span style="font-size:13px;font-weight:800;color:${barColor};min-width:80px;text-align:right;">${j.current_count||0} / ${j.headcount}명 (${pct}%)</span>
+          <span style="font-size:12px;font-weight:700;color:${barColor};white-space:nowrap;">${j.current_count||0}/${j.headcount}명</span>
         </div>
-        ${j.notes?`<div style="margin-top:10px;font-size:12px;color:var(--text3);padding:8px 12px;background:var(--bg);border-radius:6px;">${j.notes}</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
+        ${remain>0&&j.status==='진행중'?`<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:600;">미충원 ${remain}명</div>`:''}
+      </td>
+      <td style="padding:13px 16px;">
+        ${j.status==='진행중'?`
+        <div style="display:flex;align-items:center;gap:6px;">
+          <select onchange="updateJobCount(${j.id},this.value)" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;font-weight:600;cursor:pointer;">
+            ${opts}
+          </select>
+          <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
+        </div>`:'—'}
+      </td>
+      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}">${j.status}</span></td>
+      <td style="padding:13px 16px;">
+        <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+}
+async function updateJobCount(jobId, count){
+  const{error}=await sb.from('jobs').update({current_count:parseInt(count)}).eq('id',jobId);
+  if(error){toast('오류: '+error.message);return;}
+  const j=cache.jobs.find(x=>x.id===jobId);
+  if(j)j.current_count=parseInt(count);
+  toast(`확보 인원 ${count}명으로 업데이트 ✓`);
+  renderJobs();
 }
 function openAddJob(){
   currentJobId=null;
