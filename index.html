@@ -3391,11 +3391,10 @@ function previewCard(event){
 function clearCardPreview(){
   cardImageBase64=null;
   document.getElementById('card-upload-wrap').innerHTML=`
-    <div class="card-upload-area" onclick="document.getElementById('card-file').click()">
-      <i class="ti ti-camera"></i>
-      <p>여기를 클릭하거나 사진을 끌어다 놓으세요<br><span style="font-size:10px;color:var(--text3);">JPG, PNG 파일 가능 · 핸드폰으로 찍은 사진도 OK</span></p>
+    <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;">
+      <i class="ti ti-camera" style="font-size:16px;color:var(--text3);"></i> 명함 사진 등록 (클릭 또는 끌어다 놓기)
       <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
-    </div>`;
+    </label>`;
 }
 
 // ── 기관 등록 ──
