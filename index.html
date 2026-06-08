@@ -573,6 +573,14 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       <button class="btn btn-primary" onclick="saveProfile()"><i class="ti ti-check"></i> 저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('profile-modal').style.display='none'">취소</button>
     </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;">🔐 비밀번호 변경</div>
+      <div class="fg"><label>새 비밀번호</label><input id="new-pw" type="password" placeholder="새 비밀번호 (8자 이상)"></div>
+      <div class="fg"><label>새 비밀번호 확인</label><input id="new-pw-confirm" type="password" placeholder="한 번 더 입력"></div>
+      <p id="pw-err" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px;"></p>
+      <button class="btn btn-ghost btn-sm" onclick="changePassword()"><i class="ti ti-lock"></i> 비밀번호 변경</button>
+    </div>
   </div>
 </div>
 </div>
@@ -711,7 +719,20 @@ async function saveProfile(){
   document.getElementById('profile-modal').style.display='none';
   toast('프로필 저장됨 ✓');
 }
-async function clearStatus(){
+async function changePassword(){
+  const pw=document.getElementById('new-pw').value;
+  const pwc=document.getElementById('new-pw-confirm').value;
+  const errEl=document.getElementById('pw-err');
+  errEl.style.display='none';
+  if(!pw){errEl.textContent='새 비밀번호를 입력하세요.';errEl.style.display='block';return;}
+  if(pw.length<8){errEl.textContent='비밀번호는 8자 이상이어야 해요.';errEl.style.display='block';return;}
+  if(pw!==pwc){errEl.textContent='비밀번호가 일치하지 않아요.';errEl.style.display='block';return;}
+  const{error}=await sb.auth.updateUser({password:pw});
+  if(error){errEl.textContent='오류: '+error.message;errEl.style.display='block';return;}
+  document.getElementById('new-pw').value='';
+  document.getElementById('new-pw-confirm').value='';
+  toast('비밀번호가 변경됐어요 ✓');
+}
   if(!currentUser)return;
   await sb.from('profiles').update({status:'',status_emoji:''}).eq('id',currentUser.id);
   currentProfile={...currentProfile,status:'',status_emoji:''};
