@@ -1094,7 +1094,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div style="position:relative;">
         <input id="t-org-search" placeholder="기관명 검색..." autocomplete="off"
           style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"
-          oninput="searchOrg(this.value)" onfocus="searchOrg(this.value)">
+          oninput="searchOrg(this.value)" onfocus="searchOrg(this.value)"
+          onkeydown="handleOrgSearchKey(event)">
         <input type="hidden" id="t-org">
         <div id="t-org-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:200;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
       </div>
@@ -1937,13 +1938,40 @@ function renderTalent(){
     </tr>`;
   }).join(''):'<tr><td colspan="9" class="empty">수급 기록 없음</td></tr>';
 }
-function searchOrg(q){
+let orgSearchSelectedIdx=-1;
+function handleOrgSearchKey(e){
+  const dd=document.getElementById('t-org-dropdown');
+  const items=dd.querySelectorAll('[data-org-id]');
+  if(e.key==='ArrowDown'){
+    orgSearchSelectedIdx=Math.min(orgSearchSelectedIdx+1,items.length-1);
+    items.forEach((el,i)=>el.style.background=i===orgSearchSelectedIdx?'#e0e7ff':'');
+    e.preventDefault();
+  } else if(e.key==='ArrowUp'){
+    orgSearchSelectedIdx=Math.max(orgSearchSelectedIdx-1,0);
+    items.forEach((el,i)=>el.style.background=i===orgSearchSelectedIdx?'#e0e7ff':'');
+    e.preventDefault();
+  } else if(e.key==='Enter'){
+    if(orgSearchSelectedIdx>=0&&items[orgSearchSelectedIdx]){
+      items[orgSearchSelectedIdx].click();
+    } else if(items.length===1){
+      items[0].click();
+    } else {
+      // 검색 결과 없으면 직접 입력으로 사용
+      const q=document.getElementById('t-org-search').value.trim();
+      if(q){selectOrgDirect(q);}
+    }
+    e.preventDefault();
+  } else if(e.key==='Escape'){
+    dd.style.display='none';
+  }
+}
   const dd=document.getElementById('t-org-dropdown');
   const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,10);
   if(!results.length&&!q){dd.style.display='none';return;}
   dd.style.display='block';
+  orgSearchSelectedIdx=-1;
   dd.innerHTML=results.length?results.map(o=>`
-    <div onclick="selectOrg(${o.id},'${o.name.replace(/'/g,"\\'")}')"
+    <div data-org-id="${o.id}" onclick="selectOrg(${o.id},'${o.name.replace(/'/g,"\\'")}')"
       style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
       onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       ${o.name} <span style="font-size:11px;color:var(--text3);">${o.cat||''}</span>
