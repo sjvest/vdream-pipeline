@@ -465,6 +465,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       <thead><tr style="background:#f1f4f9;">
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">고객사</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">직무</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">장애유형/중증도</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">담당자</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">마감일</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">D-day</th>
@@ -507,19 +508,43 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       </div>
     </div>
     <div class="fg-row fg-2">
-      <div class="fg"><label>장애 유형</label><input id="job-disability" placeholder="예: 지체장애, 청각장애 등"></div>
-      <div class="fg"><label>근무 형태</label>
-        <select id="job-worktype">
-          <option value="">선택</option>
-          <option value="상근">상근</option>
-          <option value="시간제">시간제</option>
-          <option value="재택">재택</option>
-          <option value="혼합">혼합</option>
+      <div class="fg"><label>장애 유형</label>
+        <select id="job-disability">
+          <option value="">상관없음</option>
+          <option value="지체장애">지체장애</option>
+          <option value="뇌병변장애">뇌병변장애</option>
+          <option value="시각장애">시각장애</option>
+          <option value="청각장애">청각장애</option>
+          <option value="언어장애">언어장애</option>
+          <option value="지적장애">지적장애</option>
+          <option value="자폐성장애">자폐성장애</option>
+          <option value="정신장애">정신장애</option>
+          <option value="신장장애">신장장애</option>
+          <option value="심장장애">심장장애</option>
+          <option value="호흡기장애">호흡기장애</option>
+          <option value="간장애">간장애</option>
+          <option value="안면장애">안면장애</option>
+          <option value="장루·요루장애">장루·요루장애</option>
+          <option value="뇌전증장애">뇌전증장애</option>
+        </select>
+      </div>
+      <div class="fg"><label>중증도</label>
+        <select id="job-severity">
+          <option value="상관없음">상관없음</option>
+          <option value="중증">중증</option>
+          <option value="경증">경증</option>
         </select>
       </div>
     </div>
-    <div class="fg"><label>근무지</label><input id="job-location" placeholder="예: 서울 강남구"></div>
-    <div class="fg"><label>메모</label><textarea id="job-notes" style="min-height:64px;" placeholder="특이사항, 요구조건 등"></textarea></div>
+    <div class="fg-row fg-2">
+      <div class="fg"><label>근무 형태</label>
+        <input value="재택근무" readonly style="background:#f1f4f9;color:var(--text3);cursor:not-allowed;">
+        <input type="hidden" id="job-worktype" value="재택근무">
+      </div>
+      <div class="fg"><label>기업 주소지</label><input id="job-location" placeholder="예: 서울시 강남구 테헤란로 123"></div>
+    </div>
+    <div class="fg"><label>기업 요구조건</label><textarea id="job-requirements" style="min-height:72px;" placeholder="예: 포토샵 가능자 우대, 주 20시간 근무, OA 기본 가능자 등"></textarea></div>
+    <div class="fg"><label>특이사항</label><textarea id="job-notes" style="min-height:56px;" placeholder="예: 담당자 김과장 선호 조건, 이전 매칭 실패 사유 등"></textarea></div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveJob()"><i class="ti ti-check"></i> 저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('job-modal').style.display='none'">취소</button>
@@ -1465,6 +1490,10 @@ async function renderJobs(){
     return`<tr style="${j.status!=='진행중'?'opacity:.65':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
+      <td style="padding:13px 16px;font-size:12px;color:var(--text2);">
+        ${j.disability_type||'상관없음'}
+        ${j.severity&&j.severity!=='상관없음'?`<span class="badge b-amber" style="font-size:10px;margin-left:4px;">${j.severity}</span>`:''}
+      </td>
       <td style="padding:13px 16px;"><span class="member-pill">${j.member||'—'}</span></td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.deadline?fDate(j.deadline):'—'}</td>
       <td style="padding:13px 16px;font-weight:800;color:${daysColor};">${daysLabel}</td>
@@ -1505,12 +1534,12 @@ function openAddJob(){
   currentJobId=null;
   document.getElementById('job-modal-title').textContent='채용 건 등록';
   document.getElementById('job-delete-btn').style.display='none';
-  ['job-company','job-title','job-disability','job-location','job-notes'].forEach(id=>document.getElementById(id).value='');
+  ['job-company','job-title','job-disability','job-location','job-notes','job-requirements'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-deadline').value='';
   document.getElementById('job-status').value='진행중';
-  document.getElementById('job-worktype').value='';
+  document.getElementById('job-severity').value='상관없음';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option>${p.name}</option>`).join('');
   document.getElementById('job-modal').style.display='flex';
 }
@@ -1526,8 +1555,9 @@ function openEditJob(id){
   document.getElementById('job-deadline').value=j.deadline||'';
   document.getElementById('job-status').value=j.status||'진행중';
   document.getElementById('job-disability').value=j.disability_type||'';
-  document.getElementById('job-worktype').value=j.work_type||'';
+  document.getElementById('job-severity').value=j.severity||'상관없음';
   document.getElementById('job-location').value=j.location||'';
+  document.getElementById('job-requirements').value=j.requirements||'';
   document.getElementById('job-notes').value=j.notes||'';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===j.member?' selected':''}>${p.name}</option>`).join('');
   document.getElementById('job-modal').style.display='flex';
@@ -1544,9 +1574,11 @@ async function saveJob(){
     deadline:document.getElementById('job-deadline').value||null,
     member:document.getElementById('job-member').value,
     status:document.getElementById('job-status').value,
-    disability_type:document.getElementById('job-disability').value.trim(),
-    work_type:document.getElementById('job-worktype').value,
+    disability_type:document.getElementById('job-disability').value,
+    severity:document.getElementById('job-severity').value,
+    work_type:'재택근무',
     location:document.getElementById('job-location').value.trim(),
+    requirements:document.getElementById('job-requirements').value.trim(),
     notes:document.getElementById('job-notes').value.trim(),
     created_by:currentUser?.id||null,created_by_name:myName
   };
