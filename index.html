@@ -498,6 +498,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cold-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
+    <!-- 1행: 대상유형 + 상담주제 -->
     <div class="fg-row fg-2">
       <div class="fg"><label>컨택 대상 유형</label>
         <select id="cold-contact-type" onchange="toggleColdType()">
@@ -509,23 +510,10 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
         </select>
       </div>
       <div class="fg"><label>상담 주제</label>
-        <select id="cold-purpose">
-          <option value="">선택</option>
-        </select>
+        <select id="cold-purpose"><option value="">선택</option></select>
       </div>
     </div>
-        <select id="cold-cat">
-          <option value="복지관">복지관</option>
-          <option value="재활센터">재활센터</option>
-          <option value="특수학교">특수학교</option>
-          <option value="자립생활센터">자립생활센터</option>
-          <option value="협회·협단체">협회·협단체</option>
-          <option value="기업">기업</option>
-          <option value="공공기관">공공기관</option>
-          <option value="기타">기타</option>
-        </select>
-      </div>
-    </div>
+    <!-- 2행: 기관유형 + 기관명 -->
     <div class="fg-row fg-2">
       <div class="fg" id="cold-cat-wrap"><label>기관 유형</label>
         <select id="cold-cat">
@@ -541,22 +529,22 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
       </div>
       <div class="fg"><label id="cold-org-label">기관명 *</label><input id="cold-org" placeholder="컨택한 기관명 또는 개인명" autocomplete="off"></div>
     </div>
+    <!-- 3행: 담당자 이름 + 직책 -->
     <div class="fg-row fg-2">
       <div class="fg"><label id="cold-person-label">담당자 이름</label><input id="cold-person" placeholder="통화한 담당자 이름" autocomplete="off"></div>
       <div class="fg"><label>담당자 직책</label><input id="cold-position" placeholder="예: 팀장, 센터장, 과장" autocomplete="off"></div>
     </div>
+    <!-- 4행: 전화 + 주소 -->
     <div class="fg-row fg-2">
-      <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000"></div>
-      <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..."></div>
+      <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000" autocomplete="off"></div>
+      <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..." autocomplete="off"></div>
     </div>
+    <!-- 5행: 이메일 -->
     <div class="fg"><label>기관 이메일</label>
       <div style="display:flex;align-items:center;gap:6px;">
-        <input id="cold-email-local" placeholder="이메일 앞부분" readonly
-          onfocus="this.removeAttribute('readonly')"
-          autocomplete="off" name="search-email"
-          style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:0;">
-        <span style="font-size:13px;color:var(--text3);font-weight:600;flex-shrink:0;">@</span>
-        <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;max-width:140px;">
+        <input id="cold-email-local" placeholder="이메일 앞부분" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" style="flex:1;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:0;">
+        <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
+        <select id="cold-email-domain" onchange="toggleEmailCustom()" style="font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
           <option value="">직접입력</option>
           <option value="naver.com">naver.com</option>
           <option value="gmail.com">gmail.com</option>
@@ -573,11 +561,10 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
           <option value="Korea.kr">Korea.kr</option>
           <option value="org">org</option>
         </select>
-        <input id="cold-email-custom" placeholder="도메인 입력" readonly
-          onfocus="this.removeAttribute('readonly')"
-          style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:130px;">
+        <input id="cold-email-custom" placeholder="도메인 입력" readonly onfocus="this.removeAttribute('readonly')" style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:130px;">
       </div>
     </div>
+    <!-- 6행: 컨택방법 + 결과 + 담당팀원 -->
     <div class="fg-row fg-3">
       <div class="fg"><label>컨택 방법</label>
         <select id="cold-method" onchange="updateColdTemplate()">
@@ -600,21 +587,22 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
         <select id="cold-member"><option value="">선택</option></select>
       </div>
     </div>
-    <div class="fg"><label>한 줄 요약 *</label><input id="cold-summary" placeholder="예: 담당자 부재, 내일 재연락 / 관심 있음, 자료 요청"></div>
+    <!-- 7행: 한줄요약 -->
+    <div class="fg"><label>한 줄 요약 *</label><input id="cold-summary" placeholder="예: 담당자 부재, 내일 재연락 / 관심 있음, 자료 요청" autocomplete="off"></div>
+    <!-- 8행: 상세내용 -->
     <div class="fg">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label>상세 내용</label>
         <div style="display:flex;gap:6px;">
-          <button onclick="applyColdTemplate('전화')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">📞 전화 템플릿</button>
-          <button onclick="applyColdTemplate('이메일')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">📧 이메일 템플릿</button>
-          <button onclick="applyColdTemplate('방문')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🚶 방문 템플릿</button>
+          <button onclick="applyColdTemplate('전화')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">📞 전화 템플릿</button>
+          <button onclick="applyColdTemplate('이메일')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">📧 이메일 템플릿</button>
+          <button onclick="applyColdTemplate('방문')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">🚶 방문 템플릿</button>
         </div>
       </div>
-      <textarea id="cold-memo" style="min-height:130px;font-family:inherit;" placeholder="상세 내용을 입력하거나 위 템플릿 버튼을 클릭하세요"></textarea>
+      <textarea id="cold-memo" style="min-height:100px;font-family:inherit;" placeholder="상세 내용 입력 또는 위 템플릿 버튼 클릭"></textarea>
     </div>
-    <div class="fg-row fg-2">
-      <div class="fg"><label>컨택 일시</label><input id="cold-date" type="datetime-local"></div>
-    </div>
+    <!-- 9행: 컨택일시 -->
+    <div class="fg" style="max-width:260px;"><label>컨택 일시</label><input id="cold-date" type="datetime-local"></div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveCold()"><i class="ti ti-check"></i> 저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('cold-modal').style.display='none'">취소</button>
