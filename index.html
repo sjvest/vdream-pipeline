@@ -532,7 +532,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
     <!-- 3행: 담당자 이름 + 직책 -->
     <div class="fg-row fg-2">
       <div class="fg"><label id="cold-person-label">담당자 이름</label><input id="cold-person" placeholder="통화한 담당자 이름" autocomplete="off"></div>
-      <div class="fg"><label>담당자 직책</label><input id="cold-position" placeholder="예: 팀장, 센터장, 과장" autocomplete="off"></div>
+      <div class="fg" id="cold-position-wrap"><label>담당자 직책</label><input id="cold-position" placeholder="예: 팀장, 센터장, 과장" autocomplete="off"></div>
     </div>
     <!-- 4행: 전화 + 주소 -->
     <div class="fg-row fg-2">
@@ -1828,6 +1828,8 @@ function toggleColdType(){
   const isOrg=type==='기관';
   const catWrap=document.getElementById('cold-cat-wrap');
   if(catWrap)catWrap.style.display=isOrg?'':'none';
+  const posWrap=document.getElementById('cold-position-wrap');
+  if(posWrap)posWrap.style.display=isOrg?'':'none';
 
   // 라벨 변경
   const orgLabel=document.getElementById('cold-org-label');
@@ -1837,8 +1839,8 @@ function toggleColdType(){
     orgLabel.textContent=labels[type]||'이름 *';
   }
   if(personLabel){
-    const labels={기관:'담당자 이름',재직자:'소속 기관',구직자:'희망 직종',부모님:'자녀 이름',기타개인:'관계'};
-    personLabel.textContent=labels[type]||'담당자';
+    const labels={기관:'담당자 이름',재직자:'담당자 이름',구직자:'담당자 이름',부모님:'담당자 이름',기타개인:'담당자 이름'};
+    personLabel.textContent=labels[type]||'담당자 이름';
   }
 
   // 상담 주제 동적 변경
