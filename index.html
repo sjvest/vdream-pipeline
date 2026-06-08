@@ -881,6 +881,27 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 
 <!-- 수급 등록 모달 -->
+<!-- 인재 수급 상세/수정 모달 -->
+<div id="talent-detail-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+  <div class="modal-head">
+    <div class="modal-title" id="td-title">지원자 상세</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-detail-modal').style.display='none'"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div id="td-info" style="margin-bottom:16px;"></div>
+    <div class="modal-sec-title">상태 변경</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="td-status-btns"></div>
+    <div class="modal-sec-title">메모 수정</div>
+    <div class="fg"><textarea id="td-memo" style="min-height:80px;"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveTalentDetail()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('talent-detail-modal').style.display='none'">닫기</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <div id="talent-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal">
   <div class="modal-head"><div class="modal-title">인재 수급 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
@@ -1626,8 +1647,8 @@ function renderTalent(){
     const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
     const ch=t.channel||'기관연계';
     const orgOrRef=['기관연계','협단체','특수학교'].includes(ch)?org?.name||'—':ch==='소개'?t.referrer||'—':'—';
-    return`<tr>
-      <td style="font-weight:700;font-size:13px;">${t.name}</td>
+    return`<tr onclick="openTalentDetail(${t.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      <td style="padding:14px 16px;font-weight:700;font-size:13px;">${t.name}</td>
       <td><span class="badge ${CHANNEL_BADGE[ch]||'b-gray'}" style="font-size:11px;">${CHANNEL_ICON[ch]||''} ${ch}</span></td>
       <td style="font-size:12px;color:var(--text2);">${orgOrRef}</td>
       <td style="font-size:12px;color:var(--text2);">${t.job||'—'}</td>
@@ -1955,7 +1976,48 @@ function convertToOrg(coldId,orgName){
 }
 
 // ── 채용 건 관리 ──
-let currentJobId=null;
+let currentTalentId=null;
+function openTalentDetail(id){
+  currentTalentId=id;
+  const t=cache.talents.find(x=>x.id===id);if(!t)return;
+  const org=cache.orgs.find(o=>o.id===t.org_id);
+  document.getElementById('td-title').textContent=t.name;
+  document.getElementById('td-memo').value=t.memo||'';
+  document.getElementById('td-info').innerHTML=`
+    <div class="info-row"><span class="info-key">채널</span><span class="badge b-blue" style="font-size:11px;">${t.channel||'기관연계'}</span></div>
+    <div class="info-row"><span class="info-key">연결 기관</span><span>${org?.name||t.referrer||'—'}</span></div>
+    <div class="info-row"><span class="info-key">직무</span><span>${t.job||'—'}</span></div>
+    <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${t.member||'—'}</span></div>
+    <div class="info-row"><span class="info-key">지원일</span><span>${fDate(t.date)}</span></div>
+    <div class="info-row"><span class="info-key">등록자</span><span style="color:var(--accent);font-weight:600;">${t.created_by_name||'—'}</span></div>
+    <div class="info-row"><span class="info-key">현재 상태</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></div>
+  `;
+  const statuses=['지원중','면접','합격','불합격','포기'];
+  const STATUS_COLOR={지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
+  document.getElementById('td-status-btns').innerHTML=statuses.map(s=>`
+    <button onclick="setTalentStatus('${s}')" class="badge ${STATUS_COLOR[s]}" style="padding:8px 16px;cursor:pointer;border:2px solid ${t.status===s?'var(--accent)':'transparent'};font-size:12px;">${s}</button>
+  `).join('');
+  document.getElementById('talent-detail-modal').style.display='flex';
+}
+function setTalentStatus(status){
+  const t=cache.talents.find(x=>x.id===currentTalentId);
+  if(!t)return;
+  t.status=status;
+  // 버튼 강조 업데이트
+  const STATUS_COLOR={지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
+  document.getElementById('td-status-btns').querySelectorAll('button').forEach(btn=>{
+    btn.style.border=btn.textContent.trim()===status?'2px solid var(--accent)':'2px solid transparent';
+  });
+}
+async function saveTalentDetail(){
+  const t=cache.talents.find(x=>x.id===currentTalentId);if(!t)return;
+  const memo=document.getElementById('td-memo').value.trim();
+  const{error}=await sb.from('talents').update({status:t.status,memo}).eq('id',currentTalentId);
+  if(error){toast('오류: '+error.message);return;}
+  t.memo=memo;
+  document.getElementById('talent-detail-modal').style.display='none';
+  toast('저장 완료 ✓');renderTalent();
+}
 async function renderJobs(){
   const{data,error}=await sb.from('jobs').select('*').order('deadline',{ascending:true});
   if(error){toast('오류: '+error.message);return;}
