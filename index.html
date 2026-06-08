@@ -249,6 +249,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
   <button class="nav-item" onclick="nav('actions')"><i class="ti ti-checkbox"></i>후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
   <button class="nav-item" onclick="nav('talent')"><i class="ti ti-users"></i>인재 수급</button>
   <button class="nav-item" onclick="nav('jobs')"><i class="ti ti-briefcase"></i>채용 건 관리</button>
+  <button class="nav-item" onclick="nav('cold')"><i class="ti ti-phone-call"></i>콜드 컨택 로그</button>
   <div class="nav-divider"></div>
   <div class="nav-section">성과</div>
   <button class="nav-item" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리</button>
@@ -453,6 +454,89 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 
 <!-- 팀원 실적 -->
+<!-- 콜드 컨택 로그 -->
+<div id="p-cold" class="page">
+  <div class="page-header">
+    <div class="page-header-left"><div class="page-title">콜드 컨택 로그</div><div class="page-sub">기관 등록 전 전화·메일·문자 시도 기록</div></div>
+    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 컨택 기록 추가</button>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div id="cold-metrics" style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;"></div>
+
+  <!-- 필터 -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <select id="cold-filter-member" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+      <option value="">전체 팀원</option>
+    </select>
+    <select id="cold-filter-result" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+      <option value="">전체 결과</option>
+      <option>부재중</option>
+      <option>거절</option>
+      <option>긍정적</option>
+      <option>재연락 필요</option>
+      <option>기관 등록 전환</option>
+    </select>
+    <input type="date" id="cold-filter-start" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    <span style="font-size:12px;color:var(--text3);">~</span>
+    <input type="date" id="cold-filter-end" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    <button class="btn btn-ghost btn-sm" onclick="clearColdFilter()"><i class="ti ti-x"></i> 초기화</button>
+  </div>
+
+  <!-- 타임라인 목록 -->
+  <div class="card">
+    <div class="card-header"><i class="ti ti-phone-call" style="color:var(--accent)"></i>컨택 이력 <span id="cold-count" style="font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
+    <div class="card-body" id="cold-list"><div class="loading"><div class="spin"></div></div></div>
+  </div>
+</div>
+
+<!-- 콜드 컨택 등록 모달 -->
+<div id="cold-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+  <div class="modal-head">
+    <div class="modal-title">컨택 기록 추가</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cold-modal').style.display='none'"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="fg-row fg-2">
+      <div class="fg"><label>기관명 *</label><input id="cold-org" placeholder="컨택한 기관명"></div>
+      <div class="fg"><label>담당자 이름</label><input id="cold-person" placeholder="통화한 담당자 이름"></div>
+    </div>
+    <div class="fg-row fg-3">
+      <div class="fg"><label>컨택 방법</label>
+        <select id="cold-method">
+          <option value="전화">📞 전화</option>
+          <option value="이메일">📧 이메일</option>
+          <option value="문자">💬 문자</option>
+          <option value="방문">🚶 방문</option>
+        </select>
+      </div>
+      <div class="fg"><label>결과</label>
+        <select id="cold-result">
+          <option value="부재중">📵 부재중</option>
+          <option value="거절">❌ 거절</option>
+          <option value="긍정적">✅ 긍정적</option>
+          <option value="재연락 필요">🔄 재연락 필요</option>
+          <option value="기관 등록 전환">⭐ 기관 등록 전환</option>
+        </select>
+      </div>
+      <div class="fg"><label>담당 팀원</label>
+        <select id="cold-member"><option value="">선택</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>한 줄 요약 *</label><input id="cold-summary" placeholder="예: 담당자 부재, 내일 재연락 / 관심 있음, 자료 요청"></div>
+    <div class="fg"><label>상세 내용</label><textarea id="cold-memo" style="min-height:72px;" placeholder="통화 내용, 반응, 다음 액션 등"></textarea></div>
+    <div class="fg-row fg-2">
+      <div class="fg"><label>컨택 일시</label><input id="cold-date" type="datetime-local"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveCold()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('cold-modal').style.display='none'">취소</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- 채용 건 관리 페이지 -->
 <div id="p-jobs" class="page">
   <div class="page-header">
@@ -897,7 +981,7 @@ const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
 const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
-let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[]};
+let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[]};
 let currentUser=null, currentProfile=null;
 let cardImageBase64=null;
 let trendChart=null;
@@ -1037,7 +1121,7 @@ async function loadAll(){
 }
 function renderCurrent(){
   const id=document.querySelector('.page.active')?.id;
-  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents,'p-jobs':renderJobs};
+  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents,'p-jobs':renderJobs,'p-cold':renderCold};
   if(id&&map[id])map[id]();
 }
 
@@ -1058,7 +1142,7 @@ function nav(page){
   document.getElementById('p-'+page).classList.add('active');
   const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6};
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
-  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs};
+  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold};
   if(r[page])r[page]();
 }
 
@@ -1544,6 +1628,137 @@ function updateMemberSelects(){
   const opts='<option value="">선택</option>'+names.map(n=>`<option>${n}</option>`).join('');
   ['n-member','t-member'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
+// ── 콜드 컨택 로그 ──
+async function renderCold(){
+  const{data,error}=await sb.from('cold_contacts').select('*').order('logged_at',{ascending:false});
+  if(error){toast('오류: '+error.message);return;}
+  cache.cold=data||[];
+
+  // 필터 팀원 목록 업데이트
+  const memberSel=document.getElementById('cold-filter-member');
+  if(memberSel&&cache.profiles.length){
+    const cur=memberSel.value;
+    memberSel.innerHTML='<option value="">전체 팀원</option>'+cache.profiles.map(p=>`<option${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+  }
+
+  // 요약 카드
+  const total=cache.cold.length;
+  const todayStr=today();
+  const todayCount=cache.cold.filter(c=>c.logged_at?.slice(0,10)===todayStr).length;
+  const positive=cache.cold.filter(c=>c.result==='긍정적').length;
+  const converted=cache.cold.filter(c=>c.result==='기관 등록 전환').length;
+  const needFollow=cache.cold.filter(c=>c.result==='재연락 필요').length;
+  document.getElementById('cold-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${total}</div><div class="metric-sub">건 누적</div></div>
+    <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayCount}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">긍정적 반응</div><div class="metric-value" style="color:var(--green);">${positive}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">재연락 필요</div><div class="metric-value" style="color:var(--amber);">${needFollow}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
+  `;
+
+  // 필터 적용
+  const fm=document.getElementById('cold-filter-member')?.value||'';
+  const fr=document.getElementById('cold-filter-result')?.value||'';
+  const fs=document.getElementById('cold-filter-start')?.value||'';
+  const fe=document.getElementById('cold-filter-end')?.value||'';
+  let rows=cache.cold.filter(c=>{
+    if(fm&&c.member!==fm)return false;
+    if(fr&&c.result!==fr)return false;
+    if(fs&&c.logged_at?.slice(0,10)<fs)return false;
+    if(fe&&c.logged_at?.slice(0,10)>fe)return false;
+    return true;
+  });
+
+  document.getElementById('cold-count').textContent=`총 ${rows.length}건`;
+
+  const METHOD_ICON={전화:'📞',이메일:'📧',문자:'💬',방문:'🚶'};
+  const RESULT_CLS={부재중:'b-gray',거절:'b-red',긍정적:'b-green','재연락 필요':'b-amber','기관 등록 전환':'b-teal'};
+
+  document.getElementById('cold-list').innerHTML=rows.length?`
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${rows.map(c=>`
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'📞'}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+              <span style="font-size:13px;font-weight:700;">${c.org_name}</span>
+              ${c.contact_person?`<span style="font-size:11px;color:var(--text3);">${c.contact_person}</span>`:''}
+              <span class="badge ${RESULT_CLS[c.result]||'b-gray'}" style="font-size:10px;">${c.result}</span>
+              ${c.converted_org_id?'<span class="badge b-teal" style="font-size:10px;">✓ 기관 등록됨</span>':''}
+            </div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);">${c.summary||''}</div>
+            ${c.memo?`<div style="font-size:12px;color:var(--text3);margin-top:3px;">${c.memo}</div>`:''}
+            <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text3);">
+              <span>${fDate(c.logged_at?.slice(0,10))} ${fTime(c.logged_at)}</span>
+              ${c.created_by_name?`<span style="color:var(--accent);font-weight:600;">${c.created_by_name}</span>`:''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            ${!c.converted_org_id&&c.result==='긍정적'||c.result==='재연락 필요'?`<button onclick="convertToOrg(${c.id},'${c.org_name.replace(/'/g,"\\'")}')" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;" title="기관으로 등록"><i class="ti ti-building-plus"></i> 기관 등록</button>`:''}
+            ${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`
+  :`<div class="empty">컨택 기록 없음</div>`;
+}
+function clearColdFilter(){
+  ['cold-filter-member','cold-filter-result'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderCold();
+}
+function openAddCold(){
+  ['cold-org','cold-person','cold-summary','cold-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cold-method').value='전화';
+  document.getElementById('cold-result').value='부재중';
+  document.getElementById('cold-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===(currentProfile?.name||'')?` selected`:``}>${p.name}</option>`).join('');
+  // 현재 시간 세팅
+  const now=new Date();
+  const local=new Date(now-now.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  document.getElementById('cold-date').value=local;
+  document.getElementById('cold-modal').style.display='flex';
+}
+async function saveCold(){
+  const orgName=document.getElementById('cold-org').value.trim();
+  const summary=document.getElementById('cold-summary').value.trim();
+  if(!orgName||!summary){toast('기관명과 한 줄 요약은 필수예요');return;}
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const loggedAt=document.getElementById('cold-date').value?new Date(document.getElementById('cold-date').value).toISOString():new Date().toISOString();
+  const row={
+    org_name:orgName,
+    contact_person:document.getElementById('cold-person').value.trim(),
+    method:document.getElementById('cold-method').value,
+    result:document.getElementById('cold-result').value,
+    member:document.getElementById('cold-member').value,
+    summary,
+    memo:document.getElementById('cold-memo').value.trim(),
+    logged_at:loggedAt,
+    created_by:currentUser?.id||null,
+    created_by_name:myName
+  };
+  const{error}=await sb.from('cold_contacts').insert(row);
+  if(error){toast('오류: '+error.message);return;}
+  document.getElementById('cold-modal').style.display='none';
+  toast('컨택 기록 추가됨 ✓');
+  renderCold();
+}
+async function deleteCold(id){
+  if(!confirm('이 컨택 기록을 삭제하시겠어요?'))return;
+  const{error}=await sb.from('cold_contacts').delete().eq('id',id);
+  if(error){toast('오류: '+error.message);return;}
+  toast('삭제 완료');renderCold();
+}
+function convertToOrg(coldId,orgName){
+  // 기관 등록 페이지로 이동하면서 기관명 자동 입력
+  nav('add-org');
+  setTimeout(()=>{
+    const nameEl=document.getElementById('n-name');
+    if(nameEl){nameEl.value=orgName;nameEl.focus();}
+    toast(`"${orgName}" 기관 등록 페이지로 이동했어요!`);
+  },300);
+  // 전환 완료 표시 (나중에 org_id 연결)
+  window._coldConvertId=coldId;
+}
+
 // ── 채용 건 관리 ──
 let currentJobId=null;
 async function renderJobs(){
@@ -1839,6 +2054,8 @@ function renderTeam(){
     const placed=cache.talents.filter(t=>t.member===name&&t.status==='합격').length;
     const pending=mine.reduce((a,o)=>a+actionsForOrg(o.id).filter(x=>!x.done).length,0);
     const logs=cache.logs.filter(l=>l.created_by_name===name).length;
+    const coldCount=(cache.cold||[]).filter(c=>c.created_by_name===name).length;
+    const totalContact=logs+coldCount;
     const bg=colors[i%colors.length];
     const tx=txcolors[i%txcolors.length];
     const statusLabel=p.status_emoji||p.status?`${p.status_emoji||''} ${p.status||''}`.trim():'';
@@ -1859,6 +2076,8 @@ function renderTeam(){
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">MOU 체결</span><span style="font-weight:700;color:var(--teal);">${mou}건</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">합격자</span><span style="font-weight:700;color:var(--green);">${placed}명</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">컨택 히스토리</span><span style="font-weight:700;color:var(--accent);">${logs}건</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">콜드 컨택</span><span style="font-weight:700;color:var(--purple);">${coldCount}건</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">전체 컨택</span><span style="font-weight:700;color:var(--text);">${totalContact}건</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:var(--text3);">미완료 액션</span><span style="font-weight:700;color:${pending>0?'var(--amber)':'var(--text3)'};">${pending}건</span></div>
       </div>
     </div></div>`;
