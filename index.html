@@ -491,8 +491,8 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 </div>
 
 <!-- 콜드 컨택 등록 모달 -->
-<div id="cold-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
-<div class="modal modal-wide">
+<div id="cold-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal modal-wide" style="max-width:660px;width:100%;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
     <div class="modal-title">컨택 기록 추가</div>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cold-modal').style.display='none'"><i class="ti ti-x"></i></button>
