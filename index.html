@@ -379,7 +379,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="page-title" id="add-org-title">기관 등록</div>
       <div class="page-sub" id="add-org-sub">새 기관을 등록합니다</div>
     </div>
-    <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()"><i class="ti ti-x"></i> 신규 등록으로 전환</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="draft-status" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;"></span>
+      <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()"><i class="ti ti-x"></i> 신규 등록으로 전환</button>
+    </div>
   </div>
 
   <!-- 기관 검색 (수정 모드) -->
@@ -2468,8 +2471,10 @@ function saveDraft(type){
         savedAt:new Date().toISOString()
       };
     }
-    if(Object.values(data).some(v=>v&&v!==data.savedAt))
+    if(Object.values(data).some(v=>v&&v!==data.savedAt)){
       localStorage.setItem(DRAFT_KEYS[type],JSON.stringify(data));
+      if(type==='org')showDraftStatus();
+    }
   }catch(e){}
 }
 function loadDraft(type){
@@ -2559,6 +2564,45 @@ function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
 function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
 function executeConfirm(){closeConfirm();if(confirmCallback)confirmCallback();}
 
+function showDraftStatus(){
+  const el=document.getElementById('draft-status');
+  if(!el)return;
+  const now=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Seoul'});
+  el.style.display='inline-block';
+  el.style.background='#ecfdf3';
+  el.style.color='#027a48';
+  el.style.border='1px solid #6ce9a6';
+  el.textContent=`✅ 임시저장됨 ${now}`;
+}
+function hideDraftStatus(){
+  const el=document.getElementById('draft-status');
+  if(el)el.style.display='none';
+}
+function showDraftSaving(){
+  const el=document.getElementById('draft-status');
+  if(!el)return;
+  el.style.display='inline-block';
+  el.style.background='#f8f9fc';
+  el.style.color='var(--text3)';
+  el.style.border='1px solid var(--border)';
+  el.textContent='⏳ 저장 중...';
+}
+  const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
+  const t=iconMap[type]||iconMap.danger;
+  document.getElementById('confirm-icon').style.background=t.bg;
+  document.getElementById('confirm-icon').style.color=t.color;
+  document.getElementById('confirm-icon').textContent=t.icon;
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-sub').textContent=sub||'';
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok-btn').textContent=okLabel;
+  document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
+  confirmCallback=onOk;
+  document.getElementById('confirm-modal').style.display='flex';
+}
+function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
+function executeConfirm(){closeConfirm();if(confirmCallback)confirmCallback();}
+
 // ── 감사 로그 ──
 async function writeAuditLog(action,targetType,targetName,detail={}){
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
@@ -2610,9 +2654,11 @@ let orgDraftTimer=null;
 function startOrgDraftTimer(){
   if(orgDraftTimer)clearInterval(orgDraftTimer);
   orgDraftTimer=setInterval(()=>{
-    if(document.getElementById('p-add-org')?.classList.contains('active')&&!editOrgId)
-      saveDraft('org');
-  },3000);
+    if(document.getElementById('p-add-org')?.classList.contains('active')&&!editOrgId){
+      showDraftSaving();
+      setTimeout(()=>{saveDraft('org');},500);
+    }
+  },5000);
 }
 function setContactMode(mode){
   document.getElementById('contact-change-wrap').style.display=mode==='change'?'block':'none';
@@ -3423,7 +3469,7 @@ async function saveOrg(){
     if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
-  clearOrgForm();clearDraft('org');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
+  clearOrgForm();clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
   toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
 }
 function clearOrgForm(){
