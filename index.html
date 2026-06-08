@@ -2443,6 +2443,8 @@ function saveDraft(type){
         memo:document.getElementById('n-memo')?.value||'',
         savedAt:new Date().toISOString()
       };
+      // 기관명 없으면 저장 안 함
+      if(!data.name){clearDraft('org');return;}
     } else if(type==='cold'){
       data={
         contact_type:document.getElementById('cold-contact-type')?.value||'',
