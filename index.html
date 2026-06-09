@@ -205,6 +205,28 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
+
+/* ── 모바일 반응형 ── */
+#mobile-header{display:none;}
+@media(max-width:768px){
+  body>div[style*="display:flex"]{flex-direction:column!important;}
+  .sidebar{width:100%!important;flex-direction:column;overflow:hidden;max-height:0;transition:max-height .3s ease;padding:0!important;}
+  .sidebar.open{max-height:100vh;}
+  .logo{display:none!important;}
+  #mobile-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sidebar);position:sticky;top:0;z-index:100;}
+  #mobile-header .m-logo{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+  #mobile-header .m-menu{background:none;border:none;cursor:pointer;padding:6px;color:#fff;font-size:22px;line-height:1;}
+  #mobile-header .m-alarm{background:none;border:none;cursor:pointer;padding:6px;color:rgba(255,255,255,.7);font-size:18px;line-height:1;}
+  .page{padding:16px 14px 48px!important;}
+  .page-header{flex-direction:column;align-items:flex-start!important;gap:8px!important;}
+  .page-title{font-size:18px!important;}
+  .metrics{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;}
+  .modal-overlay{align-items:flex-end!important;}
+  .modal,.modal-wide{max-width:100%!important;width:100%!important;border-radius:16px 16px 0 0!important;max-height:92vh!important;}
+  .config-box{width:90%!important;max-width:360px;}
+  .sidebar-bottom{display:none!important;}
+  .nav-item{padding:12px 16px!important;font-size:13px!important;}
+}
 </style>
 </head>
 <body>
@@ -243,6 +265,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 <div id="toast" class="toast"></div>
 <div class="app">
+<div id="mobile-header">
+  <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn">☰</button>
+  <span class="m-logo">V:Dream 파이프라인</span>
+  <button class="m-alarm" onclick="nav('dashboard')"><i class="ti ti-bell"></i></button>
+</div>
 <div class="sidebar">
   <div class="logo" style="padding:16px 18px 14px;">
     <div style="background:#fff;border-radius:8px;padding:8px 10px;display:inline-block;">
@@ -1499,7 +1526,14 @@ function actionsForOrg(id){return cache.actions.filter(a=>a.org_id===id);}
 function urgentActions(){return cache.actions.filter(a=>!a.done&&dayDiff(a.due)<=3);}
 function updateUrgentCount(){const c=urgentActions().length;const el=document.getElementById('urgent-cnt');el.textContent=c;el.style.display=c?'':'none';}
 
+function toggleMobileNav(){
+  const sb=document.querySelector('.sidebar');
+  sb.classList.toggle('open');
+  document.getElementById('m-menu-btn').textContent=sb.classList.contains('open')?'✕':'☰';
+}
 function nav(page){
+  const sb=document.querySelector('.sidebar');
+  if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').textContent='☰';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('p-'+page).classList.add('active');
