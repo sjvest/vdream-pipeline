@@ -459,6 +459,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>MOU 예정일</label><input id="n-mou-date" type="date"></div>
       </div>
       <div class="fg"><label>메모</label><textarea id="n-memo" placeholder="미팅 내용, 기관 니즈, 특이사항 등"></textarea></div>
+      <div class="fg"><label>기관 웹사이트</label><div style="display:flex;align-items:center;gap:8px;"><input id="n-website" placeholder="https://www.example.or.kr" style="flex:1;" oninput="validateOrgUrl(this)"><button type="button" id="n-website-btn" onclick="openOrgUrl()" style="display:none;padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;white-space:nowrap;"><i class="ti ti-external-link"></i> 열기</button></div></div>
     </div>
     <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
     <div class="form-section" id="member-history-section" style="display:none;">
@@ -2844,6 +2845,7 @@ function loadOrgForEdit(orgId){
   document.getElementById('n-date').value=o.date||'';
   document.getElementById('n-mou-date').value=o.mou_date||'';
   document.getElementById('n-memo').value=o.memo||'';
+  document.getElementById('n-website').value=o.website||'';
   // 이메일 채우기
   const emailEl=document.getElementById('n-email');
   if(emailEl&&o.email){
@@ -2895,6 +2897,8 @@ document.addEventListener('click',e=>{
     if(dd)dd.style.display='none';
   }
 });
+function validateOrgUrl(input){const val=input.value.trim();const btn=document.getElementById('n-website-btn');if(val){btn.style.display='inline-flex';}else{btn.style.display='none';}}
+function openOrgUrl(){const url=document.getElementById('n-website').value.trim();if(url)window.open(url,'_blank','noopener');}
 function toggleOrgEmailCustom(){
   const domain=document.getElementById('n-email-domain').value;
   const custom=document.getElementById('n-email-custom');
@@ -3594,6 +3598,7 @@ async function saveOrg(){
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
     date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,memo:document.getElementById('n-memo').value.trim(),
+    website:document.getElementById('n-website').value.trim()||null,
   };
 
   // ── 수정 모드 ──
@@ -3718,6 +3723,7 @@ function openOrg(id){
     </div>
     <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
     <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
+    <div class="info-row"><span class="info-key">웹사이트</span><span>${o.website?`<a href="${o.website}" target="_blank" style="color:var(--accent);text-decoration:none;">${o.website} <i class="ti ti-external-link"></i></a>`:'—'}</span></div>
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
     <div class="info-row"><span class="info-key">등록자</span><span style="font-size:12px;font-weight:600;color:var(--accent);">${o.created_by_name||'—'}</span></div>
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
