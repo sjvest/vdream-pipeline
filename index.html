@@ -213,10 +213,20 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="config-box">
     <img src="logo.png" alt="V:Dream" style="width:160px;height:auto;display:block;margin:0 auto 16px;">
     <h2 style="margin-bottom:4px;text-align:center;">파이프라인 로그인</h2>
-    <p style="text-align:center;">이메일과 비밀번호로 로그인하세요.</p>
-    <label>이메일</label><input id="login-email" type="email" placeholder="example@vdream.co.kr">
-    <label>비밀번호</label><input id="login-pw" type="password" placeholder="비밀번호 입력">
-    <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;margin-top:4px;">로그인</button>
+    <div style="display:flex;gap:0;margin-bottom:18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+      <button id="tab-member" onclick="switchLoginTab('member')" style="flex:1;padding:9px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;">팀원 로그인</button>
+      <button id="tab-guest" onclick="switchLoginTab('guest')" style="flex:1;padding:9px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:var(--surface);color:var(--text2);">게스트 보기</button>
+    </div>
+    <div id="login-member-form">
+      <label>이메일</label><input id="login-email" type="email" placeholder="example@vdream.co.kr" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+      <label>비밀번호</label><input id="login-pw" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;margin-top:4px;">로그인</button>
+    </div>
+    <div id="login-guest-form" style="display:none;">
+      <p style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:12px;">조회 전용 모드입니다.<br>데이터 수정은 불가능합니다.</p>
+      <label>게스트 비밀번호</label><input id="guest-pw" type="password" placeholder="게스트 비밀번호 입력" onkeydown="if(event.key==='Enter')doGuestLogin()">
+      <button class="btn btn-primary" onclick="doGuestLogin()" style="width:100%;justify-content:center;margin-top:4px;background:var(--purple);">게스트로 보기</button>
+    </div>
     <p class="note" id="login-err" style="color:#c0200f;display:none;margin-top:8px;"></p>
   </div>
 </div>
@@ -1307,7 +1317,31 @@ const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[]};
-let currentUser=null, currentProfile=null;
+let currentUser=null, currentProfile=null, isGuest=false;
+function switchLoginTab(tab){
+  const isMember=tab==='member';
+  document.getElementById('login-member-form').style.display=isMember?'block':'none';
+  document.getElementById('login-guest-form').style.display=isMember?'none':'block';
+  document.getElementById('tab-member').style.background=isMember?'var(--accent)':'var(--surface)';
+  document.getElementById('tab-member').style.color=isMember?'#fff':'var(--text2)';
+  document.getElementById('tab-guest').style.background=isMember?'var(--surface)':'var(--purple)';
+  document.getElementById('tab-guest').style.color=isMember?'var(--text2)':'#fff';
+  document.getElementById('login-err').style.display='none';
+}
+function doGuestLogin(){
+  const pw=document.getElementById('guest-pw').value;
+  const errEl=document.getElementById('login-err');
+  if(pw!=='vdream2026'){errEl.textContent='비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
+  isGuest=true;
+  document.getElementById('login-banner').style.display='none';
+  document.getElementById('user-avatar').textContent='👁';
+  document.getElementById('user-name').textContent='게스트';
+  document.getElementById('user-status-label').textContent='읽기 전용';
+  document.getElementById('conn-dot').className='conn-dot connected';
+  document.getElementById('conn-label').textContent='게스트';
+  loadAll();
+  toast('게스트 모드로 접속했습니다 (읽기 전용)');
+}
 let cardImageBase64=null;
 let trendChart=null;
 let currentChartMode='week';
@@ -2022,6 +2056,7 @@ function openAddTalent(){
   document.getElementById('talent-modal').style.display='flex';
 }
 async function saveTalent(){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const name=document.getElementById('t-name').value.trim();
   const channel=document.getElementById('t-channel').value;
   const needsOrg=['기관연계','협단체','특수학교'].includes(channel);
@@ -3013,6 +3048,7 @@ function openAddCold(){
   setTimeout(()=>loadDraft('cold'),200);
 }
 async function saveCold(){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const orgName=document.getElementById('cold-org').value.trim();
   const summary=document.getElementById('cold-summary').value.trim();
   if(!orgName||!summary){toast('기관명과 한 줄 요약은 필수예요');return;}
@@ -3605,6 +3641,7 @@ function addActionField(){
   document.getElementById('action-form-list').appendChild(div);
 }
 async function saveOrg(){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const name=document.getElementById('n-name').value.trim();
   if(!name){toast('기관명을 입력하세요');return;}
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
