@@ -356,6 +356,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </select>
     </div>
   </div>
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="flex:1;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;"><i class="ti ti-x"></i> 초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
   <div class="card">
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
@@ -1817,11 +1818,8 @@ function renderPipeline(){
 }
 
 // ── 기관 목록 ──
-function renderOrgs(){
-  const fc=document.getElementById('filter-cat').value;
-  const fs=document.getElementById('filter-stage-orgs').value;
-  const now=new Date();
-  let rows=cache.orgs.filter(o=>(fc?o.cat===fc:true)&&(fs!==''?String(o.stage)===fs:true));
+function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';renderOrgs();}
+function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
   document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
     const oa=actionsForOrg(o.id);
     const pending=oa.filter(a=>!a.done).length,urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
