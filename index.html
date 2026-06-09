@@ -1968,6 +1968,7 @@ function handleOrgSearchKey(e){
     dd.style.display='none';
   }
 }
+function searchOrg(q){
   const dd=document.getElementById('t-org-dropdown');
   const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,10);
   if(!results.length&&!q){dd.style.display='none';return;}
