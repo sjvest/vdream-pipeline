@@ -1426,14 +1426,17 @@ async function doLogout(){
 }
 async function loadAll(){
   try{
-    const [o,a,t,l,p]=await Promise.all([
+    const [o,a,t,l,p,ev,jb,cc]=await Promise.all([
       sb.from('orgs').select('*').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
       sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
       sb.from('profiles').select('id,name,role,status,status_emoji,sort_order').order('sort_order',{ascending:true}),
+      sb.from('events').select('*').order('date',{ascending:false}),
+      sb.from('jobs').select('*').order('created_at',{ascending:false}),
+      sb.from('cold_contacts').select('*').order('logged_at',{ascending:false}),
     ]);
-    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];
+    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];cache.events=ev.data||[];cache.jobs=jb.data||[];cache.cold=cc.data||[];
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
@@ -4173,9 +4176,7 @@ function renderMetricPeriod(){
 (function init(){
   document.addEventListener('click',closeStatusDropdown);
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  const url=localStorage.getItem('vd_sb_url'),key=localStorage.getItem('vd_sb_key');
-  if(url&&key){initSupabase(url,key);}
-  else{document.getElementById('config-banner').style.display='flex';document.getElementById('conn-dot').className='conn-dot';document.getElementById('conn-label').textContent='미연결';}
+  const FIXED_URL='https://kpmhawrpkzshjlmjvnev.supabase.co';const FIXED_KEY='sb_publishable_0_mp2KDwPcq0A9ZCEhatjg_2x-B6W1d';localStorage.setItem('vd_sb_url',FIXED_URL);localStorage.setItem('vd_sb_key',FIXED_KEY);initSupabase(FIXED_URL,FIXED_KEY);
 })();
 </script>
 </body>
