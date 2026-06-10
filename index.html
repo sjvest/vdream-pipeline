@@ -309,8 +309,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
     </div>
     <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">미팅 내용</div>
-      <textarea id="m-meeting-content" placeholder="미팅에서 나온 내용을 자유롭게 입력하세요..." style="width:100%;min-height:140px;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);resize:vertical;line-height:1.6;"></textarea>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">📌 미팅 제목</div>
+      <input id="m-meeting-title" placeholder="예: 1차 미팅, 담당자 통화, 제안서 전달" style="width:100%;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);">
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">📝 미팅 내용</div>
+      <textarea id="m-meeting-content" placeholder="미팅에서 나온 내용, 기관 니즈, 특이사항 등을 자유롭게 입력하세요..." style="width:100%;min-height:140px;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);resize:vertical;line-height:1.6;"></textarea>
     </div>
     <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
       <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">다음 액션 (선택)</div>
@@ -1654,18 +1658,19 @@ function addTheirMember(){
 function removeTheirMember(i){mTheirMembers.splice(i,1);document.getElementById('m-their-members').innerHTML=mTheirMembers.map((m,i)=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);"><span style="font-size:14px;font-weight:600;">'+m.name+' <span style="color:var(--text3);">'+m.title+'</span></span><button onclick="removeTheirMember('+i+')" style="background:none;border:none;color:var(--text3);cursor:pointer;">x</button></div>').join('');}
 async function saveMobileMeeting(){
   if(!mSelectedOrgId){toast('기관을 선택해주세요.');return;}
+  const title=document.getElementById('m-meeting-title')?.value.trim()||'';
   const content=document.getElementById('m-meeting-content').value.trim();
+  if(!title){toast('미팅 제목을 입력해주세요.');return;}
   if(!content){toast('미팅 내용을 입력해주세요.');return;}
   const date=document.getElementById('m-meeting-date').value;
   const ourStr=mOurSelected.join(', ');
   const theirStr=mTheirMembers.map(m=>m.title?m.name+'('+m.title+')':m.name).join(', ');
-  const summary='[참석] 우리: '+(ourStr||'미입력')+' / 기관: '+(theirStr||'미입력')+'\n'+content;
   const nextAction=document.getElementById('m-next-action').value.trim();
   const nextDue=document.getElementById('m-next-due').value;
   const btn=document.querySelector('#mtab-content-meeting button[onclick="saveMobileMeeting()"]');
   btn.textContent='저장 중...';btn.disabled=true;
   try{
-    const{error}=await sb.from('contact_logs').insert({org_id:mSelectedOrgId,date:date?date.slice(0,10):new Date().toISOString().slice(0,10),summary,logged_at:new Date().toISOString(),created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});
+    const{error}=await sb.from('contact_logs').insert({org_id:mSelectedOrgId,date:date?date.slice(0,10):new Date().toISOString().slice(0,10),summary:title,memo:content,our_members:ourStr||null,their_members:theirStr||null,logged_at:new Date().toISOString(),created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});
     if(error)throw error;
     if(nextAction){await sb.from('actions').insert({org_id:mSelectedOrgId,content:nextAction,due:nextDue||null,status:'pending',member:mOurSelected[0]||'',created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});}
     await loadAll();
@@ -3992,11 +3997,15 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
     <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
-    <div style="display:flex;gap:8px;margin-bottom:4px;">
-      <input id="log-summary" placeholder="한 줄 요약 (예: 담당자 통화, 미팅 일정 확정)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+    <div style="display:flex;gap:8px;margin-bottom:6px;">
+      <input id="log-summary" placeholder="미팅 제목 (예: 1차 미팅, 담당자 통화)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
     </div>
-    <textarea id="log-memo" placeholder="상세 내용 (선택)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:56px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:6px;">
+      <input id="log-our-members" placeholder="우리 측 참석자 (예: 임세진, 이재성)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="log-their-members" placeholder="기관 측 참석자 (예: 박창영 센터장)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+    </div>
+    <textarea id="log-memo" placeholder="미팅 내용 상세 (니즈, 특이사항, 논의 내용 등)" style="width:100%;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);min-height:72px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
     ${o.stage===5?`
     <div style="background:var(--green-bg);border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
@@ -4080,13 +4089,16 @@ function toggleLogDetail(id){
   if(icon)icon.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
 }
 async function addContactLog(orgId){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const summary=document.getElementById('log-summary').value.trim();
   const memo=document.getElementById('log-memo').value.trim();
   const date=document.getElementById('log-date').value||today();
-  if(!summary){toast('한 줄 요약을 입력하세요');return;}
+  const ourMembers=document.getElementById('log-our-members')?.value.trim()||'';
+  const theirMembers=document.getElementById('log-their-members')?.value.trim()||'';
+  if(!summary){toast('미팅 제목을 입력하세요');return;}
   const now=new Date().toISOString();
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
-  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName,our_members:ourMembers||null,their_members:theirMembers||null}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.logs.unshift(data);
   await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
