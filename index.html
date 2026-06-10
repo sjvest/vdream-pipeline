@@ -1565,7 +1565,7 @@ async function loadAll(){
       sb.from('orgs').select('*').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
-      sb.from('contact_logs').select('id,org_id,date,summary,memo,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
+      sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
       sb.from('profiles').select('id,name,role,status,status_emoji,sort_order').order('sort_order',{ascending:true}),
       sb.from('events').select('*').order('date',{ascending:false}),
       sb.from('jobs').select('*').order('created_at',{ascending:false}),
