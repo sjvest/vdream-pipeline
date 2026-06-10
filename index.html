@@ -4076,6 +4076,7 @@ function renderContactLogs(orgId){
         ${hasMemo?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
         <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
       </div>
+      ${(l.our_members||l.their_members)?`<div style="margin:6px 0 2px 22px;font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">${l.our_members?`<span>👥 우리: <b style="color:var(--text2);">${l.our_members}</b></span>`:``}${l.their_members?`<span>🏢 기관: <b style="color:var(--text2);">${l.their_members}</b></span>`:``}</div>`:''}
       ${hasMemo?`<div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">${l.memo}</div>`:''}
     </div>`;
   }).join('');
@@ -4179,10 +4180,12 @@ async function execDelete(){
 }
 
 async function addActionFromModal(orgId){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const text=document.getElementById('new-action-text').value.trim();
   const due=document.getElementById('new-action-due').value;
   if(!text){toast('액션 내용을 입력하세요');return;}
-  const {data,error}=await sb.from('actions').insert({org_id:orgId,text,due:due||null,done:false}).select().single();
+  const myName=currentProfile?.name||'';
+  const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,done:false,status:'pending',member:myName,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.actions.push(data);
   toast('액션 추가됨 ✓');updateUrgentCount();openOrg(orgId);
