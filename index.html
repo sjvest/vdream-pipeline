@@ -269,11 +269,69 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 </div>
 <div id="toast" class="toast"></div>
+
+<!-- 모바일 미팅 입력 화면 -->
+<div id="mobile-meeting-app" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;font-family:'Pretendard',sans-serif;">
+  <div style="background:var(--sidebar);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="color:#fff;font-size:15px;font-weight:800;">미팅 기록</div>
+    <button onclick="closeMobileMeeting()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;">닫기</button>
+  </div>
+  <div style="display:flex;background:var(--surface);border-bottom:2px solid var(--border);flex-shrink:0;">
+    <button id="mtab-meeting" onclick="switchMobileTab('meeting')" style="flex:1;padding:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:none;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">미팅 입력</button>
+    <button id="mtab-action" onclick="switchMobileTab('action')" style="flex:1;padding:12px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">오늘 할 일</button>
+    <button id="mtab-search" onclick="switchMobileTab('search')" style="flex:1;padding:12px;font-size:13px;font-weight:600;border:none;cursor:pointer;background:none;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">기관 조회</button>
+  </div>
+  <div id="mtab-content-meeting" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;">
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">기관 선택</div>
+      <input id="m-org-search" placeholder="기관명 검색..." oninput="searchMobileOrg(this.value)" style="width:100%;font-size:15px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);">
+      <div id="m-org-dropdown" style="display:none;margin-top:6px;border:1.5px solid var(--accent);border-radius:10px;overflow:hidden;max-height:200px;overflow-y:auto;"></div>
+      <div id="m-org-selected" style="display:none;margin-top:8px;padding:10px 14px;background:var(--accent-bg);border-radius:10px;align-items:center;justify-content:space-between;">
+        <span id="m-org-name" style="font-size:14px;font-weight:700;color:var(--accent);"></span>
+        <button onclick="clearMobileOrg()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;">x</button>
+      </div>
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">미팅 일시</div>
+      <input id="m-meeting-date" type="datetime-local" style="width:100%;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);">
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">우리 측 참석자</div>
+      <div id="m-our-members" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">기관 측 참석자</div>
+      <div id="m-their-members" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="m-their-name" placeholder="이름" style="flex:1;font-size:14px;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
+        <input id="m-their-title" placeholder="직책" style="flex:1;font-size:14px;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
+        <button onclick="addTheirMember()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:18px;">+</button>
+      </div>
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">미팅 내용</div>
+      <textarea id="m-meeting-content" placeholder="미팅에서 나온 내용을 자유롭게 입력하세요..." style="width:100%;min-height:140px;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);resize:vertical;line-height:1.6;"></textarea>
+    </div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">다음 액션 (선택)</div>
+      <input id="m-next-action" placeholder="예: 제안서 송부, 담당자 재컨택..." style="width:100%;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);margin-bottom:8px;">
+      <input id="m-next-due" type="date" style="width:100%;font-size:14px;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);">
+    </div>
+    <button onclick="saveMobileMeeting()" style="width:100%;padding:18px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;margin-bottom:20px;">미팅 기록 저장</button>
+  </div>
+  <div id="mtab-content-action" style="flex:1;overflow-y:auto;padding:16px;display:none;">
+    <div id="m-today-actions" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+  <div id="mtab-content-search" style="flex:1;overflow-y:auto;padding:16px;display:none;">
+    <input id="m-search-kw" placeholder="기관명 검색..." oninput="renderMobileOrgList(this.value)" style="width:100%;font-size:15px;padding:14px;border:1.5px solid var(--border);border-radius:12px;box-sizing:border-box;background:var(--surface);margin-bottom:12px;">
+    <div id="m-org-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
 <div id="app-wrap" style="display:flex;flex-direction:column;height:100vh;">
 <div id="mobile-header">
   <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn">☰</button>
   <span class="m-logo">V:Dream 파이프라인</span>
-  <button class="m-alarm" onclick="nav('dashboard')"><i class="ti ti-bell"></i></button>
+  <button onclick="openMobileMeeting()" style="background:var(--accent);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;">+ 미팅</button>
 </div>
 <div class="app">
 <div class="sidebar">
@@ -1532,6 +1590,104 @@ function actionsForOrg(id){return cache.actions.filter(a=>a.org_id===id);}
 function urgentActions(){return cache.actions.filter(a=>!a.done&&dayDiff(a.due)<=3);}
 function updateUrgentCount(){const c=urgentActions().length;const el=document.getElementById('urgent-cnt');el.textContent=c;el.style.display=c?'':'none';}
 
+let mSelectedOrgId=null,mTheirMembers=[],mOurSelected=[];
+function openMobileMeeting(){
+  if(!currentUser&&!isGuest){toast('로그인 후 이용하세요.');return;}
+  if(isGuest){toast('게스트 모드에서는 미팅 입력이 불가합니다.');return;}
+  const app=document.getElementById('mobile-meeting-app');
+  app.style.display='flex';
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  document.getElementById('m-meeting-date').value=now.toISOString().slice(0,16);
+  const members=cache.profiles.map(p=>p.name);
+  document.getElementById('m-our-members').innerHTML=members.map(name=>'<label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);cursor:pointer;font-size:14px;font-weight:600;"><input type="checkbox" value="'+name+'" onchange="toggleOurMember(\''+name+'\',this.checked)" style="width:18px;height:18px;accent-color:var(--accent);">'+name+'</label>').join('');
+  if(currentProfile&&currentProfile.name){setTimeout(()=>{document.querySelectorAll('#m-our-members input').forEach(cb=>{if(cb.value===currentProfile.name){cb.checked=true;mOurSelected=[currentProfile.name];}});},100);}
+  mTheirMembers=[];mSelectedOrgId=null;mOurSelected=[];
+  document.getElementById('m-org-search').value='';
+  document.getElementById('m-org-dropdown').style.display='none';
+  document.getElementById('m-org-selected').style.display='none';
+  document.getElementById('m-their-members').innerHTML='';
+  document.getElementById('m-meeting-content').value='';
+  document.getElementById('m-next-action').value='';
+  document.getElementById('m-next-due').value='';
+  switchMobileTab('meeting');
+}
+function closeMobileMeeting(){document.getElementById('mobile-meeting-app').style.display='none';}
+function switchMobileTab(tab){
+  ['meeting','action','search'].forEach(t=>{
+    const c=document.getElementById('mtab-content-'+t);
+    c.style.display=t===tab?'flex':'none';
+    if(t===tab)c.style.flexDirection='column';
+    const b=document.getElementById('mtab-'+t);
+    b.style.color=t===tab?'var(--accent)':'var(--text3)';
+    b.style.borderBottomColor=t===tab?'var(--accent)':'transparent';
+    b.style.fontWeight=t===tab?'700':'600';
+  });
+  if(tab==='action')renderMobileTodayActions();
+  if(tab==='search')renderMobileOrgList('');
+}
+function searchMobileOrg(q){
+  const dd=document.getElementById('m-org-dropdown');
+  if(!q){dd.style.display='none';return;}
+  const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,8);
+  if(!results.length){dd.style.display='none';return;}
+  dd.style.display='block';
+  dd.innerHTML=results.map(o=>'<div onclick="selectMobileOrg(\''+o.id+'\',\''+o.name.replace(/\'/g,"\\'")+'\')\" style="padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:1px solid var(--border);background:var(--surface);">'+o.name+'<span style="font-size:11px;color:var(--text3);margin-left:8px;">'+(o.cat||'')+'</span></div>').join('');
+}
+function selectMobileOrg(id,name){
+  mSelectedOrgId=id;
+  document.getElementById('m-org-search').value='';
+  document.getElementById('m-org-dropdown').style.display='none';
+  document.getElementById('m-org-selected').style.display='flex';
+  document.getElementById('m-org-name').textContent=name;
+}
+function clearMobileOrg(){mSelectedOrgId=null;document.getElementById('m-org-selected').style.display='none';document.getElementById('m-org-search').value='';}
+function toggleOurMember(name,checked){if(checked){if(!mOurSelected.includes(name))mOurSelected.push(name);}else{mOurSelected=mOurSelected.filter(n=>n!==name);}}
+function addTheirMember(){
+  const name=document.getElementById('m-their-name').value.trim();
+  const title=document.getElementById('m-their-title').value.trim();
+  if(!name)return;
+  mTheirMembers.push({name,title});
+  document.getElementById('m-their-name').value='';
+  document.getElementById('m-their-title').value='';
+  document.getElementById('m-their-members').innerHTML=mTheirMembers.map((m,i)=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);"><span style="font-size:14px;font-weight:600;">'+m.name+' <span style="color:var(--text3);">'+m.title+'</span></span><button onclick="removeTheirMember('+i+')" style="background:none;border:none;color:var(--text3);cursor:pointer;">x</button></div>').join('');
+}
+function removeTheirMember(i){mTheirMembers.splice(i,1);document.getElementById('m-their-members').innerHTML=mTheirMembers.map((m,i)=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);"><span style="font-size:14px;font-weight:600;">'+m.name+' <span style="color:var(--text3);">'+m.title+'</span></span><button onclick="removeTheirMember('+i+')" style="background:none;border:none;color:var(--text3);cursor:pointer;">x</button></div>').join('');}
+async function saveMobileMeeting(){
+  if(!mSelectedOrgId){toast('기관을 선택해주세요.');return;}
+  const content=document.getElementById('m-meeting-content').value.trim();
+  if(!content){toast('미팅 내용을 입력해주세요.');return;}
+  const date=document.getElementById('m-meeting-date').value;
+  const ourStr=mOurSelected.join(', ');
+  const theirStr=mTheirMembers.map(m=>m.title?m.name+'('+m.title+')':m.name).join(', ');
+  const summary='[참석] 우리: '+(ourStr||'미입력')+' / 기관: '+(theirStr||'미입력')+'\n'+content;
+  const nextAction=document.getElementById('m-next-action').value.trim();
+  const nextDue=document.getElementById('m-next-due').value;
+  const btn=document.querySelector('#mtab-content-meeting button[onclick="saveMobileMeeting()"]');
+  btn.textContent='저장 중...';btn.disabled=true;
+  try{
+    const{error}=await sb.from('contact_logs').insert({org_id:mSelectedOrgId,date:date?date.slice(0,10):new Date().toISOString().slice(0,10),summary,logged_at:new Date().toISOString(),created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});
+    if(error)throw error;
+    if(nextAction){await sb.from('actions').insert({org_id:mSelectedOrgId,content:nextAction,due:nextDue||null,status:'pending',member:mOurSelected[0]||'',created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});}
+    await loadAll();
+    toast('✅ 미팅 기록이 저장됐어요!');
+    closeMobileMeeting();
+  }catch(e){toast('저장 오류: '+e.message);}
+  finally{btn.textContent='미팅 기록 저장';btn.disabled=false;}
+}
+function renderMobileTodayActions(){
+  const today=new Date().toISOString().slice(0,10);
+  const actions=cache.actions.filter(a=>a.status==='pending'&&a.due&&a.due<=today);
+  const el=document.getElementById('m-today-actions');
+  if(!actions.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">오늘 마감 액션이 없어요!</div>';return;}
+  el.innerHTML=actions.map(a=>{const org=cache.orgs.find(o=>o.id===a.org_id);return '<div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;">'+(org&&org.name||'기관 미상')+'</div><div style="font-size:14px;font-weight:600;margin-bottom:8px;">'+a.content+'</div><div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11px;color:'+(a.due<today?'var(--red)':'var(--amber)')+';">'+a.due+'</span><button onclick="completeMobileAction(\''+a.id+'\')" style="padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;">완료</button></div></div>';}).join('');
+}
+async function completeMobileAction(id){await sb.from('actions').update({status:'done'}).eq('id',id);await loadAll();renderMobileTodayActions();toast('✅ 완료 처리됐어요!');}
+function renderMobileOrgList(q){
+  const results=cache.orgs.filter(o=>!q||o.name.includes(q)).slice(0,30);
+  const SL=['발굴','콘택시도','미팅완료','관계형성','MOU예정','MOU완료','수급완료','','','보류'];
+  const SC=['var(--text3)','var(--amber)','var(--accent)','var(--purple)','var(--teal)','var(--green)','var(--green)','','','var(--text3)'];
+  document.getElementById('m-org-list').innerHTML=results.map(o=>'<div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><span style="font-size:15px;font-weight:700;">'+o.name+'</span><span style="font-size:11px;font-weight:700;color:'+(SC[o.stage]||'var(--text3)')+';">'+(SL[o.stage]||'')+'</span></div><div style="font-size:12px;color:var(--text3);">'+(o.cat||'')+' '+(o.member?'담당: '+o.member:'')+'</div>'+(o.phone?'<div style="font-size:12px;color:var(--text2);margin-top:4px;">'+o.phone+'</div>':'')+(o.website?'<a href="'+o.website+'" target="_blank" style="font-size:12px;color:var(--accent);margin-top:4px;display:block;">웹사이트</a>':'')+'</div>').join('');
+}
 function toggleMobileNav(){
   const sb=document.querySelector('.sidebar');
   sb.classList.toggle('open');
