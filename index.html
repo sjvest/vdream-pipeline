@@ -2169,7 +2169,7 @@ function renderActions(){
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone&&a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:!isDone&&a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:''}</div>
       </div>
       ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
     </div>`;
@@ -4070,7 +4070,7 @@ function openOrg(id){
         <div style="flex:1;">
           <div class="action-text done">${a.content||a.text||''}</div>
           ${a.due?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px;">${fDate(a.due)}</div>`:''}
-          ${(a.completed_by_name||a.created_by_name)?`<div style="font-size:10px;color:var(--text3);margin-top:1px;">✓ ${a.completed_by_name||a.created_by_name}</div>`:''}
+          ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:1px;">${a.created_by_name}</div>`:''}${a.completed_by_name?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px;">✓ ${a.completed_by_name}</div>`:''}
         </div>
         <div style="font-size:10px;color:var(--green);font-weight:600;flex-shrink:0;">완료</div>
         <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
