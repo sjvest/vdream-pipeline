@@ -978,6 +978,22 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 </div>
 
+<!-- 오늘의 할 일 팝업 -->
+<div id="today-tasks-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:540px;width:100%;max-height:88vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1.5px solid var(--border);flex-shrink:0;">
+      <div>
+        <div style="font-size:15px;font-weight:800;" id="today-tasks-title">📋 오늘의 할 일</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;" id="today-tasks-date"></div>
+      </div>
+      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">✕</button>
+    </div>
+    <div id="today-tasks-body" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;"></div>
+    <div style="padding:14px 20px;border-top:1.5px solid var(--border);flex-shrink:0;display:flex;justify-content:flex-end;">
+      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" class="btn btn-primary btn-sm">확인</button>
+    </div>
+  </div>
+</div>
 <!-- 히스토리 전체 모달 -->
 <div id="history-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal modal-wide" style="max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
@@ -1575,6 +1591,48 @@ async function doLogout(){
   document.getElementById('user-status-dot').style.display='none';
   document.getElementById('login-banner').style.display='flex';
 }
+function openTodayTasksModal(){
+  const name=currentProfile?.name;
+  if(!name)return;
+  const myActions=cache.actions.filter(a=>!a.done&&(a.member===name||a.created_by_name===name));
+  const overdue=myActions.filter(a=>a.due&&dayDiff(a.due)<0).sort((a,b)=>dayDiff(a.due)-dayDiff(b.due));
+  const dueToday=myActions.filter(a=>a.due&&dayDiff(a.due)===0);
+  const soon=myActions.filter(a=>a.due&&dayDiff(a.due)>0&&dayDiff(a.due)<=3).sort((a,b)=>dayDiff(a.due)-dayDiff(b.due));
+  const noDue=myActions.filter(a=>!a.due);
+  const orgName=id=>cache.orgs.find(o=>o.id===id)?.name||'—';
+  const item=(a,color)=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--surface);border-radius:var(--radius-sm);border-left:3px solid ${color};">
+    <div style="flex:1;">
+      <div style="font-size:12px;font-weight:600;color:var(--text);">${a.text||a.content||''}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${orgName(a.org_id)}${a.due?` · <b style="color:${color};">${fDate(a.due)}</b>`:''}</div>
+    </div>
+  </div>`;
+  const section=(title,color,items)=>items.length?`<div><div style="font-size:11px;font-weight:800;color:${color};margin-bottom:6px;">${title} (${items.length}건)</div>${items.map(a=>item(a,color)).join('')}</div>`:'';
+  const body=section('🔴 기한 초과','#dc2626',overdue)+section('🟡 오늘 마감','#d97706',dueToday)+section('🔵 3일 이내','#3b82f6',soon)+section('⚪ 기한 미정','#94a3b8',noDue);
+  const today=new Date();
+  document.getElementById('today-tasks-title').textContent=`📋 ${name}님의 할 일`;
+  document.getElementById('today-tasks-date').textContent=`${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}. (${['일','월','화','수','목','금','토'][today.getDay()]}) · 미완료 ${myActions.length}건`;
+  document.getElementById('today-tasks-body').innerHTML=body||'<div class="empty" style="padding:1rem 0;">미완료 액션이 없습니다 ✓</div>';
+  document.getElementById('today-tasks-modal').style.display='flex';
+}
+function showTodayTasksOnLogin(){
+  const key='today-tasks-shown-'+new Date().toDateString();
+  if(sessionStorage.getItem(key))return;
+  sessionStorage.setItem(key,'1');
+  setTimeout(openTodayTasksModal,800);
+}
+let _dailyPopupScheduled=false;
+function scheduleDailyTasksPopup(){
+  if(_dailyPopupScheduled)return;
+  _dailyPopupScheduled=true;
+  const now=new Date();
+  const next=new Date(now);
+  next.setHours(14,0,0,0);
+  if(now>=next)next.setDate(next.getDate()+1);
+  setTimeout(()=>{
+    openTodayTasksModal();
+    setInterval(openTodayTasksModal,24*60*60*1000);
+  },next-now);
+}
 async function loadAll(){
   try{
     const [o,a,t,l,p,ev,jb,cc]=await Promise.all([
@@ -1591,6 +1649,8 @@ async function loadAll(){
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
+    showTodayTasksOnLogin();
+    scheduleDailyTasksPopup();
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
 function renderCurrent(){
