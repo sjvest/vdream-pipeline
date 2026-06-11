@@ -2150,9 +2150,9 @@ function renderActions(){
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}</div>
       </div>
-      <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
+      ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
     </div>`;
 
   document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
@@ -4044,8 +4044,11 @@ function openOrg(id){
     ${oa.filter(a=>a.done).map(a=>`
       <div class="action-item" style="opacity:.7;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:4px;">
         <div class="action-cb done" onclick="toggleActionModal(${a.id},${a.done})"><i class="ti ti-check" style="font-size:10px;color:#fff;"></i></div>
-        <div class="action-text done" style="flex:1;">${a.content||a.text||''}</div>
-        <div style="font-size:10px;color:var(--green);font-weight:600;">완료</div>
+        <div style="flex:1;">
+          <div class="action-text done">${a.content||a.text||''}</div>
+          ${a.due?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px;">${fDate(a.due)}</div>`:''}
+        </div>
+        <div style="font-size:10px;color:var(--green);font-weight:600;flex-shrink:0;">완료</div>
         <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
       </div>`).join('')}
     </div>`:``}
