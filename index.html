@@ -51,6 +51,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0;}
 .nav-section{padding:14px 20px 5px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
 .urgent-count{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
+.new-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--accent);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
 .sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.35);}
 .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#555;margin-right:6px;}
 .conn-dot.ok{background:#34d399;}
@@ -350,17 +351,17 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="nav-divider"></div>
   <div class="nav-section">기관 관리</div>
   <button class="nav-item" onclick="nav('add-org')"><i class="ti ti-plus"></i>기관 등록</button>
-  <button class="nav-item" onclick="nav('orgs')"><i class="ti ti-building"></i>기관 목록</button>
+  <button class="nav-item" id="nav-orgs" onclick="nav('orgs')"><i class="ti ti-building"></i>기관 목록<span class="new-badge" id="badge-orgs" style="display:none;">0</span></button>
   <div class="nav-divider"></div>
   <div class="nav-section">수급 관리</div>
   <button class="nav-item" onclick="nav('actions')"><i class="ti ti-checkbox"></i>후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
-  <button class="nav-item" onclick="nav('talent')"><i class="ti ti-users"></i>인재 수급</button>
-  <button class="nav-item" onclick="nav('jobs')"><i class="ti ti-briefcase"></i>채용 건 관리</button>
-  <button class="nav-item" onclick="nav('cold')"><i class="ti ti-phone-call"></i>콜드 컨택 로그</button>
+  <button class="nav-item" id="nav-talent" onclick="nav('talent')"><i class="ti ti-users"></i>인재 수급<span class="new-badge" id="badge-talent" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-jobs" onclick="nav('jobs')"><i class="ti ti-briefcase"></i>채용 건 관리<span class="new-badge" id="badge-jobs" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-cold" onclick="nav('cold')"><i class="ti ti-phone-call"></i>콜드 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
   <div class="nav-divider"></div>
   <div class="nav-section">성과</div>
   <button class="nav-item" onclick="nav('analytics')"><i class="ti ti-chart-dots"></i>데이터 분석</button>
-  <button class="nav-item" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리</button>
+  <button class="nav-item" id="nav-events" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리<span class="new-badge" id="badge-events" style="display:none;">0</span></button>
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">
@@ -1649,6 +1650,7 @@ async function loadAll(){
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
+    updateNavBadges();
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
@@ -1669,6 +1671,35 @@ function dueLabel(d,due){return d<0?`D+${Math.abs(d)}`:d===0?'오늘':d<=3?`D-${
 function actionsForOrg(id){return cache.actions.filter(a=>a.org_id===id);}
 function urgentActions(){return cache.actions.filter(a=>!a.done&&dayDiff(a.due)<=3);}
 function updateUrgentCount(){const c=urgentActions().length;const el=document.getElementById('urgent-cnt');el.textContent=c;el.style.display=c?'':'none';}
+function updateNavBadges(){
+  if(!currentUser)return;
+  const uid=currentUser.id;
+  const checks={
+    orgs:{data:cache.orgs,tf:'created_at'},
+    talent:{data:cache.talents,tf:'created_at'},
+    jobs:{data:cache.jobs,tf:'created_at'},
+    cold:{data:cache.cold,tf:'logged_at'},
+    events:{data:cache.events,tf:'created_at'},
+  };
+  Object.entries(checks).forEach(([page,{data,tf}])=>{
+    const key=`nav-seen-${uid}-${page}`;
+    const el=document.getElementById(`badge-${page}`);
+    if(!el)return;
+    const lastSeen=localStorage.getItem(key);
+    if(!lastSeen){localStorage.setItem(key,new Date().toISOString());el.style.display='none';return;}
+    const cnt=data.filter(x=>{const t=x[tf]||x.created_at;return t&&new Date(t)>new Date(lastSeen);}).length;
+    el.textContent=cnt>99?'99+':cnt;
+    el.style.display=cnt?'':'none';
+  });
+}
+function markPageSeen(page){
+  if(!currentUser)return;
+  const pages=['orgs','talent','jobs','cold','events'];
+  if(!pages.includes(page))return;
+  localStorage.setItem(`nav-seen-${currentUser.id}-${page}`,new Date().toISOString());
+  const el=document.getElementById(`badge-${page}`);
+  if(el)el.style.display='none';
+}
 
 let mSelectedOrgId=null,mTheirMembers=[],mOurSelected=[];
 function openMobileMeeting(){
@@ -1784,6 +1815,7 @@ function nav(page){
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
   const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg};
   if(r[page])r[page]();
+  markPageSeen(page);
 }
 
 // ── 대시보드 ──
