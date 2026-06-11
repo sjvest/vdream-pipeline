@@ -2073,22 +2073,41 @@ function renderPipeline(){
 }
 
 // ── 기관 목록 ──
+async function toggleStar(id,e){
+  e&&e.stopPropagation();
+  const o=cache.orgs.find(x=>x.id===id);
+  if(!o)return;
+  const val=!o.is_starred;
+  const{error}=await sb.from('orgs').update({is_starred:val}).eq('id',id);
+  if(error){toast('저장 실패');return;}
+  o.is_starred=val;
+  renderOrgs();
+}
+function memberBadge(name){
+  if(!name||name==='—')return`<span class="member-pill">—</span>`;
+  const MAP={'임세진':{c:'#3b82f6',bg:'#eff6ff'},'이재성':{c:'#f59e0b',bg:'#fffbeb'},'이슬민':{c:'#f97316',bg:'#fff7ed'}};
+  const s=MAP[name]||{c:'var(--purple)',bg:'var(--purple-bg)'};
+  return`<span style="display:inline-flex;align-items:center;padding:4px 12px;background:${s.bg};color:${s.c};border-radius:20px;font-size:11px;font-weight:700;">${name}</span>`;
+}
 function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';renderOrgs();}
 function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
+  rows.sort((a,b)=>(b.is_starred?1:0)-(a.is_starred?1:0));
   document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
     const oa=actionsForOrg(o.id);
     const pending=oa.filter(a=>!a.done).length,urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
     const daysLabel=days!==null?(days===0?'오늘':days+'일 전'):'—';
     const daysColor=days>=30?'#c0200f':days>=14?'#b54708':'#64748b';
-    return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+    const starredBg=o.is_starred?'#fffbeb':'';
+    return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
+        <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;">${o.is_starred?'⭐':'☆'}</button>
         ${o.card_image?`<img src="${o.card_image}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
         <span style="font-weight:700;font-size:13px;color:#0d1b2a;">${o.name}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
       <td style="padding:14px 16px;font-size:12px;color:#64748b;">${o.source||'—'}</td>
-      <td style="padding:14px 16px;"><span class="member-pill">${o.member||'—'}</span></td>
+      <td style="padding:14px 16px;">${memberBadge(o.member||'—')}</td>
       <td style="padding:14px 16px;"><span class="badge ${STAGE_CLS[o.stage]}" style="font-size:11px;">${STAGES[o.stage]}</span>
         ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
       </td>
