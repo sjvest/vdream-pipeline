@@ -2169,7 +2169,7 @@ function renderActions(){
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone&&a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:!isDone&&a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:''}</div>
       </div>
       ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
     </div>`;
@@ -2186,8 +2186,9 @@ function renderActions(){
   }
 }
 async function toggleAction(id,done){
-  await sb.from('actions').update({done:!done}).eq('id',id);
-  const a=cache.actions.find(x=>x.id===id);if(a)a.done=!done;
+  const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
+  await sb.from('actions').update({done:!done,completed_by_name:completedBy}).eq('id',id);
+  const a=cache.actions.find(x=>x.id===id);if(a){a.done=!done;a.completed_by_name=completedBy;}
   updateUrgentCount();renderActions();toast(!done?'완료 처리됨 ✓':'완료 취소됨');
 }
 
@@ -4051,7 +4052,10 @@ function openOrg(id){
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
         <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
-        <div class="action-text" style="flex:1;">${a.text}</div>
+        <div style="flex:1;">
+          <div class="action-text">${a.text}</div>
+          ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">${a.created_by_name}</div>`:''}
+        </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 ✓</div>'}
@@ -4066,6 +4070,7 @@ function openOrg(id){
         <div style="flex:1;">
           <div class="action-text done">${a.content||a.text||''}</div>
           ${a.due?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px;">${fDate(a.due)}</div>`:''}
+          ${(a.completed_by_name||a.created_by_name)?`<div style="font-size:10px;color:var(--text3);margin-top:1px;">✓ ${a.completed_by_name||a.created_by_name}</div>`:''}
         </div>
         <div style="font-size:10px;color:var(--green);font-weight:600;flex-shrink:0;">완료</div>
         <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
@@ -4273,8 +4278,9 @@ async function addActionFromModal(orgId){
 }
 
 async function toggleActionModal(id,done){
-  await sb.from('actions').update({done:!done}).eq('id',id);
-  const a=cache.actions.find(x=>x.id===id);if(a)a.done=!done;
+  const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
+  await sb.from('actions').update({done:!done,completed_by_name:completedBy}).eq('id',id);
+  const a=cache.actions.find(x=>x.id===id);if(a){a.done=!done;a.completed_by_name=completedBy;}
   updateUrgentCount();openOrg(currentOrgId);toast(!done?'완료 처리됨 ✓':'완료 취소됨');
 }
 async function handleModalCardImage(event, orgId){
