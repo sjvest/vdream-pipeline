@@ -2169,7 +2169,7 @@ function renderActions(){
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}</div>
       </div>
       ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
     </div>`;
@@ -4054,7 +4054,7 @@ function openOrg(id){
         <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
         <div style="flex:1;">
           <div class="action-text">${a.text}</div>
-          ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">${a.created_by_name}</div>`:''}
+          ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
         </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
