@@ -3262,6 +3262,11 @@ function searchOrgForEdit(q){
     </div>`).join('')
   :`<div style="padding:10px 14px;font-size:12px;color:var(--text3);">검색 결과 없음</div>`;
 }
+function goEditOrg(id){
+  closeModal();
+  nav('add-org');
+  setTimeout(()=>loadOrgForEdit(id),100);
+}
 function loadOrgForEdit(orgId){
   editOrgId=orgId;
   const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
@@ -4275,6 +4280,7 @@ function openOrg(id){
       </select>
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
+      <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})"><i class="ti ti-pencil"></i> 정보 수정</button>
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : ''}
     </div>
   `;
