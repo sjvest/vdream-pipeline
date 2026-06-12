@@ -4105,7 +4105,7 @@ async function saveOrg(){
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
   clearOrgForm();clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> 등록 완료';
-  toast('기관 등록 완료!');updateUrgentCount();nav('orgs');
+  toast('기관 등록 완료!');updateUrgentCount();updateNavBadges();nav('orgs');
 }
 function clearOrgForm(){
   ['n-name','n-contact','n-phone','n-date','n-mou-date','n-memo','n-address'].forEach(id=>document.getElementById(id).value='');
