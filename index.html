@@ -2939,11 +2939,47 @@ async function renderCold(){
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;align-items:flex-start;">
             ${!c.converted_org_id&&(c.result==='긍정적'||c.result==='재연락 필요')?`<button onclick="convertToOrg(${c.id},'${c.org_name.replace(/'/g,"\\'")}')" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;" title="기관으로 등록"><i class="ti ti-building-plus"></i> 기관 등록</button>`:''}
-            ${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}
+            ${c.result==='재연락 필요'?`<button onclick="toggleColdFollowup(${c.id})" style="background:#fffbeb;color:#b54708;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;"><i class="ti ti-plus"></i> 추가 컨택</button>`:''}
+            <button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>
           </div>
-        </div>`).join('')}
+        </div>
+        ${c.result==='재연락 필요'?`<div id="cold-followup-${c.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
+          <div style="font-size:12px;font-weight:700;color:#b54708;margin-bottom:8px;">📞 추가 컨택 내용</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <select id="cold-fu-method-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="전화">📞 전화</option><option value="이메일">📧 이메일</option><option value="문자">💬 문자</option><option value="방문">🚶 방문</option></select>
+            <select id="cold-fu-result-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="재연락 필요">🔄 재연락 필요</option><option value="긍정적">✅ 긍정적</option><option value="부재중">📵 부재중</option><option value="거절">❌ 거절</option></select>
+            <input type="date" id="cold-fu-date-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
+          </div>
+          <textarea id="cold-fu-memo-${c.id}" placeholder="추가 컨택 내용..." style="width:100%;font-size:12px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;min-height:60px;resize:vertical;box-sizing:border-box;background:#fff;line-height:1.6;"></textarea>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button onclick="saveColdFollowup(${c.id})" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">저장</button>
+            <button onclick="document.getElementById('cold-followup-${c.id}').style.display='none'" style="padding:6px 12px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;">취소</button>
+          </div>
+        </div>`:''}
+        `).join('')}
     </div>`
   :`<div class="empty">컨택 기록 없음</div>`;
+}
+function toggleColdFollowup(id){
+  const el=document.getElementById('cold-followup-'+id);
+  if(!el)return;
+  const isOpen=el.style.display!=='none';
+  el.style.display=isOpen?'none':'block';
+  if(!isOpen){const dateEl=document.getElementById('cold-fu-date-'+id);if(dateEl)dateEl.value=today();}
+}
+async function saveColdFollowup(id){
+  const method=document.getElementById('cold-fu-method-'+id)?.value||'전화';
+  const result=document.getElementById('cold-fu-result-'+id)?.value||'재연락 필요';
+  const memo=document.getElementById('cold-fu-memo-'+id)?.value.trim()||'';
+  const date=document.getElementById('cold-fu-date-'+id)?.value||today();
+  const orig=cache.cold.find(c=>c.id===id);
+  if(!orig){toast('오류: 원본 데이터 없음');return;}
+  const myName=currentProfile?.name||currentUser?.email||'';
+  const row={org_name:orig.org_name,cat:orig.cat,contact_type:orig.contact_type,method,result,summary:'[추가컨택] '+memo.slice(0,30),memo,logged_at:new Date(date).toISOString(),created_by:currentUser?.id||null,created_by_name:myName,member:orig.member||myName,contact_person:orig.contact_person||'',phone:orig.phone||''};
+  const{error}=await sb.from('cold_contacts').insert(row);
+  if(error){toast('오류: '+error.message);return;}
+  toast('✅ 추가 컨택 저장됐어요!');
+  await loadAll();renderCold();
 }
 function clearColdFilter(){
   ['cold-filter-member','cold-filter-result'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
