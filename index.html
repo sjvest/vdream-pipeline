@@ -841,6 +841,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <option value="기관 등록 전환">⭐ 기관 등록 전환</option>
         </select>
       </div>
+      <div class="fg"><label>상태</label>
+        <select id="cold-status">
+          <option value="완료">✅ 완료</option>
+          <option value="진행중">🔄 진행중</option>
+        </select>
+      </div>
       <div class="fg"><label>담당 팀원</label>
         <select id="cold-member"><option value="">선택</option></select>
       </div>
@@ -2922,6 +2928,7 @@ async function renderCold(){
               <span class="badge ${RESULT_CLS[c.result]||'b-gray'}" style="font-size:10px;">${c.result}</span>
               ${c.converted_org_id?'<span class="badge b-teal" style="font-size:10px;">✓ 기관 등록됨</span>':''}
               ${latestByOrg[c.org_name]?.id===c.id&&c.result==='재연락 필요'?'<span style="font-size:10px;color:#b54708;font-weight:700;">⚡ 후속 컨택 필요</span>':''}
+              ${c.status==='진행중'?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;">🔄 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;">✅ 완료</span>'}
               ${latestByOrg[c.org_name]?.id===c.id&&c.result==='긍정적'?'<span style="font-size:10px;color:#027a48;font-weight:700;">🌟 관심 기관</span>':''}
             </div>
             <div style="font-size:12px;font-weight:600;color:var(--text);">${c.summary||''}</div>
@@ -2939,11 +2946,11 @@ async function renderCold(){
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;align-items:flex-start;">
             ${!c.converted_org_id&&(c.result==='긍정적'||c.result==='재연락 필요')?`<button onclick="convertToOrg(${c.id},'${c.org_name.replace(/'/g,"\\'")}')" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;" title="기관으로 등록"><i class="ti ti-building-plus"></i> 기관 등록</button>`:''}
-            ${c.result==='재연락 필요'?`<button onclick="toggleColdFollowup(${c.id})" style="background:#fffbeb;color:#b54708;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;"><i class="ti ti-plus"></i> 추가 컨택</button>`:''}
+            ${(c.result==='재연락 필요'||c.status==='진행중')?`<button onclick="toggleColdFollowup(${c.id})" style="background:#fffbeb;color:#b54708;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;"><i class="ti ti-plus"></i> 추가 컨택</button>`:''}
             <button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>
           </div>
         </div>
-        ${c.result==='재연락 필요'?`<div id="cold-followup-${c.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
+        ${(c.result==='재연락 필요'||c.status==='진행중')?`<div id="cold-followup-${c.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
           <div style="font-size:12px;font-weight:700;color:#b54708;margin-bottom:8px;">📞 추가 컨택 내용</div>
           <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
             <select id="cold-fu-method-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="전화">📞 전화</option><option value="이메일">📧 이메일</option><option value="문자">💬 문자</option><option value="방문">🚶 방문</option></select>
@@ -3527,6 +3534,7 @@ function openAddCold(){
   toggleColdType();
   document.getElementById('cold-method').value='전화';
   document.getElementById('cold-result').value='부재중';
+  const csEl=document.getElementById('cold-status');if(csEl)csEl.value='완료';
   document.getElementById('cold-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===(currentProfile?.name||'')?` selected`:``}>${p.name}</option>`).join('');
   applyColdTemplate('전화');
   const now=new Date();
@@ -3565,6 +3573,7 @@ async function saveCold(){
     address:document.getElementById('cold-address').value.trim(),
     method:document.getElementById('cold-method').value,
     result:document.getElementById('cold-result').value,
+    status:document.getElementById('cold-status')?.value||'완료',
     member:document.getElementById('cold-member').value,
     summary,
     memo:document.getElementById('cold-memo').value.trim(),
