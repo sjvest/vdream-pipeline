@@ -159,7 +159,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .modal-body{padding:20px 24px;}
 .modal-sec-title{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--border);}
 .modal-wide{max-width:720px;}
-.modal-org{max-width:900px;width:900px;}
+.modal-org{max-width:96vw;width:1100px;}
 .info-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start;}
 .info-row:last-child{border-bottom:none;}
 .info-key{width:90px;flex-shrink:0;color:var(--text3);font-weight:600;font-size:11px;padding-top:2px;text-transform:uppercase;letter-spacing:.03em;}
@@ -230,7 +230,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   .card{padding:12px!important;}
   .modal-overlay{align-items:flex-end!important;}
   .modal,.modal-wide,.modal-org{max-width:100%!important;width:100%!important;border-radius:16px 16px 0 0!important;max-height:90vh!important;}
-  .modal-org [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
+  .modal-org [style*="grid-template-columns"]{grid-template-columns:1fr!important;}
   .config-box{width:92%!important;max-width:360px!important;}
   .sidebar-bottom{display:none!important;}
   .nav-item{padding:11px 16px!important;font-size:13px!important;}
@@ -4248,7 +4248,7 @@ function openOrg(id){
   const linkedEvent=o.event_id?(cache.events||[]).find(e=>e.id===o.event_id):null;
   document.getElementById('m-title').textContent=o.name;
   document.getElementById('m-body').innerHTML=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+  <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
     ${o.card_image?`
       <div style="max-width:360px;aspect-ratio:9/5;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;">
@@ -4443,7 +4443,7 @@ function renderContactLogItem(l,orgId){
       <span style="font-size:12px;flex-shrink:0;">${typeIcon}</span>
       <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${dateStr}</span>
       <span style="font-size:11px;color:var(--accent);flex-shrink:0;background:var(--accent-bg);padding:1px 7px;border-radius:4px;font-weight:600;">${timeStr}</span>
-      <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);">${l.summary}</span>
+      <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${l.summary}</span>
       ${statusBadge}
       ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
       ${hasMemo||threads.length?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
