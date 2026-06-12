@@ -3908,11 +3908,13 @@ async function saveJob(){
     created_by:currentUser?.id||null,created_by_name:myName
   };
   if(currentJobId){
-    const{error}=await sb.from('jobs').update(row).eq('id',currentJobId);
+    const{data,error}=await sb.from('jobs').update(row).eq('id',currentJobId).select().single();
     if(error){toast('오류: '+error.message);return;}
+    if(data){const idx=cache.jobs.findIndex(x=>x.id===currentJobId);if(idx!==-1)cache.jobs[idx]={...cache.jobs[idx],...data};}
   } else {
-    const{error}=await sb.from('jobs').insert(row);
+    const{data,error}=await sb.from('jobs').insert(row).select().single();
     if(error){toast('오류: '+error.message);return;}
+    if(data)cache.jobs.push(data);
   }
   document.getElementById('job-modal').style.display='none';
   if(!currentJobId)clearDraft('job');
