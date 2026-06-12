@@ -3234,7 +3234,7 @@ function renderAddOrg(){
   }
   const eventSel=document.getElementById('n-event-id');
   if(eventSel){
-    eventSel.innerHTML='<option value="">없음</option>'+(cache.events||[]).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+    eventSel.innerHTML='<option value="">없음</option>'+(cache.events||[]).map(e=>`<option value="${e.id}">${e.name||e.title||'행사'} (${e.date||''})</option>`).join('');
   }
   if(!editOrgId)setTimeout(()=>loadDraft('org'),300);
 }
@@ -4163,7 +4163,7 @@ async function saveOrg(){
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
-    name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,event_id:document.getElementById('n-event-id')?.value||null,
+    name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,event_id:document.getElementById('n-event-id')?.value?parseInt(document.getElementById('n-event-id').value):null,
     contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
@@ -4243,6 +4243,7 @@ function openOrg(id){
   const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
   const oa=actionsForOrg(id);
   const tals=cache.talents.filter(t=>t.org_id===id);
+  const linkedEvent=o.event_id?(cache.events||[]).find(e=>e.id===o.event_id):null;
   document.getElementById('m-title').textContent=o.name;
   document.getElementById('m-body').innerHTML=`
     ${o.card_image?`
@@ -4271,7 +4272,7 @@ function openOrg(id){
         onmouseout="this.style.borderColor='#94a3b8';this.style.color=''">
         ${o.source||'발굴경로'} <i class="ti ti-pencil" style="font-size:10px;"></i>
       </span>
-      ${o.event_id?(()=>{const ev=(cache.events||[]).find(e=>e.id===o.event_id);return ev?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> ${ev.name}</span>`:''})():''}
+      ${linkedEvent?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> 🎪 ${linkedEvent.name||linkedEvent.title}</span>`:''}
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
