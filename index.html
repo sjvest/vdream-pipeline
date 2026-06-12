@@ -4321,7 +4321,7 @@ function openOrg(id){
       </div>
     </div>`:''}
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
-    <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
+    <div style="font-size:13px;font-weight:800;color:var(--purple);background:#faf5ff;padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-history"></i> 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <select id="log-contact-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
@@ -4347,7 +4347,7 @@ function openOrg(id){
       <i class="ti ti-circle-check" style="color:var(--green);font-size:18px;"></i>
       <span style="font-size:13px;font-weight:700;color:var(--green);">MOU 완료! 🎉</span>
     </div>`:''}
-    <div class="modal-sec-title">후속 액션</div>
+    <div style="font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-bg);padding:6px 12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-checkbox"></i> 후속 액션</div>
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
         <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
@@ -4376,14 +4376,14 @@ function openOrg(id){
         <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
       </div>`).join('')}
     </div>`:``}
-    <div class="modal-sec-title">액션 추가</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);border-left:3px solid var(--accent);padding-left:8px;margin:12px 0 8px;">+ 액션 추가</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due-time" type="time" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
       <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})"><i class="ti ti-plus"></i> 추가</button>
     </div>
-    ${tals.length?`<div class="modal-sec-title">연결 인재 (${tals.length}명)</div>
+    ${tals.length?`<div style="font-size:13px;font-weight:800;color:var(--green);background:#f0fdf4;padding:6px 12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-users"></i> 연결 인재 (${tals.length}명)</div>
     ${tals.map(t=>`<div class="info-row"><span style="font-weight:500;">${t.name}</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">${t.job||'—'}</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="margin-left:auto;">${t.status}</span></div>`).join('')}`:''}
   </div>
   </div>
