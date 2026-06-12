@@ -2372,6 +2372,7 @@ function renderActions(){
         <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}</div>
       </div>
       ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
+      ${!isDone&&a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
     </div>`;
 
   document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
@@ -4350,6 +4351,7 @@ function openOrg(id){
           ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
         </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
+        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 ✓</div>'}
     ${oa.filter(a=>a.done).length?`
@@ -4587,6 +4589,14 @@ function confirmDeleteTalent(id,name){
       writeAuditLog('삭제','수급',name,{reason:'관리자 삭제'});
     }
   });
+}
+function openGoogleCalendar(title,date,orgName){
+  const start=date.replace(/-/g,'');
+  const end=start;
+  const text=encodeURIComponent(`[브이드림] ${title}`);
+  const details=encodeURIComponent(`기관: ${orgName}`);
+  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}`;
+  window.open(url,'_blank');
 }
 async function deleteAction(id){
   if(!confirm('이 액션을 삭제하시겠어요?'))return;
