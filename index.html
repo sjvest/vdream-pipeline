@@ -2369,9 +2369,9 @@ function renderActions(){
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}${!isDone&&a.due?` <span onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}') " style="font-size:11px;color:#4285f4;cursor:pointer;margin-left:6px;" title="구글 캘린더에 추가">📅 캘린더</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}${!isDone&&a.due?` <span onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}','${a.due_time||''}') " style="font-size:11px;color:#4285f4;cursor:pointer;margin-left:6px;" title="구글 캘린더에 추가">📅 캘린더</span>`:''}</div>
       </div>
-      ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
+      ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}${a.due_time?' · '+a.due_time:''}</div>`:''}
     </div>`;
 
   document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
@@ -4349,8 +4349,8 @@ function openOrg(id){
           <div class="action-text">${a.text}</div>
           ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
         </div>
-        <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}</div>
-        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
+        <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}${a.due_time?' · '+a.due_time:''}</div>
+        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 ✓</div>'}
     ${oa.filter(a=>a.done).length?`
@@ -4374,6 +4374,7 @@ function openOrg(id){
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="new-action-due-time" type="time" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
       <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})"><i class="ti ti-plus"></i> 추가</button>
     </div>
     ${tals.length?`<div class="modal-sec-title">연결 인재 (${tals.length}명)</div>
@@ -4589,9 +4590,18 @@ function confirmDeleteTalent(id,name){
     }
   });
 }
-function openGoogleCalendar(title,date,orgName){
-  const start=date.replace(/-/g,'');
-  const end=start;
+function openGoogleCalendar(title,date,orgName,time=''){
+  let start,end;
+  if(time){
+    const t=time.replace(':','')+'00';
+    start=date.replace(/-/g,'')+'T'+t;
+    const endDate=new Date(date+'T'+time);
+    endDate.setHours(endDate.getHours()+1);
+    end=endDate.toISOString().slice(0,19).replace(/[-:]/g,'').replace('T','T');
+  } else {
+    start=date.replace(/-/g,'');
+    end=start;
+  }
   const text=encodeURIComponent(`[브이드림] ${title}`);
   const details=encodeURIComponent(`기관: ${orgName}`);
   const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${start}/${end}&details=${details}`;
@@ -4628,9 +4638,10 @@ async function addActionFromModal(orgId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const text=document.getElementById('new-action-text').value.trim();
   const due=document.getElementById('new-action-due').value;
+  const dueTime=document.getElementById('new-action-due-time')?.value||null;
   if(!text){toast('액션 내용을 입력하세요');return;}
   const myName=currentProfile?.name||'';
-  const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,done:false,status:'pending',member:myName,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
+  const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,due_time:dueTime,done:false,status:'pending',member:myName,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.actions.push(data);
   toast('액션 추가됨 ✓');updateUrgentCount();openOrg(orgId);
