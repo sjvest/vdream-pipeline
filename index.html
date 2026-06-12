@@ -537,6 +537,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관"></div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
+        <div class="fg"><label>연결 행사</label><select id="n-event-id"><option value="">없음</option></select></div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
@@ -3231,6 +3232,10 @@ function renderAddOrg(){
   if(memberSel){
     memberSel.innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===(currentProfile?.name||'')?` selected`:''}>${p.name}</option>`).join('');
   }
+  const eventSel=document.getElementById('n-event-id');
+  if(eventSel){
+    eventSel.innerHTML='<option value="">없음</option>'+(cache.events||[]).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  }
   if(!editOrgId)setTimeout(()=>loadDraft('org'),300);
 }
 let orgDraftTimer=null;
@@ -3378,6 +3383,7 @@ function loadOrgForEdit(orgId){
   document.getElementById('n-website').value=o.website||'';
   document.getElementById('n-region').value=o.region||'';
   document.getElementById('n-address').value=o.address||'';
+  const evSel=document.getElementById('n-event-id');if(evSel)evSel.value=o.event_id||'';
   // 이메일 채우기
   const emailEl=document.getElementById('n-email');
   if(emailEl&&o.email){
@@ -4157,7 +4163,7 @@ async function saveOrg(){
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
-    name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,
+    name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,event_id:document.getElementById('n-event-id')?.value||null,
     contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
@@ -4224,6 +4230,7 @@ function clearOrgForm(){
   document.getElementById('n-email-domain').value='naver.com';
   document.getElementById('n-email-custom').style.display='none';
   document.getElementById('n-member').value='';
+  const evEl=document.getElementById('n-event-id');if(evEl)evEl.value='';
   document.getElementById('action-form-list').innerHTML='';
   actionFieldIdx=0;clearCardPreview();
 }
@@ -4264,6 +4271,7 @@ function openOrg(id){
         onmouseout="this.style.borderColor='#94a3b8';this.style.color=''">
         ${o.source||'발굴경로'} <i class="ti ti-pencil" style="font-size:10px;"></i>
       </span>
+      ${o.event_id?(()=>{const ev=(cache.events||[]).find(e=>e.id===o.event_id);return ev?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> ${ev.name}</span>`:''})():''}
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
