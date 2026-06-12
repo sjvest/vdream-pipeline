@@ -529,7 +529,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
-        <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000"></div>
+        <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
         <div class="fg"><label>이메일</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <div contenteditable="true" id="n-email" readonly onfocus="this.removeAttribute('readonly')"
@@ -597,7 +597,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:10px;">담당자 변경</div>
         <div class="fg-row fg-3">
           <div class="fg"><label>새 담당자명</label><input id="new-contact-name" placeholder="홍길동 팀장" autocomplete="off"></div>
-          <div class="fg"><label>연락처</label><input id="new-contact-phone" placeholder="02-0000-0000" autocomplete="off"></div>
+          <div class="fg"><label>연락처</label><input id="new-contact-phone" placeholder="02-0000-0000" autocomplete="off" oninput="fmtPhone(this)"></div>
           <div class="fg"><label>이메일</label><input id="new-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
         </div>
         <div class="fg"><label>변경 사유 *</label><input id="new-contact-reason" placeholder="예: 담당자 퇴사, 업무 재배분 등" autocomplete="off"></div>
@@ -608,7 +608,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;">담당자 추가</div>
         <div class="fg-row fg-3">
           <div class="fg"><label>담당자명</label><input id="add-contact-name" placeholder="홍길동 팀장" autocomplete="off"></div>
-          <div class="fg"><label>연락처</label><input id="add-contact-phone" placeholder="02-0000-0000" autocomplete="off"></div>
+          <div class="fg"><label>연락처</label><input id="add-contact-phone" placeholder="02-0000-0000" autocomplete="off" oninput="fmtPhone(this)"></div>
           <div class="fg"><label>이메일</label><input id="add-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
         </div>
         <button onclick="applyContactAdd()" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> 추가</button>
@@ -772,7 +772,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <!-- 4행: 전화 + 주소 -->
     <div class="fg-row fg-2">
-      <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000" autocomplete="off"></div>
+      <div class="fg"><label>기관 전화번호</label><input id="cold-phone" placeholder="02-000-0000" autocomplete="off" oninput="fmtPhone(this)"></div>
       <div class="fg"><label>기관 주소</label><input id="cold-address" placeholder="서울시 강남구..." autocomplete="off"></div>
     </div>
     <!-- 5행: 이메일 -->
@@ -3300,6 +3300,22 @@ document.addEventListener('click',e=>{
     if(dd)dd.style.display='none';
   }
 });
+function fmtPhone(input){
+  const d=input.value.replace(/\D/g,'');
+  let r='';
+  if(d.startsWith('02')){
+    if(d.length<=2)r=d;
+    else if(d.length<=5)r=d.slice(0,2)+'-'+d.slice(2);
+    else if(d.length<=9)r=d.slice(0,2)+'-'+d.slice(2,5)+'-'+d.slice(5);
+    else r=d.slice(0,2)+'-'+d.slice(2,6)+'-'+d.slice(6,10);
+  }else{
+    if(d.length<=3)r=d;
+    else if(d.length<=6)r=d.slice(0,3)+'-'+d.slice(3);
+    else if(d.length<=10)r=d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6);
+    else r=d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7,11);
+  }
+  input.value=r;
+}
 function validateOrgUrl(input){const val=input.value.trim();const btn=document.getElementById('n-website-btn');if(val){btn.style.display='inline-flex';}else{btn.style.display='none';}}
 function openOrgUrl(){const url=document.getElementById('n-website').value.trim();if(url)window.open(url,'_blank','noopener');}
 function toggleOrgEmailCustom(){
