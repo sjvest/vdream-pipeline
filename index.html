@@ -2363,16 +2363,15 @@ function renderActions(){
   const done=all.filter(a=>a.done).sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
 
   const ri=(a,isDone=false)=>`
-    <div class="action-item" style="${isDone?'opacity:.7':''}">
+    <div class="action-item" style="${isDone?'opacity:.7':''}overflow:visible;">
       <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done})">
         ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
       </div>
       <div style="flex:1;">
         <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}${!isDone&&a.due?` <span onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}') " style="font-size:11px;color:#4285f4;cursor:pointer;margin-left:6px;" title="구글 캘린더에 추가">📅 캘린더</span>`:''}</div>
       </div>
       ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>`:''}
-      ${!isDone&&a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
     </div>`;
 
   document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
