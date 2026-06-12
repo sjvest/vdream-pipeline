@@ -4936,6 +4936,31 @@ function renderMetricPeriod(){
   </div>`;
 }
 
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  const modals=[
+    {id:'confirm-modal',fn:()=>closeConfirm()},
+    {id:'modal',fn:()=>closeModal()},
+    {id:'cold-modal',fn:()=>document.getElementById('cold-modal').style.display='none'},
+    {id:'job-modal',fn:()=>document.getElementById('job-modal').style.display='none'},
+    {id:'event-modal',fn:()=>document.getElementById('event-modal').style.display='none'},
+    {id:'talent-modal',fn:()=>document.getElementById('talent-modal').style.display='none'},
+    {id:'talent-detail-modal',fn:()=>document.getElementById('talent-detail-modal').style.display='none'},
+    {id:'hapgyeok-modal',fn:()=>document.getElementById('hapgyeok-modal').style.display='none'},
+    {id:'bulhapgyeok-modal',fn:()=>document.getElementById('bulhapgyeok-modal').style.display='none'},
+    {id:'history-modal',fn:()=>document.getElementById('history-modal').style.display='none'},
+    {id:'mou-detail-modal',fn:()=>document.getElementById('mou-detail-modal').style.display='none'},
+    {id:'audit-modal',fn:()=>document.getElementById('audit-modal').style.display='none'},
+    {id:'recruit-modal',fn:()=>document.getElementById('recruit-modal').style.display='none'},
+    {id:'supply-modal',fn:()=>document.getElementById('supply-modal').style.display='none'},
+    {id:'metric-modal',fn:()=>document.getElementById('metric-modal').style.display='none'},
+    {id:'today-tasks-modal',fn:()=>document.getElementById('today-tasks-modal').style.display='none'},
+  ];
+  for(const m of modals){
+    const el=document.getElementById(m.id);
+    if(el&&(el.style.display==='flex'||el.style.display==='block')){m.fn();break;}
+  }
+});
 (function init(){
   document.addEventListener('click',closeStatusDropdown);
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
