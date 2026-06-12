@@ -4223,8 +4223,15 @@ function openOrg(id){
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
     <div class="modal-sec-title" style="margin-top:14px;">📋 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
-    <div style="display:flex;gap:8px;margin-bottom:6px;">
-      <input id="log-summary" placeholder="제목" style="flex:1;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      <select id="log-contact-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
+        <option value="통화">📞 통화</option><option value="미팅">🤝 미팅</option>
+        <option value="이메일">✉️ 이메일</option><option value="문자">💬 문자</option><option value="기타">📌 기타</option>
+      </select>
+      <select id="log-status" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
+        <option value="완료">✅ 완료</option><option value="진행중">🔄 진행중</option>
+      </select>
+      <input id="log-summary" placeholder="제목" style="flex:1;min-width:120px;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
       <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:6px;">
@@ -4318,18 +4325,29 @@ function renderContactLogItem(l,orgId){
   const timeStr=fTime(l.logged_at||l.created_at);
   const dateStr=fDate(l.date);
   const hasMemo=!!l.memo;
-  return`<div class="contact-log-item" id="log-item-${l.id}">
+  const TYPE_ICON={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌'};
+  const typeIcon=TYPE_ICON[l.contact_type]||'📋';
+  const isInProgress=l.status==='진행중';
+  const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;">🔄 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;">✅ 완료</span>';
+  const threads=l.threads||[];
+  return`<div class="contact-log-item" id="log-item-${l.id}" style="${isInProgress?'border-left:3px solid #f97316;padding-left:8px;':''}">
     <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleLogDetail(${l.id})">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:1px;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${isInProgress?'#f97316':'var(--accent)'};flex-shrink:0;"></div>
+      <span style="font-size:12px;flex-shrink:0;">${typeIcon}</span>
       <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${dateStr}</span>
       <span style="font-size:11px;color:var(--accent);flex-shrink:0;background:var(--accent-bg);padding:1px 7px;border-radius:4px;font-weight:600;">${timeStr}</span>
       <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);">${l.summary}</span>
+      ${statusBadge}
       ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
-      ${hasMemo?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
+      ${hasMemo||threads.length?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
       <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
     </div>
     ${(l.our_members||l.their_members)?`<div style="margin:6px 0 2px 22px;font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">${l.our_members?`<span>👥 참여자: <b style="color:var(--text2);">${l.our_members}</b></span>`:''}${l.their_members?`<span>🏢 기관측: <b style="color:var(--text2);">${l.their_members}</b></span>`:''}</div>`:''}
-    ${hasMemo?`<div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">${l.memo}</div>`:''}
+    <div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;">
+      ${hasMemo?`<div style="font-size:12px;color:var(--text2);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;margin-bottom:6px;">${l.memo}</div>`:''}
+      ${threads.map(t=>`<div style="margin-top:6px;padding:8px 12px;background:#f8faff;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:600;">${fDate(t.date)} · ${t.by||''}</div><div style="white-space:pre-line;color:var(--text2);">${t.content}</div></div>`).join('')}
+      ${isInProgress?`<div id="thread-form-${l.id}" style="margin-top:8px;display:none;"><textarea id="thread-input-${l.id}" placeholder="추가 상담 내용..." style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-sm);min-height:60px;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea><div style="display:flex;gap:6px;margin-top:4px;"><button onclick="addThread(${l.id},${orgId})" style="padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">저장</button><button onclick="markLogComplete(${l.id},${orgId})" style="padding:5px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">✅ 완료 처리</button><button onclick="document.getElementById('thread-form-${l.id}').style.display='none'" style="padding:5px 10px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;">취소</button></div></div><button onclick="document.getElementById('thread-form-${l.id}').style.display='block'" style="margin-top:6px;font-size:11px;color:var(--accent);background:var(--accent-bg);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;">+ 추가 상담 내용</button>`:''}
+    </div>
   </div>`;
 }
 function renderContactLogs(orgId){
@@ -4338,6 +4356,30 @@ function renderContactLogs(orgId){
   const recent=logs.slice(0,3);
   const moreCount=logs.length-3;
   return recent.map(l=>renderContactLogItem(l,orgId)).join('')+(moreCount>0?`<button onclick="openHistoryModal(${orgId})" style="width:100%;margin-top:8px;padding:9px;background:var(--bg);border:1.5px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;"><i class="ti ti-history"></i> 전체 히스토리 보기 (총 ${logs.length}건)</button>`:'');
+}
+async function addThread(logId,orgId){
+  const input=document.getElementById('thread-input-'+logId);
+  const content=input&&input.value.trim();
+  if(!content){toast('내용을 입력해주세요');return;}
+  const log=cache.logs.find(l=>l.id===logId);
+  if(!log)return;
+  const threads=Array.isArray(log.threads)?[...log.threads]:[];
+  threads.push({content,date:today(),by:currentProfile&&currentProfile.name||''});
+  const{error}=await sb.from('contact_logs').update({threads}).eq('id',logId);
+  if(error){toast('오류: '+error.message);return;}
+  log.threads=threads;
+  const logList=document.getElementById('contact-log-list');
+  if(logList)logList.innerHTML=renderContactLogs(orgId);
+  toast('추가 상담 내용 저장됨 ✓');
+}
+async function markLogComplete(logId,orgId){
+  const{error}=await sb.from('contact_logs').update({status:'완료'}).eq('id',logId);
+  if(error){toast('오류: '+error.message);return;}
+  const log=cache.logs.find(l=>l.id===logId);
+  if(log)log.status='완료';
+  const logList=document.getElementById('contact-log-list');
+  if(logList)logList.innerHTML=renderContactLogs(orgId);
+  toast('✅ 완료 처리됐어요!');
 }
 let historyOrgId=null;
 function openHistoryModal(orgId){
@@ -4391,10 +4433,12 @@ async function addContactLog(orgId){
   const date=document.getElementById('log-date').value||today();
   const ourMembers=document.getElementById('log-our-members')?.value.trim()||'';
   const theirMembers=document.getElementById('log-their-members')?.value.trim()||'';
+  const contactType=document.getElementById('log-contact-type')?.value||'통화';
+  const status=document.getElementById('log-status')?.value||'완료';
   if(!summary){toast('미팅 제목을 입력하세요');return;}
   const now=new Date().toISOString();
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
-  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName,our_members:ourMembers||null,their_members:theirMembers||null}).select().single();
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary,memo:memo||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName,our_members:ourMembers||null,their_members:theirMembers||null,contact_type:contactType,status}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.logs.unshift(data);
   await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
