@@ -1251,10 +1251,19 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 <div id="talent-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal">
-  <div class="modal-head"><div class="modal-title">인재 수급 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">영입 인재 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
   <div class="modal-body">
-    <div class="fg-row fg-2">
-      <div class="fg"><label>지원자명 *</label><input id="t-name" placeholder="홍길동"></div>
+    <div class="fg" style="margin-bottom:16px;">
+      <label>등록 인원 수</label>
+      <select id="talent-count" onchange="renderTalentForms()" style="font-size:13px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;width:100px;">
+        <option value="1">1명</option>
+        <option value="2">2명</option>
+        <option value="3">3명</option>
+        <option value="4">4명</option>
+        <option value="5">5명</option>
+      </select>
+    </div>
+    <div class="fg-row fg-2" style="margin-bottom:10px;">
       <div class="fg"><label>수급 채널 *</label>
         <select id="t-channel" onchange="toggleChannelFields()">
           <option value="기관연계">🏢 기관</option>
@@ -1267,6 +1276,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <option value="기타온라인">🌐 기타 온라인</option>
         </select>
       </div>
+      <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div>
     </div>
     <div id="t-org-wrap" class="fg"><label>연결 기관</label>
       <div style="position:relative;">
@@ -1279,15 +1289,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
     </div>
     <div id="t-referrer-wrap" class="fg" style="display:none;"><label>소개자 (이름/기관)</label><input id="t-referrer" placeholder="예: 서울복지관 김센터장"></div>
-    <div class="fg-row fg-2">
-      <div class="fg"><label>직무</label><input id="t-job" placeholder="사무보조"></div>
-      <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div>
-    </div>
-    <div class="fg-row fg-2">
-      <div class="fg"><label>지원일</label><input id="t-date" type="date"></div>
-      <div class="fg"><label>상태</label><select id="t-status"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>포기</option></select></div>
-    </div>
-    <div class="fg"><label>메모</label><textarea id="t-memo" style="min-height:48px;"></textarea></div>
+    <div id="talent-forms-container"></div>
     <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()">💾 저장</button></div>
   </div>
 </div>
@@ -2487,38 +2489,62 @@ function toggleChannelFields(){
 }
 function openAddTalent(){
   renderTalent();
-  document.getElementById('t-date').value=today();
+  document.getElementById('talent-count').value='1';
   document.getElementById('t-channel').value='기관연계';
   document.getElementById('t-org').value='';
   document.getElementById('t-org-search').value='';
+  document.getElementById('t-referrer').value='';
   toggleChannelFields();
+  renderTalentForms();
   document.getElementById('talent-modal').style.display='flex';
+}
+function renderTalentForms(){
+  const count=parseInt(document.getElementById('talent-count').value);
+  const container=document.getElementById('talent-forms-container');
+  container.innerHTML=Array.from({length:count},(_,i)=>`
+    <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:${i%2===0?'#fafbfc':'#fff'};">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">👤 지원자 ${i+1}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fg"><label>지원자명 *</label><input type="text" id="t-name-${i}" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>지원일</label><input type="date" id="t-date-${i}" value="${today()}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>취소</option></select></div>
+        <div class="fg" style="grid-column:1/-1;"><label>메모</label><input type="text" id="t-memo-${i}" placeholder="메모" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+      </div>
+    </div>
+  `).join('');
 }
 async function saveTalent(){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
-  const name=document.getElementById('t-name').value.trim();
+  const count=parseInt(document.getElementById('talent-count').value);
   const channel=document.getElementById('t-channel').value;
   const needsOrg=['기관연계','협단체','특수학교'].includes(channel);
   const orgId=needsOrg?parseInt(document.getElementById('t-org').value)||null:null;
   const orgSearch=document.getElementById('t-org-search').value.trim();
   const referrer=channel==='소개'?document.getElementById('t-referrer').value.trim():'';
-  if(!name){toast('지원자명을 입력하세요');return;}
   if(needsOrg&&!orgId&&!orgSearch){toast('기관을 검색해서 선택하거나 직접 입력해주세요');return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
-  const row={
-    name,org_id:orgId||null,channel,referrer:referrer||null,
-    job:document.getElementById('t-job').value.trim(),
-    member:document.getElementById('t-member').value,
-    date:document.getElementById('t-date').value||null,
-    status:document.getElementById('t-status').value,
-    memo:document.getElementById('t-memo').value.trim(),
-    created_by:currentUser?.id||null,created_by_name:myName
-  };
-  const {data,error}=await sb.from('talents').insert(row).select().single();
+  const member=document.getElementById('t-member').value;
+  const rows=[];
+  for(let i=0;i<count;i++){
+    const name=document.getElementById(`t-name-${i}`).value.trim();
+    if(!name){toast(`${i+1}번째 지원자명을 입력하세요`);return;}
+    rows.push({
+      name,org_id:orgId||null,channel,referrer:referrer||null,
+      job:document.getElementById(`t-job-${i}`).value.trim(),
+      member,
+      date:document.getElementById(`t-date-${i}`).value||null,
+      status:document.getElementById(`t-status-${i}`).value,
+      memo:document.getElementById(`t-memo-${i}`).value.trim(),
+      created_by:currentUser?.id||null,created_by_name:myName
+    });
+  }
+  const {data,error}=await sb.from('talents').insert(rows).select();
   if(error){toast('오류: '+error.message);return;}
-  cache.talents.unshift(data);document.getElementById('talent-modal').style.display='none';
-  ['t-name','t-job','t-memo','t-referrer'].forEach(id=>document.getElementById(id).value='');
-  toast('수급 등록 완료!');renderTalent();
+  data.forEach(d=>cache.talents.unshift(d));
+  document.getElementById('talent-modal').style.display='none';
+  document.getElementById('t-referrer').value='';
+  toast(`${count}명 등록 완료!`);renderTalent();
 }
 
 // ── MOU 체크리스트 ──
