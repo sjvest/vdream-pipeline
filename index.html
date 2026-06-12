@@ -153,7 +153,8 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 /* ── 모달 ── */
 .overlay{position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
 .modal{background:var(--surface);border-radius:var(--radius);width:100%;max-width:580px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
-.modal-head{padding:20px 24px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
+.modal-head{padding:20px 24px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;cursor:grab;}
+.modal-head:active{cursor:grabbing;}
 .modal-title{font-size:16px;font-weight:800;color:var(--text);}
 .modal-body{padding:20px 24px;}
 .modal-sec-title{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--border);}
@@ -4262,6 +4263,7 @@ function openOrg(id){
     </div>
   `;
   document.getElementById('modal').style.display='flex';
+  setTimeout(()=>initModalDrag(),50);
   // 날짜 항상 오늘로 세팅
   const logDateEl=document.getElementById('log-date');
   if(logDateEl)logDateEl.value=today();
@@ -4525,7 +4527,32 @@ async function markContacted(id){
   const o=cache.orgs.find(x=>x.id===id);if(o)o.lastcontact=t;
   openOrg(id);toast('연락 완료 처리됨 ✓');
 }
-function closeModal(){document.getElementById('modal').style.display='none';}
+function closeModal(){
+  const modal=document.getElementById('modal').querySelector('.modal');
+  if(modal){modal.style.position='';modal.style.left='';modal.style.top='';modal.style.margin='';}
+  document.getElementById('modal').style.display='none';
+}
+function initModalDrag(){
+  const overlay=document.getElementById('modal');
+  const modal=overlay.querySelector('.modal');
+  const head=overlay.querySelector('.modal-head');
+  if(!head||!modal)return;
+  let isDragging=false,startX=0,startY=0,origX=0,origY=0;
+  head.onmousedown=function(e){
+    if(e.target.closest('button'))return;
+    isDragging=true;startX=e.clientX;startY=e.clientY;
+    const rect=modal.getBoundingClientRect();
+    origX=rect.left;origY=rect.top;
+    modal.style.position='fixed';modal.style.left=origX+'px';modal.style.top=origY+'px';modal.style.margin='0';
+    e.preventDefault();
+  };
+  document.onmousemove=function(e){
+    if(!isDragging)return;
+    modal.style.left=(origX+e.clientX-startX)+'px';
+    modal.style.top=(origY+e.clientY-startY)+'px';
+  };
+  document.onmouseup=function(){isDragging=false;};
+}
 
 // ── 인재 상태 변경 ──
 let statusTargetId=null;
