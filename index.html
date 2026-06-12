@@ -159,6 +159,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .modal-body{padding:20px 24px;}
 .modal-sec-title{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--border);}
 .modal-wide{max-width:720px;}
+.modal-org{max-width:900px;width:900px;}
 .info-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:flex-start;}
 .info-row:last-child{border-bottom:none;}
 .info-key{width:90px;flex-shrink:0;color:var(--text3);font-weight:600;font-size:11px;padding-top:2px;text-transform:uppercase;letter-spacing:.03em;}
@@ -228,7 +229,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   .metrics{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;}
   .card{padding:12px!important;}
   .modal-overlay{align-items:flex-end!important;}
-  .modal,.modal-wide{max-width:100%!important;width:100%!important;border-radius:16px 16px 0 0!important;max-height:90vh!important;}
+  .modal,.modal-wide,.modal-org{max-width:100%!important;width:100%!important;border-radius:16px 16px 0 0!important;max-height:90vh!important;}
+  .modal-org [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
   .config-box{width:92%!important;max-width:360px!important;}
   .sidebar-bottom{display:none!important;}
   .nav-item{padding:11px 16px!important;font-size:13px!important;}
@@ -4246,6 +4248,8 @@ function openOrg(id){
   const linkedEvent=o.event_id?(cache.events||[]).find(e=>e.id===o.event_id):null;
   document.getElementById('m-title').textContent=o.name;
   document.getElementById('m-body').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+  <div>
     ${o.card_image?`
       <div style="max-width:360px;aspect-ratio:9/5;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;">
         <img src="${o.card_image}" style="width:100%;height:100%;object-fit:contain;display:block;" alt="명함 사진">
@@ -4336,6 +4340,8 @@ function openOrg(id){
     </div>
     <textarea id="log-memo" placeholder="미팅 or 상담 내용 상세" style="width:100%;font-size:13px;font-weight:500;color:var(--text);line-height:1.7;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-height:72px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
     <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"><i class="ti ti-plus"></i> 히스토리 추가</button>
+  </div>
+  <div>
     ${o.stage===5?`
     <div style="background:var(--green-bg);border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
       <i class="ti ti-circle-check" style="color:var(--green);font-size:18px;"></i>
@@ -4379,7 +4385,9 @@ function openOrg(id){
     </div>
     ${tals.length?`<div class="modal-sec-title">연결 인재 (${tals.length}명)</div>
     ${tals.map(t=>`<div class="info-row"><span style="font-weight:500;">${t.name}</span><span style="font-size:11px;color:var(--text3);margin-left:8px;">${t.job||'—'}</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="margin-left:auto;">${t.status}</span></div>`).join('')}`:''}
-    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+  </div>
+  </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:14px;border-top:1.5px solid var(--border);">
       <select id="m-stage-sel" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
         ${[0,1,2,3,4,5,6,9].map(s=>`<option value="${s}"${o.stage===s?' selected':''}>${STAGES[s]}</option>`).join('')}
       </select>
@@ -4389,6 +4397,7 @@ function openOrg(id){
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : ''}
     </div>
   `;
+  document.getElementById('modal').querySelector('.modal').classList.add('modal-org');
   document.getElementById('modal').style.display='flex';
   setTimeout(()=>initModalDrag(),50);
   // 날짜 항상 오늘로 세팅
@@ -4712,7 +4721,7 @@ async function markContacted(id){
 }
 function closeModal(){
   const modal=document.getElementById('modal').querySelector('.modal');
-  if(modal){modal.style.position='';modal.style.left='';modal.style.top='';modal.style.margin='';}
+  if(modal){modal.style.position='';modal.style.left='';modal.style.top='';modal.style.margin='';modal.classList.remove('modal-org');}
   document.getElementById('modal').style.display='none';
 }
 function initModalDrag(){
