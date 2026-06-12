@@ -2148,6 +2148,17 @@ function renderTrendChart(mode){
 // ── 파이프라인 ──
 function renderPipeline(){
   const sl=[0,1,2,3,4,5,6,9];
+  if(window.innerWidth<=768){
+    document.getElementById('board').innerHTML='<div style="display:flex;flex-direction:column;gap:12px;">'+sl.map((s,i)=>{
+      const items=cache.orgs.filter(o=>o.stage===s);
+      if(!items.length)return'';
+      return'<div style="background:var(--surface);border-radius:12px;overflow:hidden;border:1.5px solid var(--border);"><div style="background:'+STAGE_BGS[i]+';color:'+STAGE_COLORS[i]+';padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;">'+STAGES[s]+'<span style="background:'+STAGE_COLORS[i]+';color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;">'+items.length+'</span></div>'+items.map(o=>{
+        const oa=actionsForOrg(o.id).filter(a=>!a.done&&dayDiff(a.due)<=3);
+        return`<div onclick="openOrg(${o.id})" style="padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">${o.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.cat||''} · ${o.member||'—'}</div>${oa.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px;">⚠ ${oa[0].content||oa[0].text||''}</div>`:''}</div><i class="ti ti-chevron-right" style="color:var(--text3);font-size:14px;"></i></div>`;
+      }).join('')+'</div>';
+    }).join('')+'</div>';
+    return;
+  }
   document.getElementById('board').innerHTML=sl.map((s,i)=>{
     const items=cache.orgs.filter(o=>o.stage===s);
     return`<div class="stage-col">
@@ -2158,7 +2169,7 @@ function renderPipeline(){
           ${o.card_image?`<img src="${o.card_image}" style="width:100%;height:60px;object-fit:contain;border-radius:4px;margin-bottom:5px;">`:'' }
           <div class="p-card-name">${o.name}</div>
           <div class="p-card-meta">${o.cat||''} · ${o.member||'—'}</div>
-          ${oa.length?`<div class="p-card-warn"><i class="ti ti-alert-triangle"></i> ${oa[0].text}</div>`:''}
+          ${oa.length?`<div class="p-card-warn"><i class="ti ti-alert-triangle"></i> ${oa[0].content||oa[0].text||''}</div>`:''}
         </div>`;}).join(''):'<div class="empty" style="padding:.5rem 0;font-size:11px;">없음</div>'}</div>
     </div>`;
   }).join('');
