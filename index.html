@@ -2058,9 +2058,7 @@ async function sendGChatDailySummary(){
       const remain=(j.headcount||0)-(j.current_count||0);
       const e=d===0?'🔴🔴':d<=3?'🔴':'🟡';
       jobMsg+=e+' *'+j.company+' - '+j.job_title+'*\n';
-      jobMsg+='   D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명*';
-      if(j.member)jobMsg+=' | 담당: '+j.member;
-      jobMsg+='\n\n';
+      jobMsg+='   D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명* | 담당: '+(j.member||'미배정')+'\n\n';
     });
   } else {
     jobMsg+='✅ 마감 임박 채용건 없음';
