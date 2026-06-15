@@ -4365,7 +4365,7 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(Number(${j.id}))" style="cursor:pointer;">${j.status}</span></td>
+      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(Number(${j.id}))" title="클릭하여 상태 변경" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:0 0 0 2px rgba(0,0,0,0.15);transition:all .15s;" onmouseover="this.style.opacity='.75';this.style.transform='scale(1.05)'" onmouseout="this.style.opacity='1';this.style.transform='scale(1)'">${j.status} ✎</span></td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
