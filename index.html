@@ -2035,63 +2035,98 @@ async function checkAlertsAndSendGChat(){
 }
 
 async function sendGChatDailySummary(){
-  const today=new Date();
-  const todayStr=today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  const now=new Date();
+  const todayStr=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  const timeStr=now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   const orgs=cache.orgs||[];
   const logs=cache.logs||[];
-  const todayLogs=logs.filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===today.toDateString();});
+  const todayLogs=logs.filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===now.toDateString();});
 
-  // 채용 마감 D-7 이내 미완료 건
+  // 헤더
+  await sendGChat('📋 *브이드림 알림 - '+todayStr+' '+timeStr+'*\n오늘 컨택: '+todayLogs.length+'건 · 등록기관: '+orgs.length+'개');
+
+  // ── 메시지 1: 채용 마감 임박 (D-7 이내 미완료) ──
   const urgentJobs=(cache.jobs||[]).filter(j=>{
     if(!j.deadline||j.status==='완료'||j.status==='취소')return false;
-    const d=Math.floor((new Date(j.deadline)-today)/864e5);
-    const notDone=(j.current_count||0)<(j.headcount||0);
-    return d>=0&&d<=7&&notDone;
+    const d=Math.floor((new Date(j.deadline)-now)/864e5);
+    return d>=0&&d<=7&&(j.current_count||0)<(j.headcount||0);
   });
-
-  let msg='📋 *브이드림 일일 요약 - '+todayStr+'*\n\n';
-  msg+='• 오늘 컨택: '+todayLogs.length+'건\n';
-  msg+='• 전체 등록기관: '+orgs.length+'개\n';
-
-  if(urgentJobs.length>0){
-    msg+='\n🚨 *채용 마감 임박 (미완료)*\n';
+  let jobMsg='🏢 *[채용] 마감 임박 현황*\n';
+  if(urgentJobs.length){
     urgentJobs.forEach(j=>{
-      const d=Math.floor((new Date(j.deadline)-today)/864e5);
+      const d=Math.floor((new Date(j.deadline)-now)/864e5);
       const remain=(j.headcount||0)-(j.current_count||0);
-      const emoji=d<=3?'🔴':'🟡';
-      msg+=emoji+' '+j.company+' '+j.job_title+'\n';
-      msg+='   D-'+d+' · 확보 '+(j.current_count||0)+'/'+j.headcount+'명 · 미충원 '+remain+'명\n\n';
+      const e=d===0?'🔴🔴':d<=3?'🔴':'🟡';
+      jobMsg+=e+' *'+j.company+' - '+j.job_title+'*\n';
+      jobMsg+='   D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명*';
+      if(j.member)jobMsg+=' | 담당: '+j.member;
+      jobMsg+='\n\n';
     });
   } else {
-    msg+='\n✅ 마감 임박 채용건 없음\n';
+    jobMsg+='✅ 마감 임박 채용건 없음';
   }
+  await sendGChat(jobMsg);
 
-  sendGChat(msg);
+  // ── 메시지 2: 미연락 기관 (컨택 시도 후 7일 이상) ──
+  const noContact=orgs.filter(o=>{
+    if(!o.lastcontact||o.stage===0||o.stage>=4)return false;
+    const d=Math.floor((now-new Date(o.lastcontact))/864e5);
+    return d>=7;
+  });
+  let contactMsg='📞 *[미연락] 컨택 필요 기관*\n';
+  if(noContact.length){
+    noContact.slice(0,10).forEach(o=>{
+      const d=Math.floor((now-new Date(o.lastcontact))/864e5);
+      const stage={1:'컨택시도',2:'미팅완료',3:'관계형성'}[o.stage]||'진행중';
+      contactMsg+='⚠️ *'+o.name+'* ('+stage+')\n';
+      contactMsg+='   마지막 연락: '+d+'일 전 | 담당: '+(o.member||'미배정')+'\n\n';
+    });
+    if(noContact.length>10)contactMsg+='외 '+(noContact.length-10)+'개 기관\n';
+  } else {
+    contactMsg+='✅ 미연락 기관 없음';
+  }
+  await sendGChat(contactMsg);
+
+  // ── 메시지 3: 미팅 예정 + MOU 예정 D데이 ──
+  const meetingActions=(cache.actions||[]).filter(a=>{
+    if(a.done)return false;
+    const d=Math.floor((new Date(a.due)-now)/864e5);
+    return d>=0&&d<=7&&(a.text||'').includes('미팅');
+  });
+  const mouOrgs=orgs.filter(o=>{
+    if(o.stage!==4||!o.mou_date)return false;
+    const d=Math.floor((new Date(o.mou_date)-now)/864e5);
+    return d>=0&&d<=14;
+  });
+  let meetMouMsg='📅 *[미팅/MOU] 일정 현황*\n';
+  let hasMeetMou=false;
+  if(meetingActions.length){
+    hasMeetMou=true;
+    meetMouMsg+='*🤝 미팅 예정*\n';
+    meetingActions.forEach(a=>{
+      const d=Math.floor((new Date(a.due)-now)/864e5);
+      const org=orgs.find(o=>o.id===a.org_id);
+      const e=d===0?'🔴':d<=3?'🟡':'🔵';
+      meetMouMsg+=e+' '+(org?.name||'—')+' - '+a.text+'\n';
+      meetMouMsg+='   D-'+d+' ('+a.due+')\n\n';
+    });
+  }
+  if(mouOrgs.length){
+    hasMeetMou=true;
+    meetMouMsg+='*📝 MOU 예정*\n';
+    mouOrgs.forEach(o=>{
+      const d=Math.floor((new Date(o.mou_date)-now)/864e5);
+      const e=d===0?'🔴':d<=3?'🟡':'🟢';
+      meetMouMsg+=e+' *'+o.name+'*\n';
+      meetMouMsg+='   D-'+d+' ('+o.mou_date+') | 담당: '+(o.member||'미배정')+'\n\n';
+    });
+  }
+  if(!hasMeetMou) meetMouMsg+='✅ 예정된 미팅/MOU 없음';
+  await sendGChat(meetMouMsg);
 }
 
-// 채용 마감 전용 알림 (매일 오전 9시 + 오후 2시 두 번 발송)
 async function sendGChatJobDeadlineAlert(){
-  const today=new Date();
-  const urgentJobs=(cache.jobs||[]).filter(j=>{
-    if(!j.deadline||j.status==='완료'||j.status==='취소')return false;
-    const d=Math.floor((new Date(j.deadline)-today)/864e5);
-    const notDone=(j.current_count||0)<(j.headcount||0);
-    return d>=0&&d<=7&&notDone;
-  });
-  if(!urgentJobs.length)return;
-
-  let msg='🚨 *채용 마감 임박 알림*\n'+today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})+'\n\n';
-  urgentJobs.forEach(j=>{
-    const d=Math.floor((new Date(j.deadline)-today)/864e5);
-    const remain=(j.headcount||0)-(j.current_count||0);
-    const emoji=d===0?'🔴🔴':d<=3?'🔴':'🟡';
-    msg+=emoji+' *'+j.company+' - '+j.job_title+'*\n';
-    msg+='마감: D-'+d+' ('+j.deadline+')\n';
-    msg+='확보: '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원: *'+remain+'명*\n';
-    if(j.member)msg+='담당: '+j.member+'\n';
-    msg+='\n';
-  });
-  sendGChat(msg);
+  // sendGChatDailySummary에 통합됨
 }
 
 
