@@ -434,8 +434,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
       <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅 기관수</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>수급자수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>컨택 시도수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>인재영입수</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU 체결</span>
       </div>
     </div>
@@ -445,7 +445,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card"><div class="card-header"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>마감 임박 후속 액션</div><div class="card-body" style="padding:0 16px;" id="dash-actions"><div class="loading"><div class="spin"></div></div></div></div>
     <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
   </div>
-  <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
   <div class="card" style="margin-bottom:12px;">
     <div class="card-header" style="justify-content:space-between;">
       <span><i class="ti ti-activity" style="color:var(--purple)"></i>최근 컨택 활동</span>
@@ -2043,18 +2042,20 @@ function renderDashboard(){
     const groupHeader=dateLabel!==lastDateLabel?(lastDateLabel=dateLabel,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 0 4px;margin-top:4px;border-top:1.5px solid var(--border);">${dateLabel}</div>`):'';
     return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
+        ${f.by?`<span style="font-size:11px;font-weight:700;color:var(--accent);">${f.by}</span>`:''}
+        <span style="font-size:11px;font-weight:700;color:${color};">${f.contact_type}</span>
+      </div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
           <span style="font-size:13px;font-weight:700;">${orgName}</span>
-          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록기관</span>':''}
-          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">🔄 진행중</span>':''}
+          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록</span>':''}
+          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">진행중</span>':''}
         </div>
-        ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
+        ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">${f.title}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr}</div>
-        ${f.by?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${f.by}</div>`:''}
       </div>
     </div>`;
   }).join(''):'<div class="empty" style="padding:1rem 0;">최근 컨택 활동 없음</div>';
@@ -2277,9 +2278,9 @@ function renderTrendChart(mode){
     data:{
       labels,
       datasets:[
-        {label:'컨택 건수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
-        {label:'수급자수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
-        {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'컨택 시도수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.5},
+        {label:'인재영입수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.5},
+        {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.5},
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
