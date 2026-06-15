@@ -448,7 +448,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="card" style="margin-bottom:12px;">
     <div class="card-header" style="justify-content:space-between;">
       <span><i class="ti ti-activity" style="color:var(--purple)"></i>최근 컨택 활동</span>
-      <span id="dash-feed-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="dash-feed-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
+        <button onclick="nav('cold')" style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;">전체 보기 →</button>
+      </div>
     </div>
     <div class="card-body" style="padding:0 16px;" id="dash-feed"><div class="loading"><div class="spin"></div></div></div>
   </div>
@@ -708,8 +711,15 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 콜드 컨택 로그 -->
 <div id="p-cold" class="page">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">콜드 컨택 로그</div><div class="page-sub">기관 등록 전 전화·메일·문자 시도 기록</div></div>
-    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 컨택 기록 추가</button>
+    <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 + 콜드 컨택 통합 기록</div></div>
+    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 콜드 컨택 추가</button>
+  </div>
+
+  <!-- 탭 -->
+  <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
+    <button id="cold-tab-all" onclick="setColdTab('all')" style="font-size:12px;font-weight:700;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">전체</button>
+    <button id="cold-tab-reg" onclick="setColdTab('reg')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">등록기관 컨택</button>
+    <button id="cold-tab-cold" onclick="setColdTab('cold')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">콜드 컨택</button>
   </div>
 
   <!-- 요약 카드 -->
@@ -736,7 +746,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <!-- 타임라인 목록 -->
   <div class="card">
-    <div class="card-header"><i class="ti ti-phone-call" style="color:var(--accent)"></i>컨택 이력 <span id="cold-count" style="font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
+    <div class="card-header"><i class="ti ti-history" style="color:var(--accent)"></i>컨택 이력 <span id="cold-count" style="font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
     <div class="card-body" id="cold-list"><div class="loading"><div class="spin"></div></div></div>
   </div>
 </div>
@@ -2034,7 +2044,7 @@ function renderDashboard(){
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
-          <span style="font-size:13px;font-weight:600;">${orgName}</span>
+          <span style="font-size:13px;font-weight:700;">${orgName}</span>
           ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록기관</span>':''}
           ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">🔄 진행중</span>':''}
         </div>
@@ -2927,6 +2937,18 @@ function updateMemberSelects(){
   ['n-member','t-member'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
 // ── 콜드 컨택 로그 ──
+let coldTab='all';
+function setColdTab(tab){
+  coldTab=tab;
+  ['all','reg','cold'].forEach(t=>{
+    const btn=document.getElementById('cold-tab-'+t);
+    if(!btn)return;
+    if(t===tab){btn.style.color='var(--accent)';btn.style.borderBottomColor='var(--accent)';btn.style.fontWeight='700';}
+    else{btn.style.color='var(--text3)';btn.style.borderBottomColor='transparent';btn.style.fontWeight='600';}
+  });
+  renderCold();
+}
+
 async function renderCold(){
   const{data,error}=await sb.from('cold_contacts').select('*').order('logged_at',{ascending:false});
   if(error){toast('오류: '+error.message);return;}
@@ -2954,18 +2976,53 @@ async function renderCold(){
     <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
   `;
 
+  // 탭에 따라 전체 피드 구성
+  const TYPE_ICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+  const logRows=(coldTab==='cold')?[]:(cache.logs||[]).map(l=>({
+    _type:'reg',
+    id:'log-'+l.id,
+    org_id:l.org_id,
+    orgName:(cache.orgs.find(o=>o.id===l.org_id)||{}).name||'',
+    contact_type:l.contact_type||'기타',
+    summary:l.summary||'',
+    member:l.created_by_name||'',
+    date:l.logged_at||l.created_at
+  }));
+  const coldRows=(coldTab==='reg')?[]:(cache.cold||[]).map(c=>({
+    _type:'cold',
+    id:'cold-'+c.id,
+    org_id:null,
+    orgName:c.org_name||c.org||'',
+    contact_type:c.method||'전화',
+    summary:c.purpose||c.result||'',
+    member:c.member||c.created_by_name||'',
+    date:c.logged_at||c.created_at,
+    result:c.result
+  }));
+
   // 필터 적용
   const fm=document.getElementById('cold-filter-member')?.value||'';
   const fr=document.getElementById('cold-filter-result')?.value||'';
   const fs=document.getElementById('cold-filter-start')?.value||'';
   const fe=document.getElementById('cold-filter-end')?.value||'';
-  let rows=cache.cold.filter(c=>{
-    if(fm&&c.member!==fm)return false;
-    if(fr&&c.result!==fr)return false;
-    if(fs&&c.logged_at?.slice(0,10)<fs)return false;
-    if(fe&&c.logged_at?.slice(0,10)>fe)return false;
+  let allRows=[...logRows,...coldRows].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  let rows=allRows.filter(r=>{
+    if(fm&&r.member!==fm)return false;
+    if(fr&&r._type==='cold'&&r.result!==fr)return false;
+    if(fs&&r.date?.slice(0,10)<fs)return false;
+    if(fe&&r.date?.slice(0,10)>fe)return false;
     return true;
   });
+
+  // 요약 카드 업데이트 (오늘 컨택 전체)
+  const todayAllCnt=allRows.filter(r=>r.date?.slice(0,10)===todayStr).length;
+  document.getElementById('cold-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${allRows.length}</div><div class="metric-sub">건 누적</div></div>
+    <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayAllCnt}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">등록기관</div><div class="metric-value" style="color:var(--green);">${logRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">콜드 컨택</div><div class="metric-value" style="color:var(--purple);">${coldRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
+  `;
 
   document.getElementById('cold-count').textContent=`총 ${rows.length}건`;
 
@@ -2999,9 +3056,39 @@ async function renderCold(){
     return'var(--border)';
   }
 
+  // 등록기관 탭이면 통합 피드 렌더링
+  if(coldTab==='reg'){
+    const today2=new Date();const yesterday2=new Date(today2);yesterday2.setDate(today2.getDate()-1);
+    const sameDay2=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    let lastLabel2='';
+    const TYPE_COLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
+    document.getElementById('cold-list').innerHTML=rows.length?rows.map(r=>{
+      const fDate2=new Date(r.date);
+      const lbl=sameDay2(fDate2,today2)?'오늘':sameDay2(fDate2,yesterday2)?'어제':fDate2.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp=lbl!==lastLabel2?(lastLabel2=lbl,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl}</div>`):'';
+      const timeStr2=fDate2.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const org2=cache.orgs.find(o=>o.id===r.org_id);
+      return`${grp}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="openOrg(${r.org_id})">
+        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'📋'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:${TYPE_COLOR2[r.contact_type]||'var(--text3)'};">${r.contact_type}</span>
+            <span style="font-size:13px;font-weight:700;">${r.orgName}</span>
+          </div>
+          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.summary}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr2}</div>
+          ${r.member?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${r.member}</div>`:''}
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+    return;
+  }
+
   document.getElementById('cold-list').innerHTML=rows.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
-      ${rows.map(c=>`
+      ${rows.filter(r=>r._type==='cold').map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'📞'}</div>
           <div style="flex:1;min-width:0;">
