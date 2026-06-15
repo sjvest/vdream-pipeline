@@ -2013,7 +2013,9 @@ function renderDashboard(){
   const logFeed=cache.logs.map(l=>({type:'log',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
   const coldFeed=(cache.cold||[]).map(c=>({type:'cold',id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
   const allFeed=[...logFeed,...coldFeed].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,30);
-  document.getElementById('dash-feed-count').textContent='최근 '+allFeed.length+'건';
+  const todayCnt=allFeed.filter(f=>{const d=new Date(f.date),t=new Date();return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate();}).length;
+  document.getElementById('dash-feed-count').textContent=`최근 ${allFeed.length}건 · 오늘 ${todayCnt}건`;
+  let lastDateLabel='';
   document.getElementById('dash-feed').innerHTML=allFeed.length?allFeed.map(f=>{
     const org=cache.orgs.find(o=>o.id===f.org_id);
     const orgName=org?org.name:f.title||'';
@@ -2021,8 +2023,13 @@ function renderDashboard(){
     const color=TYPE_COLOR[f.contact_type]||'var(--text3)';
     const isCold=f.type==='cold';
     const isInProgress=f.status==='진행중';
-    const dateStr=new Date(f.date).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    return`<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
+    const fDate=new Date(f.date);
+    const today=new Date(),yesterday=new Date(today);yesterday.setDate(today.getDate()-1);
+    const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    const dateLabel=sameDay(fDate,today)?'오늘':sameDay(fDate,yesterday)?'어제':fDate.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+    const timeStr=fDate.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    const groupHeader=dateLabel!==lastDateLabel?(lastDateLabel=dateLabel,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 0 4px;margin-top:4px;border-top:1.5px solid var(--border);">${dateLabel}</div>`):'';
+    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -2034,7 +2041,7 @@ function renderDashboard(){
         ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:10px;color:var(--text3);">${dateStr}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr}</div>
         ${f.by?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${f.by}</div>`:''}
       </div>
     </div>`;
