@@ -3949,8 +3949,8 @@ function openTalentDetail(id){
     <div class="info-row"><span class="info-key">등록자</span><span style="color:var(--accent);font-weight:600;">${t.created_by_name||'—'}</span></div>
     <div class="info-row"><span class="info-key">현재 상태</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></div>
   `;
-  const statuses=['지원중','면접','합격','불합격','포기'];
-  const STATUS_COLOR={지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
+  const statuses=['지원서등록','지원중','면접','합격','불합격','포기'];
+  const STATUS_COLOR={지원서등록:'b-purple',지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
   document.getElementById('td-status-btns').innerHTML=statuses.map(s=>`
     <button onclick="setTalentStatus('${s}')" class="badge ${STATUS_COLOR[s]}" style="padding:8px 16px;cursor:pointer;border:2px solid ${t.status===s?'var(--accent)':'transparent'};font-size:12px;">${s}</button>
   `).join('');
