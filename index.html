@@ -2059,11 +2059,15 @@ function getPeriodRange(type){
     start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);
     end=new Date(now);end.setHours(23,59,59,999);
   } else if(type==='lastweek'){
-    const today=new Date();
-    const dow=today.getDay();
-    const lastMonday=new Date(today);lastMonday.setDate(today.getDate()-(dow===0?13:dow+6));lastMonday.setHours(0,0,0,0);
-    const lastFriday=new Date(lastMonday);lastFriday.setDate(lastMonday.getDate()+4);lastFriday.setHours(23,59,59,999);
-    start=lastMonday;end=lastFriday;
+      const today=new Date();
+      const dow=today.getDay();
+      const lastMonday=new Date(today);
+      lastMonday.setDate(today.getDate() - (dow===0 ? 13 : dow+6));
+      lastMonday.setHours(0,0,0,0);
+      const lastFriday=new Date(lastMonday);
+      lastFriday.setDate(lastMonday.getDate()+4);
+      lastFriday.setHours(23,59,59,999);
+      start=lastMonday;end=lastFriday;
   } else if(type==='all'){
     return{start:null,end:null};
   } else if(type==='thismonth'){
