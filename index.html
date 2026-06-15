@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V:Dream 기관수급 파이프라인 v5</title>
+<title>V:Dream 기관 인재영입 파이프라인 v5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -461,7 +461,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 파이프라인 -->
 <div id="p-pipeline" class="page">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">파이프라인</div><div class="page-sub">발굴 → 컨택 → 미팅 → 관계형성 → MOU → 수급</div></div>
+    <div class="page-header-left"><div class="page-title">파이프라인</div><div class="page-sub">발굴 → 컨택 → 미팅 → 관계형성 → MOU → 인재영입</div></div>
     <button class="btn btn-primary btn-sm" onclick="nav('add-org')"><i class="ti ti-plus"></i> 기관 등록</button>
   </div>
   <div class="board" id="board"><div class="loading"><div class="spin"></div>불러오는 중...</div></div>
@@ -476,7 +476,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <option value="">전체 유형</option><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option>
       </select>
       <select id="filter-stage-orgs" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
-        <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">수급 완료</option><option value="9">보류</option>
+        <option value="">전체 단계</option><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">인재영입 완료</option><option value="9">보류</option>
       </select>
       <select id="filter-region" onchange="renderOrgs()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
         <option value="">전체 지역</option><option>서울</option><option>경기</option><option>인천</option><option>부산</option><option>대구</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option>
@@ -580,7 +580,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
         <div class="fg"><label>동행 여부</label><select id="n-accompany"><option value="">없음</option><option>대표 동행</option><option>2인 이상</option></select></div>
-        <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">수급 완료</option></select></div>
+        <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">인재영입 완료</option></select></div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>미팅 전 메일</label><select id="n-premeil"><option value="0">불필요</option><option value="1">발송 완료</option><option value="2">미발송(요구됨)</option></select></div>
@@ -1204,7 +1204,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div class="card"><div class="card-header"><i class="ti ti-calendar-event" style="color:var(--green)"></i>행사 효과</div><div class="card-body" id="an-events"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-user-check" style="color:var(--green)"></i>수급 → 채용 현황</div><div class="card-body" id="an-hire"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-user-check" style="color:var(--green)"></i>인재영입 → 채용 현황</div><div class="card-body" id="an-hire"></div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
     <div class="card"><div class="card-header"><i class="ti ti-map-pin" style="color:var(--accent)"></i>기관 발굴경로 현황</div><div class="card-body" id="an-source"></div></div>
@@ -1277,7 +1277,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </select>
     </div>
     <div class="fg-row fg-2" style="margin-bottom:10px;">
-      <div class="fg"><label>수급 채널 *</label>
+      <div class="fg"><label>영입 채널 *</label>
         <select id="t-channel" onchange="toggleChannelFields()">
           <option value="기관연계">🏢 기관</option>
           <option value="협단체">🤲 협단체</option>
@@ -1479,10 +1479,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 </div>
 
-<!-- 수급 현황 모달 -->
+<!-- 인재영입 현황 모달 -->
 <div id="supply-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
-  <div class="modal-head"><div class="modal-title">수급 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('supply-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">인재영입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('supply-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
   <div class="modal-body">
     <div class="mtab-row">
       <button class="mtab active" onclick="switchSupplyTab('pass',this)">합격자</button>
@@ -1502,7 +1502,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 
 <script>
-const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'수급 완료',9:'보류'};
+const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'인재영입 완료',9:'보류'};
 const STAGE_CLS={0:'b-gray',1:'b-blue',2:'b-purple',3:'b-amber',4:'b-teal',5:'b-green',6:'b-green',9:'b-red'};
 const STAGE_COLORS=['#888780','#2d5be3','#6b3fa0','#b86b0f','#0f7c75','#2a8c5e','#107569','#c0392b'];
 const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#d1fae5','#fdf0ee'];
@@ -1865,7 +1865,7 @@ function renderMobileTodayActions(){
 async function completeMobileAction(id){await sb.from('actions').update({status:'done'}).eq('id',id);await loadAll();renderMobileTodayActions();toast('✅ 완료 처리됐어요!');}
 function renderMobileOrgList(q){
   const results=cache.orgs.filter(o=>!q||o.name.includes(q)).slice(0,30);
-  const SL=['발굴','콘택시도','미팅완료','관계형성','MOU예정','MOU완료','수급완료','','','보류'];
+  const SL=['발굴','콘택시도','미팅완료','관계형성','MOU예정','MOU완료','인재영입완료','','','보류'];
   const SC=['var(--text3)','var(--amber)','var(--accent)','var(--purple)','var(--teal)','var(--green)','var(--green)','','','var(--text3)'];
   document.getElementById('m-org-list').innerHTML=results.map(o=>'<div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><span style="font-size:15px;font-weight:700;">'+o.name+'</span><span style="font-size:11px;font-weight:700;color:'+(SC[o.stage]||'var(--text3)')+';">'+(SL[o.stage]||'')+'</span></div><div style="font-size:12px;color:var(--text3);">'+(o.cat||'')+' '+(o.member?'담당: '+o.member:'')+'</div>'+(o.phone?'<div style="font-size:12px;color:var(--text2);margin-top:4px;">'+o.phone+'</div>':'')+(o.website?'<a href="'+o.website+'" target="_blank" style="font-size:12px;color:var(--accent);margin-top:4px;display:block;">웹사이트</a>':'')+'</div>').join('');
 }
@@ -1988,7 +1988,7 @@ function renderDashboard(){
     <div class="metric metric-clickable" onclick="openMetricModal('orgs')"><div class="metric-label">등록 기관</div><div id="metric-card-orgs"><div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('active')"><div class="metric-label">관계 형성 중</div><div id="metric-card-active"><div class="metric-value">${active}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div></div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('mou')"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">수급 현황</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">인재영입 현황</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openRecruitModal()"><div class="metric-label">채용 투입</div><div class="metric-value">${recruiting}</div><div class="metric-sub">명 진행 중 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">채용 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
   `;
@@ -2166,15 +2166,15 @@ function renderPeriodReport(start,end){
   const inProgress=cache.orgs.filter(o=>o.stage>=2&&o.stage<=3);
   // 4. MOU 진행중
   const mouProgress=cache.orgs.filter(o=>o.stage===4);
-  // 5. MOU 완료(수급완료)
+  // 5. MOU 완료(인재영입완료)
   const mouDone=cache.orgs.filter(o=>o.stage===5);  // MOU완료
   // 6. 온라인 유입 (해당 기간)
   const onlineChannels=['카페','인스타그램','페이스북','기타온라인'];
   const onlineTalents=cache.talents.filter(t=>inRange(t.created_at)&&onlineChannels.includes(t.channel));
-  // 7. 수급활동 지원자 (해당 기간)
+  // 7. 인재영입활동 지원자 (해당 기간)
   const supplyChannels=['기관연계','협단체','특수학교','소개'];
   const supplyTalents=cache.talents.filter(t=>inRange(t.created_at)&&supplyChannels.includes(t.channel||'기관연계'));
-  // 8. 전체 수급
+  // 8. 전체 인재영입
   const allTalents=cache.talents.filter(t=>inRange(t.created_at));
 
   const statCard=(icon,label,value,color)=>`
@@ -2201,7 +2201,7 @@ function renderPeriodReport(start,end){
       <td style="padding:8px 12px;"><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="font-size:10px;">${t.status}</span></td>
       <td style="padding:8px 12px;font-size:11px;color:var(--text3);">${t.member||'—'}</td>
     </tr>`;
-  }).join(''):`<tr><td colspan="5" class="empty" style="font-size:12px;">해당 기간 수급 없음</td></tr>`;
+  }).join(''):`<tr><td colspan="5" class="empty" style="font-size:12px;">해당 기간 인재영입 없음</td></tr>`;
 
   const orgRows=newLogs.length?newLogs.map(l=>{
     const org=cache.orgs.find(o=>o.id===l.org_id);
@@ -2230,7 +2230,7 @@ function renderPeriodReport(start,end){
     </div>
     <div>
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border);">
-        👤 수급 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">수급활동 ${supplyTalents.length}건</span>
+        👤 수급 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">인재영입활동 ${supplyTalents.length}건</span>
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f8f9fc;">
@@ -2490,7 +2490,7 @@ function renderTalent(){
       <td><span class="badge ${STATUS_CLS[t.status]||'b-gray'}" style="cursor:pointer;" onclick="openStatusDropdown(${t.id},event)">${t.status}</span></td>
       <td>${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:15px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="9" class="empty">수급 기록 없음</td></tr>';
+  }).join(''):'<tr><td colspan="9" class="empty">인재영입 기록 없음</td></tr>';
 }
 let orgSearchSelectedIdx=-1;
 function handleOrgSearchKey(e){
@@ -2626,7 +2626,7 @@ const MOU_ITEMS=[
   {id:'contract_draft',group:'내부 준비',label:'협약서 정제 — 초안 바탕으로 자사 공식 양식에 맞게 편집 및 검수'},
   {id:'contract_print',group:'내부 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
   {id:'contract_cover',group:'내부 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
-  {id:'logo_request',group:'상대 기관 조율',label:'CI(로고) 수급 — 상대 기관 고화질 로고 파일 요청'},
+  {id:'logo_request',group:'상대 기관 조율',label:'CI(로고) 수령 — 상대 기관 고화질 로고 파일 요청'},
   {id:'banner_confirm',group:'상대 기관 조율',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
   {id:'attendee_list',group:'상대 기관 조율',label:'참석자 명단 — 양측 최종 참석자 명단(성함/직급) 확인'},
   {id:'ceremony_order',group:'상대 기관 조율',label:'식순 및 사회 — 당일 식순 및 진행 주체 확정'},
@@ -2766,7 +2766,7 @@ function renderAnalytics(){
   `;
 
   // ── 기관 파이프라인 ──
-  const STAGE_NAMES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'수급 완료',9:'보류'};
+  const STAGE_NAMES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'인재영입 완료',9:'보류'};
   const stageData=[0,1,2,3,4,5,6].map(s=>({name:STAGE_NAMES[s],count:cache.orgs.filter(o=>o.stage===s&&(filterMember?o.member===filterMember:true)).length}));
   const maxStage=Math.max(...stageData.map(x=>x.count),1);
   document.getElementById('an-pipeline').innerHTML=`
@@ -2841,7 +2841,7 @@ function renderAnalytics(){
           </div>
           <div style="width:30px;font-size:12px;font-weight:700;">${x.count}</div>
         </div>`).join('')}
-    </div>`:'<div class="empty">해당 기간 수급 없음</div>';
+    </div>`:'<div class="empty">해당 기간 인재영입 없음</div>';
 
   // ── 채용 건 현황 ──
   const jobs=cache.jobs||[];
@@ -2895,7 +2895,7 @@ function renderAnalytics(){
       </tbody>
     </table>`:'<div class="empty">등록된 행사 없음</div>';
 
-  // ── 수급 → 채용 현황 ──
+  // ── 인재영입 → 채용 현황 ──
   const hireByChannel=channels.map(ch=>({
     ch,
     total:newTalents.filter(t=>(t.channel||'기관연계')===ch).length,
@@ -2918,7 +2918,7 @@ function renderAnalytics(){
             <td style="padding:8px 12px;text-align:center;color:${x.hired/x.total>0.5?'var(--green)':'var(--amber)'};font-weight:700;">${Math.round(x.hired/x.total*100)}%</td>
           </tr>`).join('')}
       </tbody>
-    </table>`:'<div class="empty">해당 기간 수급 없음</div>';
+    </table>`:'<div class="empty">해당 기간 인재영입 없음</div>';
 
   const SOURCES=['서칭','행사·전시회','명함·소개','인바운드'];
   const SOURCE_ICON={'서칭':'🔍','행사·전시회':'🎪','명함·소개':'🤝','인바운드':'📞'};
@@ -4863,15 +4863,15 @@ function confirmDeleteOrg(id){
 }
 function confirmDeleteTalent(id,name){
   showConfirm({
-    title:'수급 기록 삭제',sub:`"${name}" 지원자 기록을 삭제합니다`,
-    msg:`이 수급 기록을 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?`,
+    title:'인재영입 기록 삭제',sub:`"${name}" 지원자 기록을 삭제합니다`,
+    msg:`이 인재영입 기록을 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?`,
     type:'danger',okLabel:'삭제',
     onOk:async()=>{
       const{error}=await sb.from('talents').delete().eq('id',id);
       if(error){toast('오류: '+error.message);return;}
       cache.talents=cache.talents.filter(t=>t.id!==id);
-      renderTalent();toast('수급 기록 삭제 완료');
-      writeAuditLog('삭제','수급',name,{reason:'관리자 삭제'});
+      renderTalent();toast('인재영입 기록 삭제 완료');
+      writeAuditLog('삭제','인재영입',name,{reason:'관리자 삭제'});
     }
   });
 }
@@ -4915,7 +4915,7 @@ async function execDelete(){
     const{error}=await sb.from('talents').delete().eq('id',id);
     if(error){toast('오류: '+error.message);return;}
     cache.talents=cache.talents.filter(t=>t.id!==id);
-    renderTalent();toast('수급 기록 삭제 완료');
+    renderTalent();toast('인재영입 기록 삭제 완료');
   }
 }
 
@@ -5086,7 +5086,7 @@ function openRecruitModal(){
   document.getElementById('recruit-modal').style.display='flex';
 }
 
-// ── 수급 현황 모달 ──
+// ── 인재영입 현황 모달 ──
 let currentSupplyTab='pass';
 function openSupplyModal(){
   currentSupplyTab='pass';
