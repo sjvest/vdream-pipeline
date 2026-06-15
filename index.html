@@ -3062,6 +3062,40 @@ async function renderCold(){
   }
 
   // 등록기관 탭이면 통합 피드 렌더링
+  // 전체(all) 탭: 등록기관 + 콜드 통합, 날짜별 그룹
+  if(coldTab==='all'){
+    const TICON3={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+    const TCOLOR3={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
+    const t3=new Date(),y3=new Date(t3);y3.setDate(t3.getDate()-1);
+    const sd3=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    let ll3='';
+    const html3=rows.length?rows.map(r=>{
+      if(!r||!r.date)return'';
+      const fd3=new Date(r.date);
+      if(isNaN(fd3.getTime()))return'';
+      const lbl3=sd3(fd3,t3)?'오늘':sd3(fd3,y3)?'어제':fd3.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp3=lbl3!==ll3?(ll3=lbl3,'<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">'+lbl3+'</div>'):'';
+      const ts3=fd3.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const ic3=r._type==='cold';
+      const fn3=ic3?"nav('cold')":'openOrg('+r.org_id+')';
+      let html='<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="'+fn3+'">';
+      html+='<span style="font-size:16px;flex-shrink:0;">'+(TICON3[r.contact_type]||'📋')+'</span>';
+      html+='<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">';
+      if(r.member)html+='<span style="font-size:11px;font-weight:700;color:var(--accent);">'+r.member+'</span>';
+      html+='<span style="font-size:11px;font-weight:700;color:'+(TCOLOR3[r.contact_type]||'var(--text3)')+';">'+(r.contact_type||'기타')+'</span>';
+      if(ic3)html+='<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 5px;border-radius:4px;">미등록</span>';
+      html+='</div>';
+      html+='<div style="flex:1;min-width:0;"><span style="font-size:13px;font-weight:700;">'+(r.orgName||'')+'</span>';
+      if(r.summary)html+='<div style="font-size:11px;color:var(--text3);margin-top:1px;">'+r.summary+'</div>';
+      html+='</div>';
+      html+='<div style="text-align:right;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text2);">'+ts3+'</div>';
+      html+='</div>';
+      return grp3+html;
+    }).filter(Boolean).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+    document.getElementById('cold-list').innerHTML=html3;
+    return;
+  }
+
   if(coldTab==='reg'){
     const today2=new Date();const yesterday2=new Date(today2);yesterday2.setDate(today2.getDate()-1);
     const sameDay2=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
@@ -4069,6 +4103,32 @@ async function updateJobCount(jobId, count){
   if(j)j.current_count=parseInt(count);
   toast(`확보 인원 ${count}명으로 업데이트 ✓`);
   renderJobs();
+}
+function searchJobOrg(kw){
+  const dropdown=document.getElementById('job-org-dropdown');
+  if(!kw||!kw.trim()){dropdown.style.display='none';return;}
+  const results=(cache.orgs||[]).filter(o=>o.name.includes(kw)).slice(0,8);
+  if(!results.length){dropdown.style.display='none';return;}
+  dropdown.innerHTML=results.map(o=>{
+    const sn=o.name.replace(/'/g,'&#39;');
+    return '<div onclick="selectJobOrg('+o.id+',&quot;'+sn+'&quot;)" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #e2e8f0;">'+o.name+'</div>';
+  }).join('');
+  dropdown.style.display='block';
+}
+function selectJobOrg(id,name){
+  document.getElementById('job-org-id').value=id;
+  document.getElementById('job-org-name-display').textContent=name;
+  document.getElementById('job-org-search').value=name;
+  document.getElementById('job-org-selected').style.display='flex';
+  document.getElementById('job-org-dropdown').style.display='none';
+  if(!document.getElementById('job-company').value)document.getElementById('job-company').value=name;
+}
+function clearJobOrg(){
+  document.getElementById('job-org-id').value='';
+  document.getElementById('job-org-name-display').textContent='';
+  document.getElementById('job-org-search').value='';
+  document.getElementById('job-org-selected').style.display='none';
+  document.getElementById('job-org-dropdown').style.display='none';
 }
 function openAddJob(){
   currentJobId=null;
