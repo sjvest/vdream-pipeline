@@ -945,7 +945,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>담당 팀원</label><select id="job-member"><option value="">선택</option></select></div>
       <div class="fg"><label>진행 상태</label>
         <select id="job-status">
-          <option value="진행중">🟡 진행중</option>
+          <option value="서칭중">🔍 서칭중</option>
           <option value="완료">✅ 완료</option>
           <option value="보류">⏸ 보류</option>
           <option value="취소">❌ 취소</option>
@@ -4327,7 +4327,7 @@ async function renderJobs(){
     return(order[a.status]||0)-(order[b.status]||0)||new Date(a.deadline)-new Date(b.deadline);
   });
 
-  const STATUS_CLS2={서칭중:'b-blue',진행중:'b-amber',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
+  const STATUS_CLS2={서칭중:'b-blue',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
 
   document.getElementById('job-tbody').innerHTML=sorted.length?sorted.map(j=>{
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
@@ -4377,12 +4377,11 @@ async function cycleJobStatus(jobId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const j=cache.jobs.find(x=>x.id===jobId);
   if(!j)return;
-  const cycle={서칭중:'완료',완료:'진행중',진행중:'서칭중'};
-  const status=cycle[j.status]||'서칭중';
+  const status=j.status==='완료'?'서칭중':'완료';
   const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
   if(error){toast('오류: '+error.message);return;}
   j.status=status;
-  toast(status==='완료'?'✅ 완료!':status==='서칭중'?'🔍 서칭중':'진행중으로 변경');
+  toast(status==='완료'?'✅ 완료 처리됐어요!':'🔍 서칭중으로 변경됐어요!');
   renderJobs();
 }
 async function toggleJobStatus(jobId, newStatus){
@@ -4440,7 +4439,7 @@ function openAddJob(){
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-deadline').value='';
-  document.getElementById('job-status').value='진행중';
+  document.getElementById('job-status').value='서칭중';
   document.getElementById('job-severity').value='상관없음';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option>${p.name}</option>`).join('');
   document.getElementById('job-modal').style.display='flex';
