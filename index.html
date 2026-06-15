@@ -2060,7 +2060,8 @@ function getPeriodRange(type){
     end=new Date(now);end.setHours(23,59,59,999);
   } else if(type==='lastweek'){
     const day=now.getDay();
-    const lastMonday=new Date(now);lastMonday.setDate(now.getDate()-day-6);lastMonday.setHours(0,0,0,0);
+    const diff=day===0?6:day-1;
+    const lastMonday=new Date(now);lastMonday.setDate(now.getDate()-diff-7);lastMonday.setHours(0,0,0,0);
     const lastFriday=new Date(lastMonday);lastFriday.setDate(lastMonday.getDate()+4);lastFriday.setHours(23,59,59,999);
     start=lastMonday;end=lastFriday;
   } else if(type==='all'){
