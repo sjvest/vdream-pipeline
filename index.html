@@ -1527,7 +1527,7 @@ function switchLoginTab(tab){
 function doGuestLogin(){
   const pw=document.getElementById('guest-pw').value;
   const errEl=document.getElementById('login-err');
-  if(pw!=='vdream2026'){errEl.textContent='비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
+  if(pw!=='05'){errEl.textContent='비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
   isGuest=true;
   document.getElementById('login-banner').style.display='none';
   document.getElementById('user-avatar').textContent='👁';
