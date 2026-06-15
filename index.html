@@ -1977,9 +1977,9 @@ async function sendGChat(text){
 }
 
 // 채용 마감 임박 알림
-function sendGChatJobAlert(company, title, days, current, headcount){
+function sendGChatJobAlert(company, title, days, current, headcount, member){
   const emoji=days<=3?'🚨':'⚠️';
-  sendGChat(emoji+' *채용 마감 임박*\n고객사: '+company+'\n직무: '+title+'\nD-'+days+' · 확보 '+current+'/'+headcount+'명');
+  sendGChat(emoji+' *채용 마감 임박*\n고객사: '+company+'\n직무: '+title+'\nD-'+days+' · 확보 '+current+'/'+headcount+'명 · 담당: '+(member||'미배정'));
 }
 
 // 기관 등록 알림
@@ -2011,7 +2011,7 @@ async function checkAlertsAndSendGChat(){
     const days=Math.floor((new Date(j.deadline)-now)/864e5);
     if(days>=0&&days<=7){
       hasAlert=true;
-      msg+=(days<=3?'🚨':'⚠️')+' *채용 마감 D-'+days+'*\n'+j.company+' · '+j.job_title+' · '+(j.current_count||0)+'/'+j.headcount+'명\n\n';
+      msg+=(days<=3?'🚨':'⚠️')+' *채용 마감 D-'+days+'*\n'+j.company+' · '+j.job_title+' · '+(j.current_count||0)+'/'+j.headcount+'명 · 담당: '+(j.member||'미배정')+'\n\n';
     }
   });
 
@@ -2138,10 +2138,10 @@ function checkAlerts(manual=false){
       const days=Math.floor((new Date(j.deadline)-now)/864e5);
       if(days<=3&&days>=0){
         alerts.push({type:'danger',icon:'🚨',title:`채용 마감 D-${days}`,msg:`${j.company} · ${j.job_title} · ${j.current_count||0}/${j.headcount}명 확보`,link:'jobs'});
-        if(manual){sendPushNotification(`🚨 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount);}
+        if(manual){sendPushNotification(`🚨 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount,j.member);}
       } else if(days<=7&&days>3){
         alerts.push({type:'warn',icon:'⚠️',title:`채용 마감 D-${days}`,msg:`${j.company} · ${j.job_title} · ${j.current_count||0}/${j.headcount}명 확보`,link:'jobs'});
-        if(manual){sendPushNotification(`⚠️ 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount);}
+        if(manual){sendPushNotification(`⚠️ 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount,j.member);}
       }
     });
   }
