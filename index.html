@@ -1951,7 +1951,7 @@ function checkAlerts(manual=false){
       <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bell-ringing" style="color:var(--red);"></i>오늘 알림 <span style="background:var(--red);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;">${alerts.length}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${alerts.map(a=>`
-          <div onclick="${a.orgId?`openOrg('${a.orgId}')`:`nav('${a.link}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <div onclick="if(this.dataset.orgId){openOrg(this.dataset.orgId)}else{nav(this.dataset.link)}" data-org-id="${a.orgId||''}" data-link="${a.link||''}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
             <span style="font-size:18px;flex-shrink:0;">${a.icon}</span>
             <div style="flex:1;">
               <div style="font-size:12px;font-weight:700;color:${textMap[a.type]};">${a.title}</div>
