@@ -2967,20 +2967,10 @@ async function renderCold(){
     memberSel.innerHTML='<option value="">전체 팀원</option>'+cache.profiles.map(p=>`<option${p.name===cur?' selected':''}>${p.name}</option>`).join('');
   }
 
-  // 요약 카드
+  // 요약 카드 기본값
   const total=cache.cold.length;
   const todayStr=today();
-  const todayCount=cache.cold.filter(c=>c.logged_at?.slice(0,10)===todayStr).length;
-  const positive=cache.cold.filter(c=>c.result==='긍정적').length;
   const converted=cache.cold.filter(c=>c.result==='기관 등록 전환').length;
-  const needFollow=cache.cold.filter(c=>c.result==='재연락 필요').length;
-  document.getElementById('cold-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${total}</div><div class="metric-sub">건 누적</div></div>
-    <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayCount}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">긍정적 반응</div><div class="metric-value" style="color:var(--green);">${positive}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">재연락 필요</div><div class="metric-value" style="color:var(--amber);">${needFollow}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
-  `;
 
   // 탭에 따라 전체 피드 구성
   const TYPE_ICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
@@ -3106,7 +3096,8 @@ async function renderCold(){
       const isCold3=r._type==='cold';
       const typeColor3=TYPE_COLOR3[r.contact_type]||'var(--text3)';
       const TYPE_ICON3={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
-      return`${grp3}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${isCold3?`nav('cold');setColdTab('cold')`:`openOrg(${r.org_id})`}">
+      const clickFn3=isCold3?`nav('cold')`:`openOrg(${r.org_id})`;
+      return`${grp3}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${clickFn3}">
         <span style="font-size:16px;flex-shrink:0;">${TYPE_ICON3[r.contact_type]||'📋'}</span>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
           ${r.member?`<span style="font-size:11px;font-weight:700;color:var(--accent);">${r.member}</span>`:''}
