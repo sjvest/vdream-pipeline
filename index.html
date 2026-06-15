@@ -434,11 +434,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
       <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#6366f1;display:inline-block;"></span>신규발굴</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅예정</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block;"></span>미팅완료</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>인재영입</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU완료</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block;"></span>신규발굴</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#f97316;display:inline-block;"></span>미팅예정</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eab308;display:inline-block;"></span>미팅완료</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block;"></span>인재영입</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block;"></span>MOU완료</span>
       </div>
     </div>
   </div>
@@ -2290,11 +2290,11 @@ function renderTrendChart(mode){
       data:{
         labels,
         datasets:[
-          {label:'신규발굴',data:newOrgData,backgroundColor:'rgba(99,102,241,0.75)',borderRadius:4,barPercentage:.55},
-          {label:'미팅예정',data:meetingScheduledData,backgroundColor:'rgba(45,91,227,0.75)',borderRadius:4,barPercentage:.55},
-          {label:'미팅완료',data:meetingDoneData,backgroundColor:'rgba(139,92,246,0.75)',borderRadius:4,barPercentage:.55},
-          {label:'인재영입',data:placedData2,backgroundColor:'rgba(42,140,94,0.75)',borderRadius:4,barPercentage:.55},
-          {label:'MOU완료',data:mouDoneData,backgroundColor:'rgba(15,124,117,0.75)',borderRadius:4,barPercentage:.55},
+          {label:'신규발굴',data:newOrgData,backgroundColor:'rgba(239,68,68,0.85)',borderRadius:4,barPercentage:.55},
+          {label:'미팅예정',data:meetingScheduledData,backgroundColor:'rgba(251,146,60,0.85)',borderRadius:4,barPercentage:.55},
+          {label:'미팅완료',data:meetingDoneData,backgroundColor:'rgba(250,204,21,0.85)',borderRadius:4,barPercentage:.55},
+          {label:'인재영입',data:placedData2,backgroundColor:'rgba(34,197,94,0.85)',borderRadius:4,barPercentage:.55},
+          {label:'MOU완료',data:mouDoneData,backgroundColor:'rgba(59,130,246,0.85)',borderRadius:4,barPercentage:.55},
         ]
       },
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
