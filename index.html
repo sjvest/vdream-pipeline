@@ -1909,7 +1909,7 @@ function checkAlerts(manual=false){
   cache.orgs.filter(o=>o.stage===1&&o.lastcontact).forEach(o=>{
     const days=Math.floor((now-new Date(o.lastcontact))/864e5);
     if(days>=7){
-      alerts.push({type:'warn',icon:'📞',title:`컨택 시도 후 ${days}일 미연락`,msg:`${o.name} · 담당: ${o.member||'미배정'}`,link:'orgs'});
+      alerts.push({type:'warn',icon:'📞',title:`컨택 시도 후 ${days}일 미연락`,msg:`${o.name} · 담당: ${o.member||'미배정'}`,link:'orgs',orgId:o.id});
       if(manual&&days>=14)sendPushNotification(`📞 장기 미연락`,`${o.name} - 컨택 시도 후 ${days}일 경과`);
     }
   });
@@ -1918,7 +1918,7 @@ function checkAlerts(manual=false){
   cache.orgs.filter(o=>o.stage===2&&o.lastcontact).forEach(o=>{
     const days=Math.floor((now-new Date(o.lastcontact))/864e5);
     if(days>=14){
-      alerts.push({type:'warn',icon:'🤝',title:`미팅 후 ${days}일 미연락`,msg:`${o.name} · 담당: ${o.member||'미배정'}`,link:'orgs'});
+      alerts.push({type:'warn',icon:'🤝',title:`미팅 후 ${days}일 미연락`,msg:`${o.name} · 담당: ${o.member||'미배정'}`,link:'orgs',orgId:o.id});
       if(manual)sendPushNotification(`🤝 미팅 후 미연락`,`${o.name} - 미팅 후 ${days}일 경과`);
     }
   });
@@ -1951,7 +1951,7 @@ function checkAlerts(manual=false){
       <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bell-ringing" style="color:var(--red);"></i>오늘 알림 <span style="background:var(--red);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;">${alerts.length}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${alerts.map(a=>`
-          <div onclick="nav('${a.link}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <div onclick="${a.orgId?`openOrg('${a.orgId}')`:`nav('${a.link}')`}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
             <span style="font-size:18px;flex-shrink:0;">${a.icon}</span>
             <div style="flex:1;">
               <div style="font-size:12px;font-weight:700;color:${textMap[a.type]};">${a.title}</div>
