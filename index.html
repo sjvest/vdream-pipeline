@@ -4329,7 +4329,7 @@ async function renderJobs(){
     return(order[a.status]||0)-(order[b.status]||0)||new Date(a.deadline)-new Date(b.deadline);
   });
 
-  const STATUS_CLS2={진행중:'b-amber',완료:'b-green',보류:'b-gray',취소:'b-red'};
+  const STATUS_CLS2={서칭중:'b-blue',진행중:'b-amber',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
 
   document.getElementById('job-tbody').innerHTML=sorted.length?sorted.map(j=>{
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
@@ -4368,13 +4368,31 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}">${j.status}</span></td>
+      <td style="padding:13px 16px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <button onclick="toggleJobStatus(${j.id},'서칭중')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;border:2px solid ${j.status==='서칭중'?'var(--accent)':'var(--border)'};background:${j.status==='서칭중'?'var(--accent-bg)':'#fff'};color:${j.status==='서칭중'?'var(--accent)':'var(--text3)'};">🔍 서칭중</button>
+          <button onclick="toggleJobStatus(${j.id},'완료')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;border:2px solid ${j.status==='완료'?'var(--green)':'var(--border)'};background:${j.status==='완료'?'var(--green-bg)':'#fff'};color:${j.status==='완료'?'var(--green)':'var(--text3)'};">✅ 완료</button>
+        </div>
+      </td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
     </tr>`;
   }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
 }
+async function toggleJobStatus(jobId, newStatus){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  const j=cache.jobs.find(x=>x.id===jobId);
+  if(!j)return;
+  // 같은 상태 클릭 시 진행중으로 되돌리기
+  const status=j.status===newStatus?'진행중':newStatus;
+  const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
+  if(error){toast('오류: '+error.message);return;}
+  j.status=status;
+  toast(status==='완료'?'✅ 완료 처리됐어요!':status==='서칭중'?'🔍 서칭중으로 변경됐어요!':'진행중으로 변경됐어요!');
+  renderJobs();
+}
+
 async function updateJobCount(jobId, count){
   const{error}=await sb.from('jobs').update({current_count:parseInt(count)}).eq('id',jobId);
   if(error){toast('오류: '+error.message);return;}
