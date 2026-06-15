@@ -4365,12 +4365,22 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(Number(${j.id}))" title="클릭하여 상태 변경" style="cursor:pointer;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:0 0 0 2px rgba(0,0,0,0.15);transition:all .15s;" onmouseover="this.style.opacity='.75';this.style.transform='scale(1.05)'" onmouseout="this.style.opacity='1';this.style.transform='scale(1)'">${j.status} ✎</span></td>
+      <td style="padding:13px 16px;"><select onchange="cycleJobStatusSelect(Number(${j.id}),this.value)" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select></td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
     </tr>`;
   }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+}
+async function cycleJobStatusSelect(jobId, newStatus){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  const j=cache.jobs.find(x=>Number(x.id)===Number(jobId));
+  if(!j)return;
+  const{error}=await sb.from('jobs').update({status:newStatus}).eq('id',jobId);
+  if(error){toast('오류: '+error.message);return;}
+  j.status=newStatus;
+  toast(newStatus==='완료'?'✅ 완료!':'🔍 서칭중');
+  renderJobs();
 }
 async function cycleJobStatus(jobId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
