@@ -392,7 +392,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-dashboard" class="page active">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">대시보드</div><div class="page-sub" id="today-date"></div></div>
-    <button class="btn btn-ghost btn-sm" onclick="checkAlerts(true);sendGChatDailySummary();toast('📨 구글 챗으로 현황 전송됨!')"><i class="ti ti-bell"></i> 알림 확인</button>
+    <button class="btn btn-ghost btn-sm" onclick="checkAlertsAndSendGChat()"><i class="ti ti-bell"></i> 알림 확인</button>
   </div>
 
   <!-- 오늘 알림 배너 -->
@@ -1968,6 +1968,42 @@ function sendGChatHireAlert(name, orgName){
 }
 
 // 일일 요약 (매일 오전 9시)
+async function checkAlertsAndSendGChat(){
+  // 알림 체크 먼저
+  checkAlerts(true);
+  // 오늘 알림 항목들 구글 챗으로 전송
+  const now=new Date();
+  let msg='🔔 *브이드림 알림 현황*\n\n';
+  let hasAlert=false;
+
+  // 채용 마감 임박
+  (cache.jobs||[]).filter(j=>j.status==='진행중'&&j.deadline).forEach(j=>{
+    const days=Math.floor((new Date(j.deadline)-now)/864e5);
+    if(days>=0&&days<=7){
+      hasAlert=true;
+      msg+=(days<=3?'🚨':'⚠️')+' *채용 마감 D-'+days+'*\n'+j.company+' · '+j.job_title+' · '+(j.current_count||0)+'/'+j.headcount+'명\n\n';
+    }
+  });
+
+  // 7일 미연락 기관
+  (cache.orgs||[]).filter(o=>o.stage===1&&o.lastcontact).forEach(o=>{
+    const days=Math.floor((now-new Date(o.lastcontact))/864e5);
+    if(days>=7){
+      hasAlert=true;
+      msg+='📞 *컨택 시도 후 '+days+'일 미연락*\n'+o.name+' · 담당: '+(o.member||'미배정')+'\n\n';
+    }
+  });
+
+  if(!hasAlert) msg+='✅ 현재 긴급 알림 없음\n\n';
+
+  // 오늘 컨택 현황 추가
+  const todayLogs=(cache.logs||[]).filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===now.toDateString();});
+  msg+='📋 오늘 컨택: '+todayLogs.length+'건';
+
+  await sendGChat(msg);
+  toast('📨 구글 챗으로 알림 전송됨!');
+}
+
 async function sendGChatDailySummary(){
   const today=new Date();
   const todayStr=today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
@@ -2043,6 +2079,16 @@ function checkAlerts(manual=false){
     return;
   }
   bannerEl.style.display='block';
+
+  // 로그인 후 첫 번째 알림 체크 시 구글 챗으로 자동 발송
+  if(!manual && !window._gchatAlertSent && alerts.length>0){
+    window._gchatAlertSent=true;
+    const today=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+    let msg='🔔 *브이드림 오늘 알림 - '+today+'*\n\n';
+    alerts.forEach(a=>{ msg+=a.icon+' *'+a.title+'*\n'+a.msg+'\n\n'; });
+    sendGChat(msg);
+  }
+
   const colorMap={danger:'#fee2e2',warn:'#fffaeb',info:'#eff4ff'};
   const borderMap={danger:'#fca5a5',warn:'#fcd34d',info:'#a5b4fc'};
   const textMap={danger:'#7f1d1d',warn:'#78350f',info:'#1e1b4b'};
