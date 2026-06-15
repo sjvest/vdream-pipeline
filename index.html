@@ -434,8 +434,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
       <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>컨택 시도수</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>인재영입수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅 기관수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>수급자수</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU 체결</span>
       </div>
     </div>
@@ -445,6 +445,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card"><div class="card-header"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>마감 임박 후속 액션</div><div class="card-body" style="padding:0 16px;" id="dash-actions"><div class="loading"><div class="spin"></div></div></div></div>
     <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
   </div>
+  <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
   <div class="card" style="margin-bottom:12px;">
     <div class="card-header" style="justify-content:space-between;">
       <span><i class="ti ti-activity" style="color:var(--purple)"></i>최근 컨택 활동</span>
@@ -2040,23 +2041,20 @@ function renderDashboard(){
     const dateLabel=sameDay(fDate,today)?'오늘':sameDay(fDate,yesterday)?'어제':fDate.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
     const timeStr=fDate.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     const groupHeader=dateLabel!==lastDateLabel?(lastDateLabel=dateLabel,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 0 4px;margin-top:4px;border-top:1.5px solid var(--border);">${dateLabel}</div>`):'';
-    const clickAction=isCold?`nav('cold')`:`openOrg(${f.org_id})`;
-    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${clickAction}">
+    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
-      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
-        ${f.by?`<span style="font-size:11px;font-weight:700;color:var(--accent);">${f.by}</span>`:''}
-        <span style="font-size:11px;font-weight:700;color:${color};">${f.contact_type}</span>
-      </div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
           <span style="font-size:13px;font-weight:700;">${orgName}</span>
-          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록</span>':''}
-          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">진행중</span>':''}
+          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록기관</span>':''}
+          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">🔄 진행중</span>':''}
         </div>
-        ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">${f.title}</div>`:''}
+        ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr}</div>
+        ${f.by?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${f.by}</div>`:''}
       </div>
     </div>`;
   }).join(''):'<div class="empty" style="padding:1rem 0;">최근 컨택 활동 없음</div>';
@@ -2279,9 +2277,9 @@ function renderTrendChart(mode){
     data:{
       labels,
       datasets:[
-        {label:'컨택 시도수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.5},
-        {label:'인재영입수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.5},
-        {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.5},
+        {label:'컨택 건수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'수급자수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
@@ -2968,10 +2966,20 @@ async function renderCold(){
     memberSel.innerHTML='<option value="">전체 팀원</option>'+cache.profiles.map(p=>`<option${p.name===cur?' selected':''}>${p.name}</option>`).join('');
   }
 
-  // 요약 카드 기본값
+  // 요약 카드
   const total=cache.cold.length;
   const todayStr=today();
+  const todayCount=cache.cold.filter(c=>c.logged_at?.slice(0,10)===todayStr).length;
+  const positive=cache.cold.filter(c=>c.result==='긍정적').length;
   const converted=cache.cold.filter(c=>c.result==='기관 등록 전환').length;
+  const needFollow=cache.cold.filter(c=>c.result==='재연락 필요').length;
+  document.getElementById('cold-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${total}</div><div class="metric-sub">건 누적</div></div>
+    <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayCount}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">긍정적 반응</div><div class="metric-value" style="color:var(--green);">${positive}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">재연락 필요</div><div class="metric-value" style="color:var(--amber);">${needFollow}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
+  `;
 
   // 탭에 따라 전체 피드 구성
   const TYPE_ICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
@@ -3053,52 +3061,39 @@ async function renderCold(){
     return'var(--border)';
   }
 
-  // 전체/등록기관/콜드 탭 공통 피드 렌더링 함수
-  if(coldTab==='all'||coldTab==='reg'){
-    const TICON={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
-    const TCOLOR={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
-    const t4=new Date(),y4=new Date(t4);y4.setDate(t4.getDate()-1);
-    const sd4=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
-    let ll4='';
+  // 등록기관 탭이면 통합 피드 렌더링
+  if(coldTab==='reg'){
+    const today2=new Date();const yesterday2=new Date(today2);yesterday2.setDate(today2.getDate()-1);
+    const sameDay2=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    let lastLabel2='';
+    const TYPE_COLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
     document.getElementById('cold-list').innerHTML=rows.length?rows.map(r=>{
-      if(!r||!r.date)return'';
-      const fd4=new Date(r.date);
-      if(isNaN(fd4.getTime()))return'';
-      const lbl4=sd4(fd4,t4)?'오늘':sd4(fd4,y4)?'어제':fd4.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-      const grp4=lbl4!==ll4?(ll4=lbl4,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl4}</div>`):'';
-      const ts4=fd4.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      const ic4=r._type==='cold';
-      const fn4=ic4?"nav('cold')":"openOrg("+r.org_id+")";
-      return`${grp4}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${fn4}">
-        <span style="font-size:16px;flex-shrink:0;">${TICON[r.contact_type]||'📋'}</span>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
-          ${r.member?`<span style="font-size:11px;font-weight:700;color:var(--accent);">${r.member}</span>`:''}
-          <span style="font-size:11px;font-weight:700;color:${TCOLOR[r.contact_type]||'var(--text3)'};">${r.contact_type||'기타'}</span>
-          ${ic4?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 5px;border-radius:4px;">미등록</span>':''}
-        </div>
+      const fDate2=new Date(r.date);
+      const lbl=sameDay2(fDate2,today2)?'오늘':sameDay2(fDate2,yesterday2)?'어제':fDate2.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp=lbl!==lastLabel2?(lastLabel2=lbl,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl}</div>`):'';
+      const timeStr2=fDate2.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const org2=cache.orgs.find(o=>o.id===r.org_id);
+      return`${grp}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="openOrg(${r.org_id})">
+        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'📋'}</span>
         <div style="flex:1;min-width:0;">
-          <span style="font-size:13px;font-weight:700;">${r.orgName||''}</span>
-          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">${r.summary}</div>`:''}
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:${TYPE_COLOR2[r.contact_type]||'var(--text3)'};">${r.contact_type}</span>
+            <span style="font-size:13px;font-weight:700;">${r.orgName}</span>
+          </div>
+          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.summary}</div>`:''}
         </div>
-        <div style="text-align:right;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text2);">${ts4}</div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr2}</div>
+          ${r.member?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${r.member}</div>`:''}
+        </div>
       </div>`;
-    }).filter(Boolean).join('')||'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+    }).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
     return;
   }
 
-  // 콜드 탭: cache.cold 직접 필터링
-  const fm2=document.getElementById('cold-filter-member')?.value||'';
-  const fs2=document.getElementById('cold-filter-start')?.value||'';
-  const fe2=document.getElementById('cold-filter-end')?.value||'';
-  const coldOnly=(cache.cold||[]).filter(c=>{
-    if(fm2&&(c.member||c.created_by_name)!==fm2)return false;
-    if(fs2&&(c.logged_at||c.created_at)?.slice(0,10)<fs2)return false;
-    if(fe2&&(c.logged_at||c.created_at)?.slice(0,10)>fe2)return false;
-    return true;
-  });
-  document.getElementById('cold-list').innerHTML=coldOnly.length?`
+  document.getElementById('cold-list').innerHTML=rows.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
-      ${coldOnly.map(c=>`
+      ${rows.filter(r=>r._type==='cold').map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'📞'}</div>
           <div style="flex:1;min-width:0;">
