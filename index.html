@@ -4366,17 +4366,24 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;">
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <button onclick="toggleJobStatus(${j.id},'서칭중')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;border:2px solid ${j.status==='서칭중'?'var(--accent)':'var(--border)'};background:${j.status==='서칭중'?'var(--accent-bg)':'#fff'};color:${j.status==='서칭중'?'var(--accent)':'var(--text3)'};">🔍 서칭중</button>
-          <button onclick="toggleJobStatus(${j.id},'완료')" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;border:2px solid ${j.status==='완료'?'var(--green)':'var(--border)'};background:${j.status==='완료'?'var(--green-bg)':'#fff'};color:${j.status==='완료'?'var(--green)':'var(--text3)'};">✅ 완료</button>
-        </div>
-      </td>
+      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(${j.id})" style="cursor:pointer;">${j.status}</span></td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
     </tr>`;
   }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+}
+async function cycleJobStatus(jobId){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  const j=cache.jobs.find(x=>x.id===jobId);
+  if(!j)return;
+  const cycle={서칭중:'완료',완료:'진행중',진행중:'서칭중'};
+  const status=cycle[j.status]||'서칭중';
+  const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
+  if(error){toast('오류: '+error.message);return;}
+  j.status=status;
+  toast(status==='완료'?'✅ 완료!':status==='서칭중'?'🔍 서칭중':'진행중으로 변경');
+  renderJobs();
 }
 async function toggleJobStatus(jobId, newStatus){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
