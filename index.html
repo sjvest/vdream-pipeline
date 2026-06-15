@@ -1692,6 +1692,16 @@ function showTodayTasksOnLogin(){
   setTimeout(openTodayTasksModal,800);
 }
 let _dailyPopupScheduled=false;
+function scheduleGChatDailySummary(){
+  const now=new Date();
+  const next=new Date(now);
+  next.setHours(9,0,0,0);
+  if(now>=next)next.setDate(next.getDate()+1);
+  setTimeout(()=>{
+    sendGChatDailySummary();
+    setInterval(sendGChatDailySummary,24*60*60*1000);
+  },next-now);
+}
 function scheduleDailyTasksPopup(){
   if(_dailyPopupScheduled)return;
   _dailyPopupScheduled=true;
@@ -1723,6 +1733,7 @@ async function loadAll(){
     updateNavBadges();
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
+    scheduleGChatDailySummary();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
@@ -1921,6 +1932,61 @@ function sendPushNotification(title,body,icon='🔔'){
     new Notification(title,{body,icon:'https://sjvest.github.io/vdream-pipeline/logo.png'});
   }
 }
+
+// ── 구글 챗 알림 ──
+const GCHAT_WEBHOOK='https://chat.googleapis.com/v1/spaces/AAQAKVViTxw/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=rGbCLr7gfNo9_a4mnUUPj_JsMXqX0E5zFATDvTL45jU';
+
+async function sendGChat(text){
+  try{
+    await fetch(GCHAT_WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
+    });
+  }catch(e){console.warn('구글 챗 알림 실패:',e);}
+}
+
+// 채용 마감 임박 알림
+function sendGChatJobAlert(company, title, days, current, headcount){
+  const emoji=days<=3?'🚨':'⚠️';
+  sendGChat(emoji+' *채용 마감 임박*\n고객사: '+company+'\n직무: '+title+'\nD-'+days+' · 확보 '+current+'/'+headcount+'명');
+}
+
+// 기관 등록 알림
+function sendGChatOrgAlert(orgName, member){
+  sendGChat('🏢 *신규 기관 등록*\n기관명: '+orgName+'\n담당자: '+(member||'미배정'));
+}
+
+// MOU 체결 알림
+function sendGChatMouAlert(orgName, member){
+  sendGChat('🎉 *MOU 체결!*\n기관명: '+orgName+'\n담당자: '+(member||'—'));
+}
+
+// 인재 합격 알림
+function sendGChatHireAlert(name, orgName){
+  sendGChat('👤 *인재 합격 처리*\n지원자: '+name+'\n기관: '+(orgName||'—'));
+}
+
+// 일일 요약 (매일 오전 9시)
+async function sendGChatDailySummary(){
+  const today=new Date();
+  const todayStr=today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  const orgs=cache.orgs||[];
+  const logs=cache.logs||[];
+  const todayLogs=logs.filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===today.toDateString();});
+  const urgentJobs=(cache.jobs||[]).filter(j=>{if(!j.deadline||j.status!=='진행중')return false;const d=Math.floor((new Date(j.deadline)-today)/864e5);return d>=0&&d<=7;});
+  let msg='📋 *브이드림 일일 요약 - '+todayStr+'*\n\n';
+  msg+='• 오늘 컨택: '+todayLogs.length+'건\n';
+  msg+='• 전체 등록기관: '+orgs.length+'개\n';
+  if(urgentJobs.length>0){
+    msg+='\n🚨 *마감 임박 채용건*\n';
+    urgentJobs.forEach(j=>{
+      const d=Math.floor((new Date(j.deadline)-today)/864e5);
+      msg+='• '+j.company+' (D-'+d+') - '+( j.current_count||0)+'/'+j.headcount+'명\n';
+    });
+  }
+  sendGChat(msg);
+}
 function checkAlerts(manual=false){
   const now=new Date();
   const alerts=[];
@@ -1931,10 +1997,10 @@ function checkAlerts(manual=false){
       const days=Math.floor((new Date(j.deadline)-now)/864e5);
       if(days<=3&&days>=0){
         alerts.push({type:'danger',icon:'🚨',title:`채용 마감 D-${days}`,msg:`${j.company} · ${j.job_title} · ${j.current_count||0}/${j.headcount}명 확보`,link:'jobs'});
-        if(manual)sendPushNotification(`🚨 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);
+        if(manual){sendPushNotification(`🚨 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount);}
       } else if(days<=7&&days>3){
         alerts.push({type:'warn',icon:'⚠️',title:`채용 마감 D-${days}`,msg:`${j.company} · ${j.job_title} · ${j.current_count||0}/${j.headcount}명 확보`,link:'jobs'});
-        if(manual)sendPushNotification(`⚠️ 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);
+        if(manual){sendPushNotification(`⚠️ 채용 마감 D-${days}`,`${j.company} ${j.job_title} - ${j.current_count||0}/${j.headcount}명`);sendGChatJobAlert(j.company,j.job_title,days,j.current_count||0,j.headcount);}
       }
     });
   }
@@ -4091,6 +4157,7 @@ async function saveTalentDetail(){
   t.memo=memo;
   document.getElementById('talent-detail-modal').style.display='none';
   toast('저장 완료 ✓');renderTalent();
+  if(document.getElementById('td-status-btns')&&currentTalentId){const t=cache.talents.find(x=>x.id===currentTalentId);if(t&&t.status==='합격'){const org=cache.orgs.find(o=>o.id===t.org_id);sendGChatHireAlert(t.name,org?.name||'');} }
 }
 async function renderJobs(){
   const{data,error}=await sb.from('jobs').select('*').order('deadline',{ascending:true});
@@ -4559,6 +4626,7 @@ async function saveOrg(){
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
   clearOrgForm();clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='💾 저장';
   toast('기관 등록 완료!');updateUrgentCount();updateNavBadges();nav('orgs');
+  sendGChatOrgAlert(orgRow.name, orgRow.member);
 }
 function clearOrgForm(){
   ['n-name','n-contact','n-phone','n-date','n-mou-date','n-memo','n-address'].forEach(id=>document.getElementById(id).value='');
