@@ -728,6 +728,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <!-- 필터 -->
   <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <input id="cold-filter-keyword" placeholder="기관명 / 담당자 검색" oninput="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:180px;">
     <select id="cold-filter-member" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
       <option value="">전체 팀원</option>
     </select>
@@ -3010,12 +3011,19 @@ async function renderCold(){
   const fr=document.getElementById('cold-filter-result')?.value||'';
   const fs=document.getElementById('cold-filter-start')?.value||'';
   const fe=document.getElementById('cold-filter-end')?.value||'';
+  const fk=(document.getElementById('cold-filter-keyword')?.value||'').trim().toLowerCase();
   let allRows=[...logRows,...coldRows].sort((a,b)=>new Date(b.date)-new Date(a.date));
   let rows=allRows.filter(r=>{
     if(fm&&r.member!==fm)return false;
     if(fr&&r._type==='cold'&&r.result!==fr)return false;
     if(fs&&r.date?.slice(0,10)<fs)return false;
     if(fe&&r.date?.slice(0,10)>fe)return false;
+    if(fk){
+      const orgMatch=(r.orgName||'').toLowerCase().includes(fk);
+      const memberMatch=(r.member||'').toLowerCase().includes(fk);
+      const summaryMatch=(r.summary||'').toLowerCase().includes(fk);
+      if(!orgMatch&&!memberMatch&&!summaryMatch)return false;
+    }
     return true;
   });
 
@@ -3202,7 +3210,7 @@ async function saveColdFollowup(id){
 }
 function clearColdFilter(){
   ['cold-filter-member','cold-filter-result'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['cold-filter-start','cold-filter-end'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['cold-filter-start','cold-filter-end','cold-filter-keyword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderCold();
 }
 // ── 임시저장 ──
