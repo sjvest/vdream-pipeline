@@ -4321,8 +4321,9 @@ async function renderJobs(){
 
   // 테이블 렌더링
   const sorted=[...cache.jobs].sort((a,b)=>{
-    const order={진행중:0,보류:1,완료:2,취소:3};
-    return(order[a.status]||0)-(order[b.status]||0)||new Date(a.deadline)-new Date(b.deadline);
+    const order={서칭중:0,완료:1};
+    const oa=order[a.status]??0,ob=order[b.status]??0;
+    return oa-ob||new Date(a.deadline)-new Date(b.deadline);
   });
 
   const STATUS_CLS2={서칭중:'b-blue',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
@@ -4364,7 +4365,7 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(${j.id})" style="cursor:pointer;">${j.status}</span></td>
+      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}" onclick="cycleJobStatus(Number(${j.id}))" style="cursor:pointer;">${j.status}</span></td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
@@ -4373,7 +4374,7 @@ async function renderJobs(){
 }
 async function cycleJobStatus(jobId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
-  const j=cache.jobs.find(x=>x.id===jobId);
+  const j=cache.jobs.find(x=>Number(x.id)===Number(jobId));
   if(!j)return;
   const status=j.status==='완료'?'서칭중':'완료';
   const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
