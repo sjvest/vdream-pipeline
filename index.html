@@ -2230,7 +2230,7 @@ function renderPeriodReport(start,end){
     </div>
     <div>
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border);">
-        👤 수급 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">인재영입활동 ${supplyTalents.length}건</span>
+        👤 인재영입 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">인재영입활동 ${supplyTalents.length}건</span>
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f8f9fc;">
@@ -2279,7 +2279,7 @@ function renderTrendChart(mode){
       labels,
       datasets:[
         {label:'컨택 건수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
-        {label:'수급자수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'인재영입수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
         {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
       ]
     },
