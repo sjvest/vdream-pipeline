@@ -405,6 +405,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-header"><i class="ti ti-report-analytics" style="color:var(--accent)"></i>기간별 보고</div>
     <div class="card-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+        <button class="chart-tab" id="period-btn-all" onclick="setPeriod('all')">전체</button>
         <button class="chart-tab active" id="period-btn-thisweek" onclick="setPeriod('thisweek')">이번 주</button>
         <button class="chart-tab" id="period-btn-lastweek" onclick="setPeriod('lastweek')">지난 주</button>
         <button class="chart-tab" id="period-btn-thismonth" onclick="setPeriod('thismonth')">이번 달</button>
@@ -1971,8 +1972,8 @@ function renderDashboard(){
   const failed=tals.filter(t=>t.status==='불합격').length;
   const recruiting=tals.filter(t=>t.status==='지원중'||t.status==='면접').length;
   document.getElementById('metrics').innerHTML=`
-    <div class="metric metric-clickable" onclick="openMetricModal('orgs')"><div class="metric-label">등록 기관</div><div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('active')"><div class="metric-label">관계 형성 중</div><div class="metric-value">${active}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="openMetricModal('orgs')"><div class="metric-label">등록 기관</div><div id="metric-card-orgs"><div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div></div>
+    <div class="metric metric-clickable" onclick="openMetricModal('active')"><div class="metric-label">관계 형성 중</div><div id="metric-card-active"><div class="metric-value">${active}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div></div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('mou')"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">수급 현황</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
     <div class="metric metric-clickable" onclick="openRecruitModal()"><div class="metric-label">채용 투입</div><div class="metric-value">${recruiting}</div><div class="metric-sub">명 진행 중 · 클릭해서 보기</div></div>
@@ -2058,9 +2059,12 @@ function getPeriodRange(type){
     start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);
     end=new Date(now);end.setHours(23,59,59,999);
   } else if(type==='lastweek'){
-    const day=now.getDay()||7;
-    end=new Date(now);end.setDate(now.getDate()-day);end.setHours(23,59,59,999);
-    start=new Date(end);start.setDate(end.getDate()-6);start.setHours(0,0,0,0);
+    const day=now.getDay();
+    const lastMonday=new Date(now);lastMonday.setDate(now.getDate()-day-6);lastMonday.setHours(0,0,0,0);
+    const lastFriday=new Date(lastMonday);lastFriday.setDate(lastMonday.getDate()+4);lastFriday.setHours(23,59,59,999);
+    start=lastMonday;end=lastFriday;
+  } else if(type==='all'){
+    return{start:null,end:null};
   } else if(type==='thismonth'){
     start=new Date(now.getFullYear(),now.getMonth(),1);
     end=new Date(now);end.setHours(23,59,59,999);
@@ -2078,29 +2082,51 @@ function getPeriodRange(type){
 }
 function setPeriod(type){
   currentPeriod=type;
-  ['thisweek','lastweek','thismonth','lastmonth'].forEach(t=>{
+  ['all','thisweek','lastweek','thismonth','lastmonth'].forEach(t=>{
     const btn=document.getElementById('period-btn-'+t);
     if(btn)btn.className='chart-tab'+(t===type?' active':'');
   });
   const range=getPeriodRange(type);
-  if(!range)return;
-  const {start,end}=range;
+  if(range===undefined)return;
+  const {start,end}=range||{start:null,end:null};
   const startEl=document.getElementById('period-start');
   const endEl=document.getElementById('period-end');
   const labelEl=document.getElementById('period-label');
   const gridEl=document.getElementById('report-grid');
   if(!startEl||!endEl||!labelEl||!gridEl)return;
-  if(type!=='custom'){
+  if(type==='all'){startEl.value='';endEl.value='';}
+  else if(type!=='custom'&&start&&end){
     startEl.value=start.toISOString().slice(0,10);
     endEl.value=end.toISOString().slice(0,10);
   }
   const fmt=d=>d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-  labelEl.textContent=`📅 ${fmt(start)} ~ ${fmt(end)}`;
+  labelEl.textContent=start&&end?`📅 ${fmt(start)} ~ ${fmt(end)}`:'📅 전체 기간';
   renderPeriodReport(start,end);
+  updateDashboardMetrics(start,end);
+}
+function updateDashboardMetrics(start,end){
+  const el1=document.getElementById('metric-card-orgs');
+  const el2=document.getElementById('metric-card-active');
+  if(!el1||!el2)return;
+  const orgs=cache.orgs||[];
+  const total=orgs.length;
+  const activeTotal=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
+  if(!start||!end){
+    el1.innerHTML=`<div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div>`;
+    el2.innerHTML=`<div class="metric-value">${activeTotal}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div>`;
+    return;
+  }
+  const inR=d=>d&&new Date(d)>=start&&new Date(d)<=end;
+  const periodOrgs=orgs.filter(o=>inR(o.created_at)).length;
+  const periodActiveIds=new Set((cache.logs||[]).filter(l=>inR(l.logged_at||l.created_at)).map(l=>l.org_id));
+  const periodActive=periodActiveIds.size;
+  el1.innerHTML=`<div class="metric-value">${periodOrgs}</div><div class="metric-sub" style="line-height:1.5;">기간 내 신규 <span style="opacity:.65;font-size:10px;">/ 전체 ${total}개</span></div>`;
+  el2.innerHTML=`<div class="metric-value">${periodActive}</div><div class="metric-sub" style="line-height:1.5;">기간 내 활동 <span style="opacity:.65;font-size:10px;">/ 전체 ${activeTotal}건</span></div>`;
 }
 function renderPeriodReport(start,end){
   const inRange=(dateStr)=>{
     if(!dateStr)return false;
+    if(!start||!end)return true;
     const d=new Date(dateStr);
     return d>=start&&d<=end;
   };
