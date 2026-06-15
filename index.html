@@ -3092,7 +3092,39 @@ async function renderCold(){
     return;
   }
 
-  document.getElementById('cold-list').innerHTML=rows.length?`
+  // 전체 탭: 통합 피드 (등록기관 + 콜드 합쳐서 날짜별 그룹)
+  if(coldTab==='all'){
+    const today3=new Date(),yesterday3=new Date(today3);yesterday3.setDate(today3.getDate()-1);
+    const sameDay3=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    const TYPE_COLOR3={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
+    let lastLabel3='';
+    document.getElementById('cold-list').innerHTML=rows.length?rows.map(r=>{
+      const fDate3=new Date(r.date);
+      const lbl3=sameDay3(fDate3,today3)?'오늘':sameDay3(fDate3,yesterday3)?'어제':fDate3.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp3=lbl3!==lastLabel3?(lastLabel3=lbl3,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl3}</div>`):'';
+      const timeStr3=fDate3.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const isCold3=r._type==='cold';
+      const typeColor3=TYPE_COLOR3[r.contact_type]||'var(--text3)';
+      const TYPE_ICON3={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+      return`${grp3}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${isCold3?`nav('cold');setColdTab('cold')`:`openOrg(${r.org_id})`}">
+        <span style="font-size:16px;flex-shrink:0;">${TYPE_ICON3[r.contact_type]||'📋'}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
+          ${r.member?`<span style="font-size:11px;font-weight:700;color:var(--accent);">${r.member}</span>`:''}
+          <span style="font-size:11px;font-weight:700;color:${typeColor3};">${r.contact_type}</span>
+          ${isCold3?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 5px;border-radius:4px;">미등록</span>':''}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:13px;font-weight:700;">${r.orgName}</span>
+          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:1px;">${r.summary}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text2);">${timeStr3}</div>
+      </div>`;
+    }).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+    return;
+  }
+
+  // 콜드 탭: 기존 카드형
+  document.getElementById('cold-list').innerHTML=rows.filter(r=>r._type==='cold').length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${rows.filter(r=>r._type==='cold').map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
