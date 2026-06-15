@@ -1693,14 +1693,44 @@ function showTodayTasksOnLogin(){
 }
 let _dailyPopupScheduled=false;
 function scheduleGChatDailySummary(){
-  const now=new Date();
-  const next=new Date(now);
-  next.setHours(9,0,0,0);
-  if(now>=next)next.setDate(next.getDate()+1);
-  setTimeout(()=>{
-    sendGChatDailySummary();
-    setInterval(sendGChatDailySummary,24*60*60*1000);
-  },next-now);
+  // 이미 스케줄 등록됐으면 중복 방지
+  if(window._gchatScheduled)return;
+  window._gchatScheduled=true;
+
+  // 발송 시간: 09:00, 14:00, 16:00
+  const SEND_HOURS=[9,14,16];
+
+  function getNextSendTime(){
+    const now=new Date();
+    for(const h of SEND_HOURS){
+      const t=new Date(now);
+      t.setHours(h,0,0,0);
+      if(t>now)return t;
+    }
+    // 오늘 다 지났으면 내일 9시
+    const tomorrow=new Date(now);
+    tomorrow.setDate(now.getDate()+1);
+    tomorrow.setHours(9,0,0,0);
+    return tomorrow;
+  }
+
+  function scheduleNext(){
+    const next=getNextSendTime();
+    const label=next.getHours()+'시';
+    console.log('[구글챗] 다음 발송 예정:', next.toLocaleString());
+    setTimeout(()=>{
+      // 오늘 이 시간에 이미 보냈는지 체크
+      const key='gchat_sent_'+next.toISOString().slice(0,13); // YYYY-MM-DDTHH
+      if(!localStorage.getItem(key)){
+        localStorage.setItem(key, '1');
+        sendGChatDailySummary();
+        sendGChatJobDeadlineAlert();
+      }
+      scheduleNext(); // 다음 시간 예약
+    }, next-new Date());
+  }
+
+  scheduleNext();
 }
 function scheduleDailyTasksPopup(){
   if(_dailyPopupScheduled)return;
@@ -1734,7 +1764,6 @@ async function loadAll(){
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
-    scheduleJobDeadlineAlert();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
@@ -2065,24 +2094,7 @@ async function sendGChatJobDeadlineAlert(){
   sendGChat(msg);
 }
 
-function scheduleJobDeadlineAlert(){
-  // 매일 오전 9시, 오후 2시 두 번 발송
-  function scheduleNext(){
-    const now=new Date();
-    const times=[9,14];
-    let next=null;
-    for(const h of times){
-      const t=new Date(now);t.setHours(h,0,0,0);
-      if(t>now){next=t;break;}
-    }
-    if(!next){next=new Date(now);next.setDate(now.getDate()+1);next.setHours(9,0,0,0);}
-    setTimeout(()=>{
-      sendGChatJobDeadlineAlert();
-      scheduleNext();
-    },next-now);
-  }
-  scheduleNext();
-}
+
 function checkAlerts(manual=false){
   const now=new Date();
   const alerts=[];
@@ -2139,15 +2151,6 @@ function checkAlerts(manual=false){
     return;
   }
   bannerEl.style.display='block';
-
-  // 로그인 후 첫 번째 알림 체크 시 구글 챗으로 자동 발송
-  if(!manual && !window._gchatAlertSent && alerts.length>0){
-    window._gchatAlertSent=true;
-    const today=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-    let msg='🔔 *브이드림 오늘 알림 - '+today+'*\n\n';
-    alerts.forEach(a=>{ msg+=a.icon+' *'+a.title+'*\n'+a.msg+'\n\n'; });
-    sendGChat(msg);
-  }
 
   const colorMap={danger:'#fee2e2',warn:'#fffaeb',info:'#eff4ff'};
   const borderMap={danger:'#fca5a5',warn:'#fcd34d',info:'#a5b4fc'};
