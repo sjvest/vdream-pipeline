@@ -3076,35 +3076,36 @@ async function renderCold(){
     return'var(--border)';
   }
 
-  // 등록기관 탭이면 통합 피드 렌더링
-  if(coldTab==='reg'){
-    const today2=new Date();const yesterday2=new Date(today2);yesterday2.setDate(today2.getDate()-1);
-    const sameDay2=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
-    let lastLabel2='';
-    const TYPE_COLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
+  // 전체/등록기관 탭: 날짜별 통합 피드
+  if(coldTab==='all'||coldTab==='reg'){
+    const TICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+    const TCOLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
+    const t4=new Date(),y4=new Date(t4);y4.setDate(t4.getDate()-1);
+    const sd4=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    let ll4='';
     document.getElementById('cold-list').innerHTML=rows.length?rows.map(r=>{
-      const fDate2=new Date(r.date);
-      const lbl=sameDay2(fDate2,today2)?'오늘':sameDay2(fDate2,yesterday2)?'어제':fDate2.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-      const grp=lbl!==lastLabel2?(lastLabel2=lbl,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl}</div>`):'';
-      const timeStr2=fDate2.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      const org2=cache.orgs.find(o=>o.id===r.org_id);
-      return`${grp}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="openOrg(${r.org_id})">
-        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'📋'}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="font-size:12px;font-weight:700;color:${TYPE_COLOR2[r.contact_type]||'var(--text3)'};">${r.contact_type}</span>
-            <span style="font-size:13px;font-weight:700;">${r.orgName}</span>
-          </div>
-          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.summary}</div>`:''}
-        </div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr2}</div>
-          ${r.member?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${r.member}</div>`:''}
-        </div>
-      </div>`;
-    }).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+      if(!r||!r.date)return'';
+      const fd4=new Date(r.date);
+      if(isNaN(fd4.getTime()))return'';
+      const lbl4=sd4(fd4,t4)?'오늘':sd4(fd4,y4)?'어제':fd4.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp4=lbl4!==ll4?(ll4=lbl4,'<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">'+lbl4+'</div>'):'';
+      const ts4=fd4.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const ic4=r._type==='cold';
+      const fn4=ic4?"nav('cold')":'openOrg('+r.org_id+')';
+      const memberHtml=r.member?'<span style="font-size:11px;font-weight:700;color:var(--accent);">'+r.member+'</span>':'';
+      const typeHtml='<span style="font-size:11px;font-weight:700;color:'+(TCOLOR2[r.contact_type]||'var(--text3)')+';">'+(r.contact_type||'기타')+'</span>';
+      const coldBadge=ic4?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 5px;border-radius:4px;">미등록</span>':'';
+      const summaryHtml=r.summary?'<div style="font-size:11px;color:var(--text3);margin-top:1px;">'+r.summary+'</div>':'';
+      return grp4+'<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="'+fn4+'">'+
+        '<span style="font-size:16px;flex-shrink:0;">'+(TICON2[r.contact_type]||'📋')+'</span>'+
+        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">'+memberHtml+typeHtml+coldBadge+'</div>'+
+        '<div style="flex:1;min-width:0;"><span style="font-size:13px;font-weight:700;">'+(r.orgName||'')+'</span>'+summaryHtml+'</div>'+
+        '<div style="text-align:right;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text2);">'+ts4+'</div>'+
+      '</div>';
+    }).filter(Boolean).join('')||'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
     return;
   }
+
 
   document.getElementById('cold-list').innerHTML=rows.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
