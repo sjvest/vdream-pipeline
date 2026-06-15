@@ -405,6 +405,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-header"><i class="ti ti-report-analytics" style="color:var(--accent)"></i>기간별 보고</div>
     <div class="card-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+        <button class="chart-tab" id="period-btn-today" onclick="setPeriod('today')">오늘</button>
         <button class="chart-tab" id="period-btn-all" onclick="setPeriod('all')">전체</button>
         <button class="chart-tab active" id="period-btn-thisweek" onclick="setPeriod('thisweek')">이번 주</button>
         <button class="chart-tab" id="period-btn-lastweek" onclick="setPeriod('lastweek')">지난 주</button>
@@ -1308,6 +1309,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 <!-- 상태 변경 드롭다운 -->
 <div id="status-dropdown" class="status-dropdown" style="display:none;">
+  <div class="status-dropdown-item" onclick="selectStatus('지원서등록')"><span class="badge b-purple">지원서등록</span></div>
   <div class="status-dropdown-item" onclick="selectStatus('지원중')"><span class="badge b-blue">지원중</span></div>
   <div class="status-dropdown-item" onclick="selectStatus('면접')"><span class="badge b-amber">면접</span></div>
   <div class="status-dropdown-item" onclick="selectStatus('합격')"><span class="badge b-green">합격</span></div>
@@ -1506,7 +1508,7 @@ const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#d
 const MEMBERS=['김지현','박서준','이수민','최예진','정현우'];
 const AVATARBG=['#eef2fd','#f3effe','#e8f5ef','#fdf3e3','#e6f5f4'];
 const AVATARTX=['#2d5be3','#6b3fa0','#2a8c5e','#b86b0f','#0f7c75'];
-const STATUS_CLS={합격:'b-green',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
+const STATUS_CLS={합격:'b-green',지원서등록:'b-purple',지원중:'b-blue',면접:'b-amber',불합격:'b-red',포기:'b-gray'};
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[]};
@@ -1990,7 +1992,7 @@ function renderDashboard(){
     <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">채용 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
   `;
   renderTrendChart(currentChartMode);
-  setPeriod(currentPeriod||'thisweek');
+  setPeriod(currentPeriod||'today');
   // 알림 자동 체크
   setTimeout(()=>checkAlerts(false),500);
   const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
@@ -2067,11 +2069,14 @@ function switchChart(mode, btn){
 }
 
 // ── 기간별 보고 ──
-let currentPeriod='thisweek';
+let currentPeriod='today';
 function getPeriodRange(type){
   const now=new Date();
   let start,end;
-  if(type==='thisweek'){
+  if(type==='today'){
+    start=new Date(now);start.setHours(0,0,0,0);
+    end=new Date(now);end.setHours(23,59,59,999);
+  } else if(type==='thisweek'){
     const day=now.getDay()||7;
     start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);
     end=new Date(now);end.setHours(23,59,59,999);
@@ -2104,7 +2109,7 @@ function getPeriodRange(type){
 }
 function setPeriod(type){
   currentPeriod=type;
-  ['all','thisweek','lastweek','thismonth','lastmonth'].forEach(t=>{
+  ['today','all','thisweek','lastweek','thismonth','lastmonth'].forEach(t=>{
     const btn=document.getElementById('period-btn-'+t);
     if(btn)btn.className='chart-tab'+(t===type?' active':'');
   });
@@ -2244,15 +2249,15 @@ function renderTrendChart(mode){
   let labels=[], meetData=[], placedData=[], mouData=[];
 
   if(mode==='week'){
-    // 최근 8주
-    for(let i=7;i>=0;i--){
-      const end=new Date(); end.setDate(end.getDate()-i*7); end.setHours(23,59,59);
-      const start=new Date(end); start.setDate(start.getDate()-6); start.setHours(0,0,0);
-      const label=`${start.getMonth()+1}/${start.getDate()}주`;
+    // 최근 14일 날짜별
+    for(let i=13;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);
+      const de=new Date(d);de.setHours(23,59,59,999);
+      const label=`${d.getMonth()+1}/${d.getDate()}`;
       labels.push(label);
-      meetData.push(orgs.filter(o=>o.date&&new Date(o.date)>=start&&new Date(o.date)<=end).length);
-      placedData.push(tals.filter(t=>t.date&&t.status==='합격'&&new Date(t.date)>=start&&new Date(t.date)<=end).length);
-      mouData.push(orgs.filter(o=>o.stage>=4&&o.date&&new Date(o.date)>=start&&new Date(o.date)<=end).length);
+      meetData.push((cache.logs||[]).filter(l=>{const ld=new Date(l.logged_at||l.created_at);return ld>=d&&ld<=de;}).length);
+      placedData.push(tals.filter(t=>t.date&&t.status==='합격'&&new Date(t.date)>=d&&new Date(t.date)<=de).length);
+      mouData.push(orgs.filter(o=>o.stage>=4&&o.date&&new Date(o.date)>=d&&new Date(o.date)<=de).length);
     }
   } else {
     // 최근 6개월
@@ -2272,7 +2277,7 @@ function renderTrendChart(mode){
     data:{
       labels,
       datasets:[
-        {label:'미팅 기관수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'컨택 건수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
         {label:'수급자수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
         {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
       ]
