@@ -3123,10 +3123,11 @@ async function renderCold(){
     return;
   }
 
-  // 콜드 탭: 기존 카드형
-  document.getElementById('cold-list').innerHTML=rows.filter(r=>r._type==='cold').length?`
+  // 콜드 탭: 기존 카드형 (원본 cache.cold 데이터 사용)
+  const coldOnly=rows.filter(r=>r._type==='cold').map(r=>cache.cold.find(c=>c.id===Number(r.id.replace('cold-','')))).filter(Boolean);
+  document.getElementById('cold-list').innerHTML=coldOnly.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
-      ${rows.filter(r=>r._type==='cold').map(c=>`
+      ${coldOnly.map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'📞'}</div>
           <div style="flex:1;min-width:0;">
