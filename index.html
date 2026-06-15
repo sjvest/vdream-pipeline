@@ -906,7 +906,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">고객사</th>
-        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">연결기관</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">직무</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">장애유형/중증도</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">담당자</th>
@@ -917,7 +916,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">상태</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;"></th>
       </tr></thead>
-      <tbody id="job-tbody"><tr><td colspan="10"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+      <tbody id="job-tbody"><tr><td colspan="9"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
     </table>
   </div>
 </div>
@@ -930,18 +929,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('job-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
-    <div class="fg">
-      <label>연결 기관 (선택)</label>
-      <div style="position:relative;">
-        <input id="job-org-search" placeholder="기관명 검색..." autocomplete="off" style="width:100%;" oninput="searchJobOrg(this.value)">
-        <div id="job-org-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-sm);max-height:160px;overflow-y:auto;z-index:50;box-shadow:var(--shadow);"></div>
-      </div>
-      <input type="hidden" id="job-org-id">
-      <div id="job-org-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-bg);border-radius:6px;font-size:12px;font-weight:600;color:var(--accent);display:flex;align-items:center;justify-content:space-between;">
-        <span id="job-org-name-display"></span>
-        <button onclick="clearJobOrg()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;">✕</button>
-      </div>
-    </div>
     <div class="fg-row fg-2">
       <div class="fg"><label>고객사명 *</label><input id="job-company" placeholder="예: GS건설"></div>
       <div class="fg"><label>직무/포지션 *</label><input id="job-title" placeholder="예: 미술강사, 사무보조"></div>
@@ -955,10 +942,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>담당 팀원</label><select id="job-member"><option value="">선택</option></select></div>
       <div class="fg"><label>진행 상태</label>
         <select id="job-status">
-          <option value="서칭중">🔍 서칭중</option>
           <option value="진행중">🟡 진행중</option>
           <option value="완료">✅ 완료</option>
-          <option value="미완료">⚠️ 미완료</option>
           <option value="보류">⏸ 보류</option>
           <option value="취소">❌ 취소</option>
         </select>
@@ -3076,36 +3061,35 @@ async function renderCold(){
     return'var(--border)';
   }
 
-  // 전체/등록기관 탭: 날짜별 통합 피드
-  if(coldTab==='all'||coldTab==='reg'){
-    const TICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
-    const TCOLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
-    const t4=new Date(),y4=new Date(t4);y4.setDate(t4.getDate()-1);
-    const sd4=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
-    let ll4='';
+  // 등록기관 탭이면 통합 피드 렌더링
+  if(coldTab==='reg'){
+    const today2=new Date();const yesterday2=new Date(today2);yesterday2.setDate(today2.getDate()-1);
+    const sameDay2=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    let lastLabel2='';
+    const TYPE_COLOR2={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
     document.getElementById('cold-list').innerHTML=rows.length?rows.map(r=>{
-      if(!r||!r.date)return'';
-      const fd4=new Date(r.date);
-      if(isNaN(fd4.getTime()))return'';
-      const lbl4=sd4(fd4,t4)?'오늘':sd4(fd4,y4)?'어제':fd4.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-      const grp4=lbl4!==ll4?(ll4=lbl4,'<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">'+lbl4+'</div>'):'';
-      const ts4=fd4.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      const ic4=r._type==='cold';
-      const fn4=ic4?"nav('cold')":'openOrg('+r.org_id+')';
-      const memberHtml=r.member?'<span style="font-size:11px;font-weight:700;color:var(--accent);">'+r.member+'</span>':'';
-      const typeHtml='<span style="font-size:11px;font-weight:700;color:'+(TCOLOR2[r.contact_type]||'var(--text3)')+';">'+(r.contact_type||'기타')+'</span>';
-      const coldBadge=ic4?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 5px;border-radius:4px;">미등록</span>':'';
-      const summaryHtml=r.summary?'<div style="font-size:11px;color:var(--text3);margin-top:1px;">'+r.summary+'</div>':'';
-      return grp4+'<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="'+fn4+'">'+
-        '<span style="font-size:16px;flex-shrink:0;">'+(TICON2[r.contact_type]||'📋')+'</span>'+
-        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">'+memberHtml+typeHtml+coldBadge+'</div>'+
-        '<div style="flex:1;min-width:0;"><span style="font-size:13px;font-weight:700;">'+(r.orgName||'')+'</span>'+summaryHtml+'</div>'+
-        '<div style="text-align:right;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text2);">'+ts4+'</div>'+
-      '</div>';
-    }).filter(Boolean).join('')||'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
+      const fDate2=new Date(r.date);
+      const lbl=sameDay2(fDate2,today2)?'오늘':sameDay2(fDate2,yesterday2)?'어제':fDate2.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
+      const grp=lbl!==lastLabel2?(lastLabel2=lbl,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl}</div>`):'';
+      const timeStr2=fDate2.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      const org2=cache.orgs.find(o=>o.id===r.org_id);
+      return`${grp}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="openOrg(${r.org_id})">
+        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'📋'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:${TYPE_COLOR2[r.contact_type]||'var(--text3)'};">${r.contact_type}</span>
+            <span style="font-size:13px;font-weight:700;">${r.orgName}</span>
+          </div>
+          ${r.summary?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.summary}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr2}</div>
+          ${r.member?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${r.member}</div>`:''}
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty" style="padding:1rem 0;">컨택 기록 없음</div>';
     return;
   }
-
 
   document.getElementById('cold-list').innerHTML=rows.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -4027,20 +4011,12 @@ async function renderJobs(){
   `;
 
   // 테이블 렌더링
-  // 마감일 지났고 미충원이면 자동 미완료 처리
-  cache.jobs.forEach(j=>{
-    if(j.status==='진행중'&&j.deadline){
-      const days=Math.floor((new Date(j.deadline)-now)/864e5);
-      if(days<0&&(j.current_count||0)<(j.headcount||0)) j._autoStatus='미완료';
-      else j._autoStatus=null;
-    }
-  });
   const sorted=[...cache.jobs].sort((a,b)=>{
-    const order={서칭중:0,진행중:1,미완료:2,보류:3,완료:4,취소:5};
+    const order={진행중:0,보류:1,완료:2,취소:3};
     return(order[a.status]||0)-(order[b.status]||0)||new Date(a.deadline)-new Date(b.deadline);
   });
 
-  const STATUS_CLS2={서칭중:'b-blue',진행중:'b-amber',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
+  const STATUS_CLS2={진행중:'b-amber',완료:'b-green',보류:'b-gray',취소:'b-red'};
 
   document.getElementById('job-tbody').innerHTML=sorted.length?sorted.map(j=>{
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
@@ -4051,10 +4027,8 @@ async function renderJobs(){
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
-    const displayStatus=j._autoStatus||j.status;
-    return`<tr style="${displayStatus==='미완료'?'background:#fff5f5':displayStatus!=='진행중'&&displayStatus!=='서칭중'?'opacity:.65':''}">
+    return`<tr style="${j.status!=='진행중'?'opacity:.65':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
-      <td style="padding:13px 16px;font-size:12px;">${j.org_name?'<span style="color:var(--accent);font-weight:600;">'+ j.org_name +'</span>':'<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">
         ${j.disability_type||'상관없음'}
@@ -4081,12 +4055,12 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[displayStatus]||'b-gray'}">${displayStatus}</span></td>
+      <td style="padding:13px 16px;"><span class="badge ${STATUS_CLS2[j.status]||'b-gray'}">${j.status}</span></td>
       <td style="padding:13px 16px;">
         <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
     </tr>`;
-  }).join(''):`<tr><td colspan="10" class="empty">등록된 채용 건 없음</td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
 }
 async function updateJobCount(jobId, count){
   const{error}=await sb.from('jobs').update({current_count:parseInt(count)}).eq('id',jobId);
@@ -4096,39 +4070,11 @@ async function updateJobCount(jobId, count){
   toast(`확보 인원 ${count}명으로 업데이트 ✓`);
   renderJobs();
 }
-function searchJobOrg(kw){
-  const dropdown=document.getElementById('job-org-dropdown');
-  if(!kw.trim()){dropdown.style.display='none';return;}
-  const results=(cache.orgs||[]).filter(o=>o.name.includes(kw)).slice(0,8);
-  if(!results.length){dropdown.style.display='none';return;}
-  dropdown.innerHTML=results.map(o=>{
-    const sn=o.name.replace(/'/g,'&#39;');
-    return '<div onclick="selectJobOrg('+o.id+',&quot;'+sn+'&quot;)" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #e2e8f0;">'+o.name+'</div>';
-  }).join('');
-  dropdown.style.display='block';
-}
-function selectJobOrg(id, name){
-  document.getElementById('job-org-id').value=id;
-  document.getElementById('job-org-name-display').textContent=name;
-  document.getElementById('job-org-search').value=name;
-  document.getElementById('job-org-selected').style.display='flex';
-  document.getElementById('job-org-dropdown').style.display='none';
-  // 고객사명 자동 입력
-  if(!document.getElementById('job-company').value) document.getElementById('job-company').value=name;
-}
-function clearJobOrg(){
-  document.getElementById('job-org-id').value='';
-  document.getElementById('job-org-name-display').textContent='';
-  document.getElementById('job-org-search').value='';
-  document.getElementById('job-org-selected').style.display='none';
-  document.getElementById('job-org-dropdown').style.display='none';
-}
 function openAddJob(){
   currentJobId=null;
   document.getElementById('job-modal-title').textContent='채용 건 등록';
   document.getElementById('job-delete-btn').style.display='none';
   ['job-company','job-title','job-disability','job-location','job-notes','job-requirements'].forEach(id=>document.getElementById(id).value='');
-  clearJobOrg();
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-deadline').value='';
@@ -4143,9 +4089,6 @@ function openEditJob(id){
   const j=cache.jobs.find(x=>x.id===id);if(!j)return;
   document.getElementById('job-modal-title').textContent='채용 건 수정';
   document.getElementById('job-delete-btn').style.display=currentUser?.email==='sjvest@vdream.co.kr'?'':'none';
-  // 기관 정보 복원
-  document.getElementById('job-org-id').value=j.org_id||'';
-  if(j.org_name){document.getElementById('job-org-name-display').textContent=j.org_name;document.getElementById('job-org-search').value=j.org_name;document.getElementById('job-org-selected').style.display='flex';}else{clearJobOrg();}
   document.getElementById('job-company').value=j.company||'';
   document.getElementById('job-title').value=j.job_title||'';
   document.getElementById('job-headcount').value=j.headcount||'';
@@ -4178,8 +4121,6 @@ async function saveJob(){
     location:document.getElementById('job-location').value.trim(),
     requirements:document.getElementById('job-requirements').value.trim(),
     notes:document.getElementById('job-notes').value.trim(),
-    org_id:document.getElementById('job-org-id').value?parseInt(document.getElementById('job-org-id').value):null,
-    org_name:document.getElementById('job-org-name-display').textContent||null,
     created_by:currentUser?.id||null,created_by_name:myName
   };
   if(currentJobId){
