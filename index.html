@@ -2108,7 +2108,7 @@ async function sendGChatDailySummary(){
       const org=orgs.find(o=>o.id===a.org_id);
       const e=d===0?'🔴':d<=3?'🟡':'🔵';
       meetMouMsg+=e+' '+(org?.name||'—')+' - '+a.text+'\n';
-      meetMouMsg+='   D-'+d+' ('+a.due+')\n\n';
+      meetMouMsg+='   D-'+d+' ('+a.due+') | 담당: '+(org?.member||a.created_by_name||'미배정')+'\n\n';
     });
   }
   if(mouOrgs.length){
