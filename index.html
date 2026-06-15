@@ -3123,8 +3123,16 @@ async function renderCold(){
     return;
   }
 
-  // 콜드 탭: 기존 카드형 (원본 cache.cold 데이터 사용)
-  const coldOnly=rows.filter(r=>r._type==='cold').map(r=>cache.cold.find(c=>c.id===Number(r.id.replace('cold-','')))).filter(Boolean);
+  // 콜드 탭: cache.cold 직접 필터링
+  const fm2=document.getElementById('cold-filter-member')?.value||'';
+  const fs2=document.getElementById('cold-filter-start')?.value||'';
+  const fe2=document.getElementById('cold-filter-end')?.value||'';
+  const coldOnly=(cache.cold||[]).filter(c=>{
+    if(fm2&&(c.member||c.created_by_name)!==fm2)return false;
+    if(fs2&&(c.logged_at||c.created_at)?.slice(0,10)<fs2)return false;
+    if(fe2&&(c.logged_at||c.created_at)?.slice(0,10)>fe2)return false;
+    return true;
+  });
   document.getElementById('cold-list').innerHTML=coldOnly.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${coldOnly.map(c=>`
