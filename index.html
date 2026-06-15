@@ -3065,10 +3065,10 @@ async function renderCold(){
       const fd4=new Date(r.date);
       if(isNaN(fd4.getTime()))return'';
       const lbl4=sd4(fd4,t4)?'오늘':sd4(fd4,y4)?'어제':fd4.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-      const grp4=lbl4!==ll4?(ll4=lbl4,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl4}</div>`):\'\' ;
+      const grp4=lbl4!==ll4?(ll4=lbl4,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">${lbl4}</div>`):'';
       const ts4=fd4.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
       const ic4=r._type==='cold';
-      const fn4=ic4?`nav('cold')`:`openOrg(${r.org_id})`;
+      const fn4=ic4?"nav('cold')":"openOrg("+r.org_id+")";
       return`${grp4}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="${fn4}">
         <span style="font-size:16px;flex-shrink:0;">${TICON[r.contact_type]||'📋'}</span>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">
