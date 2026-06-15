@@ -448,7 +448,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
   </div>
   <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
-  <div class="card" style="margin-bottom:12px;">
+  <div class="card" style="margin-bottom:12px;max-width:900px;">
     <div class="card-header" style="justify-content:space-between;">
       <span><i class="ti ti-activity" style="color:var(--purple)"></i>최근 컨택 활동</span>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -2046,9 +2046,10 @@ function renderDashboard(){
   const TYPE_COLOR={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
   const logFeed=cache.logs.map(l=>({type:'log',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
   const coldFeed=(cache.cold||[]).map(c=>({type:'cold',id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
-  const allFeed=[...logFeed,...coldFeed].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,30);
-  const todayCnt=allFeed.filter(f=>{const d=new Date(f.date),t=new Date();return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate();}).length;
-  document.getElementById('dash-feed-count').textContent=`최근 ${allFeed.length}건 · 오늘 ${todayCnt}건`;
+  const _allFeed=[...logFeed,...coldFeed].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const _today=new Date();
+  const allFeed=_allFeed.filter(f=>{const d=new Date(f.date);return d.getFullYear()===_today.getFullYear()&&d.getMonth()===_today.getMonth()&&d.getDate()===_today.getDate();});
+  document.getElementById('dash-feed-count').textContent=`오늘 ${allFeed.length}건`;
   let lastDateLabel='';
   document.getElementById('dash-feed').innerHTML=allFeed.length?allFeed.map(f=>{
     const org=cache.orgs.find(o=>o.id===f.org_id);
@@ -2062,7 +2063,7 @@ function renderDashboard(){
     const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
     const dateLabel=sameDay(fDate,today)?'오늘':sameDay(fDate,yesterday)?'어제':fDate.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
     const timeStr=fDate.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    const groupHeader=dateLabel!==lastDateLabel?(lastDateLabel=dateLabel,`<div style="font-size:11px;font-weight:700;color:var(--text3);padding:8px 0 4px;margin-top:4px;border-top:1.5px solid var(--border);">${dateLabel}</div>`):'';
+    const groupHeader='';
     return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
