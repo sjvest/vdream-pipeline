@@ -947,8 +947,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <select id="job-status">
           <option value="서칭중">🔍 서칭중</option>
           <option value="완료">✅ 완료</option>
-          <option value="보류">⏸ 보류</option>
-          <option value="취소">❌ 취소</option>
         </select>
       </div>
     </div>
@@ -4338,7 +4336,7 @@ async function renderJobs(){
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
-    return`<tr style="${j.status!=='진행중'?'opacity:.65':''}">
+    return`<tr style="${j.status==='완료'?'opacity:.55':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">
@@ -4358,7 +4356,7 @@ async function renderJobs(){
         ${remain>0&&j.status==='진행중'?`<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:600;">미충원 ${remain}명</div>`:''}
       </td>
       <td style="padding:13px 16px;">
-        ${j.status==='진행중'?`
+        ${j.status!=='완료'?`
         <div style="display:flex;align-items:center;gap:6px;">
           <select onchange="updateJobCount(${j.id},this.value)" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;font-weight:600;cursor:pointer;">
             ${opts}
@@ -4455,7 +4453,7 @@ function openEditJob(id){
   document.getElementById('job-headcount').value=j.headcount||'';
   document.getElementById('job-current').value=j.current_count||0;
   document.getElementById('job-deadline').value=j.deadline||'';
-  document.getElementById('job-status').value=j.status||'진행중';
+  document.getElementById('job-status').value=(j.status==='완료'?'완료':'서칭중');
   document.getElementById('job-disability').value=j.disability_type||'';
   document.getElementById('job-severity').value=j.severity||'상관없음';
   document.getElementById('job-location').value=j.location||'';
