@@ -1945,19 +1945,19 @@ function checkAlerts(manual=false){
   bannerEl.style.display='block';
   const colorMap={danger:'#fee2e2',warn:'#fffaeb',info:'#eff4ff'};
   const borderMap={danger:'#fca5a5',warn:'#fcd34d',info:'#a5b4fc'};
-  const textMap={danger:'#b91c1c',warn:'#92400e',info:'#3730a3'};
+  const textMap={danger:'#7f1d1d',warn:'#78350f',info:'#1e1b4b'};
   bannerEl.innerHTML=`
     <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow-sm);">
       <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bell-ringing" style="color:var(--red);"></i>오늘 알림 <span style="background:var(--red);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;">${alerts.length}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${alerts.map(a=>`
           <div onclick="if(this.dataset.orgId){openOrg(Number(this.dataset.orgId))}else{nav(this.dataset.link)}" data-org-id="${a.orgId||''}" data-link="${a.link||''}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-            <span style="font-size:18px;flex-shrink:0;">${a.icon}</span>
+            <span style="font-size:20px;flex-shrink:0;">${a.icon}</span>
             <div style="flex:1;">
-              <div style="font-size:12px;font-weight:700;color:${textMap[a.type]};">${a.title}</div>
-              <div style="font-size:11px;color:${textMap[a.type]};opacity:.8;margin-top:2px;">${a.msg}</div>
+              <div style="font-size:13px;font-weight:800;color:${textMap[a.type]};letter-spacing:-.01em;">${a.title}</div>
+              <div style="font-size:12px;color:${textMap[a.type]};opacity:.95;margin-top:3px;font-weight:500;">${a.msg}</div>
             </div>
-            <i class="ti ti-chevron-right" style="font-size:13px;color:${textMap[a.type]};opacity:.6;"></i>
+            <i class="ti ti-chevron-right" style="font-size:14px;color:${textMap[a.type]};opacity:.7;"></i>
           </div>`).join('')}
       </div>
     </div>`;
