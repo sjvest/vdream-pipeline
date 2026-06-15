@@ -4101,7 +4101,7 @@ function searchJobOrg(kw){
   const results=(cache.orgs||[]).filter(o=>o.name.includes(kw)).slice(0,8);
   if(!results.length){dropdown.style.display='none';return;}
   dropdown.innerHTML=results.map(o=>{
-    const sn=o.name.replace(/['\']/g,'&#39;');
+    const sn=o.name.replace(/'/g,'&#39;');
     return '<div onclick="selectJobOrg('+o.id+',&quot;'+sn+'&quot;)" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #e2e8f0;">'+o.name+'</div>';
   }).join('');
   dropdown.style.display='block';
