@@ -1734,6 +1734,7 @@ async function loadAll(){
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
+    scheduleJobDeadlineAlert();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
@@ -2010,18 +2011,77 @@ async function sendGChatDailySummary(){
   const orgs=cache.orgs||[];
   const logs=cache.logs||[];
   const todayLogs=logs.filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===today.toDateString();});
-  const urgentJobs=(cache.jobs||[]).filter(j=>{if(!j.deadline||j.status!=='진행중')return false;const d=Math.floor((new Date(j.deadline)-today)/864e5);return d>=0&&d<=7;});
+
+  // 채용 마감 D-7 이내 미완료 건
+  const urgentJobs=(cache.jobs||[]).filter(j=>{
+    if(!j.deadline||j.status==='완료'||j.status==='취소')return false;
+    const d=Math.floor((new Date(j.deadline)-today)/864e5);
+    const notDone=(j.current_count||0)<(j.headcount||0);
+    return d>=0&&d<=7&&notDone;
+  });
+
   let msg='📋 *브이드림 일일 요약 - '+todayStr+'*\n\n';
   msg+='• 오늘 컨택: '+todayLogs.length+'건\n';
   msg+='• 전체 등록기관: '+orgs.length+'개\n';
+
   if(urgentJobs.length>0){
-    msg+='\n🚨 *마감 임박 채용건*\n';
+    msg+='\n🚨 *채용 마감 임박 (미완료)*\n';
     urgentJobs.forEach(j=>{
       const d=Math.floor((new Date(j.deadline)-today)/864e5);
-      msg+='• '+j.company+' (D-'+d+') - '+( j.current_count||0)+'/'+j.headcount+'명\n';
+      const remain=(j.headcount||0)-(j.current_count||0);
+      const emoji=d<=3?'🔴':'🟡';
+      msg+=emoji+' '+j.company+' '+j.job_title+'\n';
+      msg+='   D-'+d+' · 확보 '+(j.current_count||0)+'/'+j.headcount+'명 · 미충원 '+remain+'명\n\n';
     });
+  } else {
+    msg+='\n✅ 마감 임박 채용건 없음\n';
   }
+
   sendGChat(msg);
+}
+
+// 채용 마감 전용 알림 (매일 오전 9시 + 오후 2시 두 번 발송)
+async function sendGChatJobDeadlineAlert(){
+  const today=new Date();
+  const urgentJobs=(cache.jobs||[]).filter(j=>{
+    if(!j.deadline||j.status==='완료'||j.status==='취소')return false;
+    const d=Math.floor((new Date(j.deadline)-today)/864e5);
+    const notDone=(j.current_count||0)<(j.headcount||0);
+    return d>=0&&d<=7&&notDone;
+  });
+  if(!urgentJobs.length)return;
+
+  let msg='🚨 *채용 마감 임박 알림*\n'+today.toLocaleDateString('ko-KR',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})+'\n\n';
+  urgentJobs.forEach(j=>{
+    const d=Math.floor((new Date(j.deadline)-today)/864e5);
+    const remain=(j.headcount||0)-(j.current_count||0);
+    const emoji=d===0?'🔴🔴':d<=3?'🔴':'🟡';
+    msg+=emoji+' *'+j.company+' - '+j.job_title+'*\n';
+    msg+='마감: D-'+d+' ('+j.deadline+')\n';
+    msg+='확보: '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원: *'+remain+'명*\n';
+    if(j.member)msg+='담당: '+j.member+'\n';
+    msg+='\n';
+  });
+  sendGChat(msg);
+}
+
+function scheduleJobDeadlineAlert(){
+  // 매일 오전 9시, 오후 2시 두 번 발송
+  function scheduleNext(){
+    const now=new Date();
+    const times=[9,14];
+    let next=null;
+    for(const h of times){
+      const t=new Date(now);t.setHours(h,0,0,0);
+      if(t>now){next=t;break;}
+    }
+    if(!next){next=new Date(now);next.setDate(now.getDate()+1);next.setHours(9,0,0,0);}
+    setTimeout(()=>{
+      sendGChatJobDeadlineAlert();
+      scheduleNext();
+    },next-now);
+  }
+  scheduleNext();
 }
 function checkAlerts(manual=false){
   const now=new Date();
