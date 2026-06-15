@@ -363,7 +363,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('actions')"><i class="ti ti-checkbox"></i>후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
   <button class="nav-item" id="nav-talent" onclick="nav('talent')"><i class="ti ti-users"></i>인재 영입<span class="new-badge" id="badge-talent" style="display:none;">0</span></button>
   <button class="nav-item" id="nav-jobs" onclick="nav('jobs')"><i class="ti ti-briefcase"></i>채용 건 관리<span class="new-badge" id="badge-jobs" style="display:none;">0</span></button>
-  <button class="nav-item" id="nav-cold" onclick="nav('cold')"><i class="ti ti-phone-call"></i>콜드 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-cold" onclick="nav('cold')"><i class="ti ti-phone-call"></i>신규 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
   <div class="nav-divider"></div>
   <div class="nav-section">성과</div>
   <button class="nav-item" onclick="nav('analytics')"><i class="ti ti-chart-dots"></i>데이터 분석</button>
@@ -709,18 +709,18 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 
 <!-- 팀원 실적 -->
-<!-- 콜드 컨택 로그 -->
+<!-- 신규 컨택 로그 -->
 <div id="p-cold" class="page">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 + 콜드 컨택 통합 기록</div></div>
-    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 콜드 컨택 추가</button>
+    <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 + 신규 컨택 통합 기록</div></div>
+    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 신규 컨택 추가</button>
   </div>
 
   <!-- 탭 -->
   <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
     <button id="cold-tab-all" onclick="setColdTab('all')" style="font-size:12px;font-weight:700;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">전체</button>
     <button id="cold-tab-reg" onclick="setColdTab('reg')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">등록기관 컨택</button>
-    <button id="cold-tab-cold" onclick="setColdTab('cold')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">콜드 컨택</button>
+    <button id="cold-tab-cold" onclick="setColdTab('cold')" style="font-size:12px;font-weight:600;padding:7px 16px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">신규 컨택</button>
   </div>
 
   <!-- 요약 카드 -->
@@ -753,7 +753,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 </div>
 
-<!-- 콜드 컨택 등록 모달 -->
+<!-- 신규 컨택 등록 모달 -->
 <div id="cold-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide" style="max-width:660px;width:100%;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
@@ -2048,7 +2048,7 @@ function renderDashboard(){
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
           <span style="font-size:13px;font-weight:700;">${orgName}</span>
-          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">미등록기관</span>':''}
+          ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">신규컨택</span>':''}
           ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">🔄 진행중</span>':''}
         </div>
         ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
@@ -2760,7 +2760,7 @@ function renderAnalytics(){
   document.getElementById('an-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">신규 기관 등록</div><div class="metric-value" style="color:var(--accent);">${newOrgs.length}</div><div class="metric-sub">개 기관</div></div>
     <div class="metric"><div class="metric-label">컨택 히스토리</div><div class="metric-value" style="color:var(--purple);">${newLogs.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">콜드 컨택</div><div class="metric-value" style="color:var(--teal);">${newCold.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--teal);">${newCold.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">지원자 유입</div><div class="metric-value" style="color:var(--amber);">${newTalents.length}</div><div class="metric-sub">명</div></div>
     <div class="metric"><div class="metric-label">채용 완료</div><div class="metric-value" style="color:var(--green);">${hired.length}</div><div class="metric-sub">명</div></div>
   `;
@@ -2801,7 +2801,7 @@ function renderAnalytics(){
         <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">팀원</th>
         <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">기관등록</th>
         <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">히스토리</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">콜드컨택</th>
+        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">신규컨택</th>
         <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">수급</th>
         <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">합계</th>
       </tr></thead>
@@ -2942,7 +2942,7 @@ function updateMemberSelects(){
   const opts='<option value="">선택</option>'+names.map(n=>`<option>${n}</option>`).join('');
   ['n-member','t-member'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
 }
-// ── 콜드 컨택 로그 ──
+// ── 신규 컨택 로그 ──
 let coldTab='all';
 function setColdTab(tab){
   coldTab=tab;
@@ -3033,7 +3033,7 @@ async function renderCold(){
     <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${allRows.length}</div><div class="metric-sub">건 누적</div></div>
     <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayAllCnt}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">등록기관</div><div class="metric-value" style="color:var(--green);">${logRows.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">콜드 컨택</div><div class="metric-value" style="color:var(--purple);">${coldRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--purple);">${coldRows.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
   `;
 
@@ -3856,7 +3856,7 @@ async function deleteCold(id){
       const{error}=await sb.from('cold_contacts').delete().eq('id',id);
       if(error){toast('오류: '+error.message);return;}
       toast('삭제 완료');renderCold();
-      writeAuditLog('삭제','콜드컨택',c?.org_name||'—');
+      writeAuditLog('삭제','신규컨택',c?.org_name||'—');
     }
   });
 }
@@ -4393,7 +4393,7 @@ function renderTeam(){
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">MOU 체결</span><span style="font-weight:700;color:var(--teal);">${mou}건</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">합격자</span><span style="font-weight:700;color:var(--green);">${placed}명</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">컨택 히스토리</span><span style="font-weight:700;color:var(--accent);">${logs}건</span></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">콜드 컨택</span><span style="font-weight:700;color:var(--purple);">${coldCount}건</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">신규 컨택</span><span style="font-weight:700;color:var(--purple);">${coldCount}건</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">전체 컨택</span><span style="font-weight:700;color:var(--text);">${totalContact}건</span></div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:var(--text3);">미완료 액션</span><span style="font-weight:700;color:${pending>0?'var(--amber)':'var(--text3)'};">${pending}건</span></div>
       </div>
