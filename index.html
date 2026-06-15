@@ -1393,6 +1393,24 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 </div>
 
+<!-- 연락 필요 기관 알림 모달 -->
+<div id="contact-alert-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;" onclick="if(event.target===this)closeContactAlert()">
+<div style="background:var(--surface);border-radius:var(--radius);padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#fef3c7;">⚠️</div>
+    <div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px;">연락이 필요한 기관</div>
+      <div id="contact-alert-sub" style="font-size:12px;color:var(--text3);"></div>
+    </div>
+  </div>
+  <div id="contact-alert-list" style="background:var(--bg);border-radius:var(--radius-sm);padding:4px 12px;margin-bottom:20px;max-height:300px;overflow-y:auto;"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+    <button onclick="closeContactAlert()" class="btn btn-ghost">닫기</button>
+    <button onclick="dismissContactAlertToday()" class="btn btn-primary"><i class="ti ti-check"></i> 오늘 확인 완료 (오늘 하루 안 보기)</button>
+  </div>
+</div>
+</div>
+
 <!-- 감사 로그 모달 -->
 <div id="audit-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide" style="max-width:700px;max-height:88vh;overflow-y:auto;">
@@ -1689,6 +1707,7 @@ async function loadAll(){
     updateNavBadges();
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
+    setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
 function renderCurrent(){
@@ -3187,6 +3206,39 @@ function showDraftSaving(){
   el.style.color='var(--text3)';
   el.style.border='1px solid var(--border)';
   el.textContent='⏳ 저장 중...';
+}
+function checkContactAlert(){
+  const todayStr=new Date().toISOString().slice(0,10);
+  if(localStorage.getItem('vd_contact_alert_dismissed')===todayStr)return;
+  const lastLogMap={};
+  (cache.logs||[]).forEach(l=>{
+    const d=l.logged_at||l.created_at;
+    if(!d)return;
+    if(!lastLogMap[l.org_id]||d>lastLogMap[l.org_id])lastLogMap[l.org_id]=d;
+  });
+  const base=new Date();base.setHours(0,0,0,0);
+  const overdue=(cache.orgs||[]).filter(o=>{
+    const last=lastLogMap[o.id];
+    if(!last)return false;
+    return Math.floor((base-new Date(last))/864e5)>=7;
+  }).map(o=>{
+    const days=Math.floor((base-new Date(lastLogMap[o.id]))/864e5);
+    return{id:o.id,name:o.name,days};
+  }).sort((a,b)=>b.days-a.days);
+  if(!overdue.length)return;
+  document.getElementById('contact-alert-sub').textContent=`마지막 연락으로부터 7일 이상 지난 기관이 ${overdue.length}개 있어요.`;
+  document.getElementById('contact-alert-list').innerHTML=overdue.map(o=>`
+    <div onclick="closeContactAlert();openOrg('${o.id}')" style="padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background=''">
+      <span style="font-size:13px;font-weight:600;color:var(--text);">${o.name}</span>
+      <span style="font-size:12px;color:var(--red);font-weight:700;white-space:nowrap;margin-left:12px;">마지막 연락 ${o.days}일 전</span>
+    </div>
+  `).join('');
+  document.getElementById('contact-alert-modal').style.display='flex';
+}
+function closeContactAlert(){document.getElementById('contact-alert-modal').style.display='none';}
+function dismissContactAlertToday(){
+  localStorage.setItem('vd_contact_alert_dismissed',new Date().toISOString().slice(0,10));
+  closeContactAlert();
 }
 function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
@@ -4965,6 +5017,7 @@ function renderMetricPeriod(){
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
   const modals=[
+    {id:'contact-alert-modal',fn:()=>closeContactAlert()},
     {id:'confirm-modal',fn:()=>closeConfirm()},
     {id:'modal',fn:()=>closeModal()},
     {id:'cold-modal',fn:()=>document.getElementById('cold-modal').style.display='none'},
