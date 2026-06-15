@@ -433,10 +433,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <button class="chart-tab" onclick="switchChart('month',this)">월별</button>
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
-      <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;">
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅 기관수</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>인재영입수</span>
-        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU 체결</span>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#6366f1;display:inline-block;"></span>신규발굴</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>미팅예정</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block;"></span>미팅완료</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a8c5e;display:inline-block;"></span>인재영입</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0f7c75;display:inline-block;"></span>MOU완료</span>
       </div>
     </div>
   </div>
@@ -2250,16 +2252,54 @@ function renderTrendChart(mode){
   let labels=[], meetData=[], placedData=[], mouData=[];
 
   if(mode==='week'){
-    // 최근 14일 날짜별
-    for(let i=13;i>=0;i--){
-      const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);
+    // 최근 2주 (월~금만, 14일 범위)
+    const newOrgData=[], meetingScheduledData=[], meetingDoneData=[], placedData2=[], mouDoneData=[];
+    // 오늘 기준으로 지난 월요일부터 2주
+    const today=new Date();
+    const dow=today.getDay();
+    const startMonday=new Date(today);
+    startMonday.setDate(today.getDate()-(dow===0?13:dow-1+7)); // 2주전 월요일
+    startMonday.setHours(0,0,0,0);
+
+    for(let i=0;i<14;i++){
+      const d=new Date(startMonday);
+      d.setDate(startMonday.getDate()+i);
+      const dayOfWeek=d.getDay();
+      if(dayOfWeek===0||dayOfWeek===6)continue; // 주말 제외
       const de=new Date(d);de.setHours(23,59,59,999);
-      const label=`${d.getMonth()+1}/${d.getDate()}`;
-      labels.push(label);
-      meetData.push((cache.logs||[]).filter(l=>{const ld=new Date(l.logged_at||l.created_at);return ld>=d&&ld<=de;}).length);
-      placedData.push(tals.filter(t=>t.date&&t.status==='합격'&&new Date(t.date)>=d&&new Date(t.date)<=de).length);
-      mouData.push(orgs.filter(o=>o.stage>=4&&o.date&&new Date(o.date)>=d&&new Date(o.date)<=de).length);
+      const mm=d.getMonth()+1, dd=d.getDate();
+      const weekLabel=i<7?'1주차':'2주차';
+      labels.push(mm+'/'+dd+'('+['일','월','화','수','목','금','토'][dayOfWeek]+')');
+
+      // 신규발굴: stage=0으로 created_at
+      newOrgData.push(orgs.filter(o=>o.stage===0&&o.created_at&&new Date(o.created_at)>=d&&new Date(o.created_at)<=de).length);
+      // 미팅예정: stage=1~2이고 action 중 미팅 예정
+      meetingScheduledData.push((cache.actions||[]).filter(a=>{if(!a.due)return false;const ad=new Date(a.due);return ad>=d&&ad<=de&&(a.text||'').includes('미팅');}).length);
+      // 미팅완료: stage=2로 변경된 기관 (date 기준)
+      meetingDoneData.push(orgs.filter(o=>o.stage>=2&&o.date&&new Date(o.date)>=d&&new Date(o.date)<=de).length);
+      // 인재영입: 합격 처리된 인재
+      placedData2.push(tals.filter(t=>t.date&&t.status==='합격'&&new Date(t.date)>=d&&new Date(t.date)<=de).length);
+      // MOU완료: stage=5
+      mouDoneData.push(orgs.filter(o=>o.stage===5&&o.mou_date&&new Date(o.mou_date)>=d&&new Date(o.mou_date)<=de).length);
     }
+    meetData.push(...newOrgData);
+    // 나머지는 아래 datasets에서 직접 사용
+    if(trendChart)trendChart.destroy();
+    trendChart=new Chart(document.getElementById('trend-chart'),{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'신규발굴',data:newOrgData,backgroundColor:'rgba(99,102,241,0.75)',borderRadius:4,barPercentage:.55},
+          {label:'미팅예정',data:meetingScheduledData,backgroundColor:'rgba(45,91,227,0.75)',borderRadius:4,barPercentage:.55},
+          {label:'미팅완료',data:meetingDoneData,backgroundColor:'rgba(139,92,246,0.75)',borderRadius:4,barPercentage:.55},
+          {label:'인재영입',data:placedData2,backgroundColor:'rgba(42,140,94,0.75)',borderRadius:4,barPercentage:.55},
+          {label:'MOU완료',data:mouDoneData,backgroundColor:'rgba(15,124,117,0.75)',borderRadius:4,barPercentage:.55},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
+    });
+    return;
   } else {
     // 최근 6개월
     for(let i=5;i>=0;i--){
@@ -2278,7 +2318,7 @@ function renderTrendChart(mode){
     data:{
       labels,
       datasets:[
-        {label:'컨택 건수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
+        {label:'미팅 기관수',data:meetData,backgroundColor:'rgba(45,91,227,0.7)',borderRadius:4,barPercentage:.6},
         {label:'인재영입수',data:placedData,backgroundColor:'rgba(42,140,94,0.7)',borderRadius:4,barPercentage:.6},
         {label:'MOU 체결',data:mouData,backgroundColor:'rgba(15,124,117,0.7)',borderRadius:4,barPercentage:.6},
       ]
