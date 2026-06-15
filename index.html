@@ -1876,7 +1876,7 @@ function toggleMobileNav(){
   sb.classList.toggle('open');
   document.getElementById('m-menu-btn').textContent=sb.classList.contains('open')?'✕':'☰';
 }
-function nav(page){
+function nav(page, pushState=true){
   const sb=document.querySelector('.sidebar');
   if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').textContent='☰';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1887,7 +1887,26 @@ function nav(page){
   const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg};
   if(r[page])r[page]();
   markPageSeen(page);
+  // 브라우저 히스토리에 추가 (뒤로가기 지원)
+  if(pushState){
+    history.pushState({page}, '', '#'+page);
+  }
 }
+
+// 브라우저 뒤로가기/앞으로가기 감지
+window.addEventListener('popstate', function(e){
+  const page = e.state?.page || 'dashboard';
+  nav(page, false);
+});
+
+// 페이지 로드 시 URL 해시 확인
+window.addEventListener('load', function(){
+  const hash = location.hash.replace('#','');
+  const validPages = ['dashboard','pipeline','orgs','actions','talent','team','events','jobs','cold','analytics','add-org'];
+  if(hash && validPages.includes(hash)){
+    nav(hash, false);
+  }
+});
 
 // ── 대시보드 ──
 // ── 알림 시스템 ──
