@@ -2946,6 +2946,16 @@ function renderMouChecklist(org){
     +'<button onclick="selectMouOption(&quot;mou_type&quot;,&quot;서면&quot;)" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='서면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='서면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='서면'?'var(--teal)':'var(--text3)')+';">📄 서면 협약</button>'
     +'</div>'
     +(mouType?'<div style="margin-top:8px;font-size:11px;color:var(--teal);font-weight:600;">✅ '+mouType+' 협약으로 진행 확정</div>':'')
+    +(mouType==='대면'?
+      '<div style="margin-top:12px;">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">협약식 장소 주체</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button onclick="selectMouOption(&quot;venue_owner&quot;,&quot;브이드림 사무실&quot;)" style="flex:1;padding:7px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(checklist['venue_owner']==='브이드림 사무실'?'var(--accent)':'var(--border)')+';background:'+(checklist['venue_owner']==='브이드림 사무실'?'var(--accent-bg)':'#fff')+';color:'+(checklist['venue_owner']==='브이드림 사무실'?'var(--accent)':'var(--text3)')+';">브이드림</button>'
+      +'<button onclick="selectMouOption(&quot;venue_owner&quot;,&quot;상대 기관&quot;)" style="flex:1;padding:7px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(checklist['venue_owner']==='상대 기관'?'var(--accent)':'var(--border)')+';background:'+(checklist['venue_owner']==='상대 기관'?'var(--accent-bg)':'#fff')+';color:'+(checklist['venue_owner']==='상대 기관'?'var(--accent)':'var(--text3)')+';">상대 기관</button>'
+      +'<button onclick="selectMouOption(&quot;venue_owner&quot;,&quot;외부 장소&quot;)" style="flex:1;padding:7px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(checklist['venue_owner']==='외부 장소'?'var(--accent)':'var(--border)')+';background:'+(checklist['venue_owner']==='외부 장소'?'var(--accent-bg)':'#fff')+';color:'+(checklist['venue_owner']==='외부 장소'?'var(--accent)':'var(--text3)')+';">외부 장소</button>'
+      +'</div>'
+      +'</div>'
+      :'')
     +'</div>';
   return typeUI+`
     <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
