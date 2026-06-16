@@ -2937,8 +2937,26 @@ function openMouDetail(orgId){
 function renderMouChecklist(org){
   const checklist=org.mou_checklist||{};
   const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
-  const groups=['내부 준비','상대 기관 조율','당일 점검'];
+  const groups=['내부 준비','상대 기관 조울','당일 점검'];
   const mouType=checklist['mou_type']||'';
+  const progressBar=`<div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><span style="font-size:12px;font-weight:700;color:var(--teal);">진행률</span><span style="font-size:13px;font-weight:800;color:var(--teal);">${done} / ${MOU_ITEMS.length}</span></div><div style="background:rgba(255,255,255,.5);border-radius:20px;height:8px;overflow:hidden;"><div style="width:${Math.round(done/MOU_ITEMS.length*100)}%;height:100%;background:var(--teal);border-radius:20px;transition:width .3s;"></div></div></div>`;
+  const venueOwner=checklist['venue_owner']||'';
+  let vdreamUI='';
+  if(mouType==='대면'&&venueOwner==='브이드림 사무실'){
+    vdreamUI='<div style="margin-top:14px;">';
+    vdreamUI+='<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">✅ 브이드림 사무실 준비 사항</div>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_attendee\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_attendee']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_attendee']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_attendee']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_attendee']?'line-through':'none')+';color:'+(checklist['prep_attendee']?'var(--text3)':'var(--text)')+'">참석자 명단 작성 (양측 성함·직책 확인)</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_contract\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_contract']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_contract']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_contract']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_contract']?'line-through':'none')+';color:'+(checklist['prep_contract']?'var(--text3)':'var(--text)')+'">협약서 초안 작성 및 최종 검수</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_logo\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_logo']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_logo']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_logo']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_logo']?'line-through':'none')+';color:'+(checklist['prep_logo']?'var(--text3)':'var(--text)')+'">상대 기관 CI(로고) 수령</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_design\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_design']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_design']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_design']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_design']?'line-through':'none')+';color:'+(checklist['prep_design']?'var(--text3)':'var(--text)')+'">디자인팀 로고 삽입 작업 요청</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_print\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_print']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_print']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_print']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_print']?'line-through':'none')+';color:'+(checklist['prep_print']?'var(--text3)':'var(--text)')+'">협약서 최종본 출력 (2부)</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_folder\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_folder']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_folder']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_folder']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_folder']?'line-through':'none')+';color:'+(checklist['prep_folder']?'var(--text3)':'var(--text)')+'">보관용 커버(폴더) 2개 준비</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_nameplate\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_nameplate']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_nameplate']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_nameplate']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_nameplate']?'line-through':'none')+';color:'+(checklist['prep_nameplate']?'var(--text3)':'var(--text)')+'">명패 제작 (참석자 성함·직책)</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_seal\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_seal']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_seal']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_seal']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_seal']?'line-through':'none')+';color:'+(checklist['prep_seal']?'var(--text3)':'var(--text)')+'">날인 방식 확정 (직인 or 친필서명)</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_ceremony\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_ceremony']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_ceremony']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_ceremony']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_ceremony']?'line-through':'none')+';color:'+(checklist['prep_ceremony']?'var(--text3)':'var(--text)')+'">식순 및 사회 주체 확정</span>';
+    vdreamUI+='<div onclick="toggleMouItem(\'prep_camera\')" style="display:flex;align-items:center;gap:8px;padding:7px 0;cursor:pointer;">'+'<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checklist['prep_camera']?'var(--teal)':'var(--border)')+';background:'+(checklist['prep_camera']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+(checklist['prep_camera']?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':'')+'</div>'+'<span style="font-size:12px;text-decoration:'+(checklist['prep_camera']?'line-through':'none')+';color:'+(checklist['prep_camera']?'var(--text3)':'var(--text)')+'">협약식 사진 촬영 담당자 지정</span>';
+    vdreamUI+='</div>';
+  }
   const typeUI='<div style="margin-bottom:14px;">'
     +'<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">MOU 방식</div>'
     +'<div style="display:flex;gap:8px;">'
@@ -2958,28 +2976,7 @@ function renderMouChecklist(org){
       :'')
     +'</div>';
   return typeUI+`
-    <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <span style="font-size:12px;font-weight:700;color:var(--teal);">진행률</span>
-        <span style="font-size:13px;font-weight:800;color:var(--teal);">${done} / ${MOU_ITEMS.length}</span>
-      </div>
-      <div style="background:rgba(255,255,255,.5);border-radius:20px;height:8px;overflow:hidden;">
-        <div style="width:${Math.round(done/MOU_ITEMS.length*100)}%;height:100%;background:var(--teal);border-radius:20px;transition:width .3s;"></div>
-      </div>
-    </div>
-    ${groups.map(g=>{
-      const items=MOU_ITEMS.filter(i=>i.group===g);
-      return`<div style="margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
-        ${items.map(item=>`
-          <div onclick="toggleMouItem('${item.id}')" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;cursor:pointer;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-            <div style="width:18px;height:18px;border-radius:4px;border:2px solid ${checklist[item.id]?'var(--teal)':'var(--border)'};background:${checklist[item.id]?'var(--teal)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-              ${checklist[item.id]?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
-            </div>
-            <span style="font-size:12px;color:${checklist[item.id]?'var(--text3)':'var(--text)'};text-decoration:${checklist[item.id]?'line-through':'none'};line-height:1.4;">${item.label}</span>
-          </div>`).join('')}
-      </div>`;
-    }).join('')}`;
+  return progressBar+typeUI+vdreamUI;
 }
 async function selectMouOption(key, value){
   const orgId=currentMouOrgId||currentOrgId;
