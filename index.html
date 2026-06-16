@@ -447,6 +447,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card"><div class="card-header"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>마감 임박 후속 액션</div><div class="card-body" style="padding:0 16px;" id="dash-actions"><div class="loading"><div class="spin"></div></div></div></div>
     <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
   </div>
+  <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-file-time" style="color:var(--amber)"></i>계약 만료 임박 (30일 이내)</div><div class="card-body" style="padding:0 16px;" id="dash-contract-expiry"></div></div>
   <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
   <div class="card" style="margin-bottom:12px;max-width:900px;">
     <div class="card-header" style="justify-content:space-between;">
@@ -2230,6 +2231,23 @@ function renderDashboard(){
       <div style="flex:1;"><div class="action-text">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
       <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
     </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
+  const expiryEl=document.getElementById('dash-contract-expiry');
+  if(expiryEl){
+    const expiring=tals.filter(t=>t.status==='합격'&&t.contract_end_date).map(t=>{
+      const org=orgs.find(o=>o.id===t.org_id);
+      const diff=Math.ceil((new Date(t.contract_end_date)-new Date())/864e5);
+      return{...t,orgName:org?.name||'—',diff};
+    }).filter(t=>t.diff<=30).sort((a,b)=>a.diff-b.diff);
+    expiryEl.innerHTML=expiring.length?expiring.map(t=>{
+      const label=t.diff<0?`D+${Math.abs(t.diff)}`:`D-${t.diff}`;
+      const icon=t.diff<0?'⚠️':'🔴';
+      const color=t.diff<0?'#f97316':'var(--red)';
+      return`<div class="action-item" style="cursor:pointer;" onclick="nav('talent')">
+        <div style="flex:1;"><div class="action-text">${icon} ${t.name} 계약만료 ${label}</div><div style="font-size:10px;color:var(--text3);">${t.orgName} · ${fDate(t.contract_end_date)}</div></div>
+        <div class="action-due due-over" style="color:${color};">${label}</div>
+      </div>`;
+    }).join(''):'<div class="empty">만료 임박 계약 없음 ✓</div>';
+  }
   const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
   document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -2749,8 +2767,9 @@ function renderTalent(){
     let contractBadge='';
     if(t.status==='합격'&&t.contract_end_date){
       const diff=Math.ceil((new Date(t.contract_end_date)-new Date())/864e5);
-      const icon=diff<0?'⚠️':diff<=30?'🔴':'';
-      contractBadge=`<div style="font-size:10px;color:var(--text3);margin-top:3px;">${icon} 만료 ${fDate(t.contract_end_date)}</div>`;
+      const label=diff<0?`⚠️ D+${Math.abs(diff)}`:diff<=30?`🔴 D-${diff}`:`🟢 D-${diff}`;
+      const color=diff<0?'#f97316':diff<=30?'var(--red)':'var(--green)';
+      contractBadge=`<div style="font-size:10px;font-weight:700;color:${color};margin-top:3px;">${label} 만료 ${fDate(t.contract_end_date)}</div>`;
     }
     return`<tr onclick="openTalentDetail(${t.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:14px 16px;font-weight:700;font-size:13px;">${t.name}</td>
@@ -4303,6 +4322,7 @@ async function saveContractEndDate(){
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(t)t.contract_end_date=date;
   toast('계약 만료일 저장 완료 ✓');
+  renderTalent();
 }
 function setTalentStatus(status){
   const t=cache.talents.find(x=>x.id===currentTalentId);
