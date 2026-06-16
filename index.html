@@ -2938,7 +2938,16 @@ function renderMouChecklist(org){
   const checklist=org.mou_checklist||{};
   const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
   const groups=['내부 준비','상대 기관 조율','당일 점검'];
-  return`
+  const mouType=checklist['mou_type']||'';
+  const typeUI='<div style="margin-bottom:14px;">'
+    +'<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">MOU 방식</div>'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button onclick="selectMouOption('mou_type','대면')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='대면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='대면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='대면'?'var(--teal)':'var(--text3)')+';">🤝 대면 협약식</button>'
+    +'<button onclick="selectMouOption('mou_type','서면')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='서면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='서면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='서면'?'var(--teal)':'var(--text3)')+';">📄 서면 협약</button>'
+    +'</div>'
+    +(mouType?'<div style="margin-top:8px;font-size:11px;color:var(--teal);font-weight:600;">✅ '+mouType+' 협약으로 진행 확정</div>':'')
+    +'</div>';
+  return typeUI+`
     <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <span style="font-size:12px;font-weight:700;color:var(--teal);">진행률</span>
@@ -2961,6 +2970,21 @@ function renderMouChecklist(org){
           </div>`).join('')}
       </div>`;
     }).join('')}`;
+}
+async function selectMouOption(key, value){
+  const orgId=currentMouOrgId||currentOrgId;
+  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
+  const checklist={...o.mou_checklist||{}};
+  checklist[key]=checklist[key]===value?'':value;
+  const{error}=await sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
+  if(error){toast('오류: '+error.message);return;}
+  o.mou_checklist=checklist;
+  if(document.getElementById('mou-detail-modal').style.display!=='none'){
+    openMouDetail(orgId);
+  } else {
+    const wrap=document.getElementById('mou-checklist-wrap');
+    if(wrap)wrap.innerHTML=renderMouChecklist(o);
+  }
 }
 async function toggleMouItem(itemId){
   const orgId=currentMouOrgId||currentOrgId;
