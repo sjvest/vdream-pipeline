@@ -1226,7 +1226,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="page-title">팀 할일</div>
       <div class="page-sub" id="team-tasks-date"></div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="openTeamTaskModal()"><i class="ti ti-plus"></i> 할일 추가</button>
   </div>
   <div id="team-tasks-board" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
     <div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div>
@@ -1235,20 +1234,24 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 </div></div>
 
-<!-- 팀 할일 추가 모달 -->
-<div id="team-task-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
-<div class="modal" style="max-width:400px;">
+<!-- 팀 할일 상세/수정 모달 -->
+<div id="team-task-edit-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal" style="max-width:420px;">
   <div class="modal-head">
-    <div class="modal-title">할일 추가</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('team-task-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <div class="modal-title">할일 상세</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('team-task-edit-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
-    <div class="fg"><label>제목 *</label><input id="tt-title" placeholder="할일 제목" onkeydown="if(event.key==='Enter')saveTeamTask()"></div>
-    <div class="fg"><label>담당자 *</label><select id="tt-assignee"></select></div>
-    <div class="fg"><label>마감일</label><input id="tt-due" type="date"></div>
+    <div class="fg"><label>제목</label><input id="tte-title" onkeydown="if(event.key==='Enter')saveTeamTaskDetail()"></div>
+    <div class="fg"><label>담당자</label><select id="tte-assignee"></select></div>
+    <div class="fg"><label>마감일</label><input id="tte-due" type="date"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:18px;">
+      <input type="checkbox" id="tte-done" style="width:16px;height:16px;accent-color:var(--green);"> 완료 처리
+    </label>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveTeamTask()"><i class="ti ti-check"></i> 저장</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('team-task-modal').style.display='none'">취소</button>
+      <button class="btn btn-primary" onclick="saveTeamTaskDetail()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('team-task-edit-modal').style.display='none'">취소</button>
+      <button class="btn btn-ghost" style="margin-left:auto;color:var(--red);border-color:var(--red-bg);" onclick="deleteTeamTask()"><i class="ti ti-trash"></i> 삭제</button>
     </div>
   </div>
 </div>
@@ -5638,78 +5641,148 @@ function renderMetricPeriod(){
 }
 
 /* ── 팀 할일 ── */
+const TT_MEMBERS=['임세진','이재성','김현구','이슬민'];
+const TT_BG={임세진:'#eef2ff',이재성:'#f9f5ff',김현구:'#ecfdf3',이슬민:'#fffaeb'};
+const TT_TX={임세진:'#3b6ef8',이재성:'#6941c6',김현구:'#027a48',이슬민:'#b54708'};
+let editingTaskId=null;
+
 function renderTeamTasks(){
   const el=document.getElementById('team-tasks-date');
   if(el)el.textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
-  const members=['임세진','이재성','김현구','이슬민'];
   const tasks=cache.team_tasks||[];
-  const colors={임세진:'#eef2ff',이재성:'#f9f5ff',김현구:'#ecfdf3',이슬민:'#fffaeb'};
-  const txcolors={임세진:'#3b6ef8',이재성:'#6941c6',김현구:'#027a48',이슬민:'#b54708'};
-  document.getElementById('team-tasks-board').innerHTML=members.map(name=>{
+  const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
+  const myName=currentProfile?.name||'';
+  document.getElementById('team-tasks-board').innerHTML=TT_MEMBERS.map(name=>{
     const mine=tasks.filter(t=>t.assignee===name);
     const pending=mine.filter(t=>!t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
     const done=mine.filter(t=>t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
     const all=[...pending,...done];
-    const bg=colors[name]||'#f4f6fa';
-    const tx=txcolors[name]||'#3d4f63';
-    return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);">
-      <div style="padding:12px 16px;background:${bg};border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    const bg=TT_BG[name]||'#f4f6fa';
+    const tx=TT_TX[name]||'#3d4f63';
+    const canAdd=isAdmin||myName===name;
+    const safeId=name.replace(/\s/g,'_');
+    return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;">
+      <div style="padding:12px 16px;background:${bg};border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <span style="font-size:13px;font-weight:800;color:${tx};">${name}</span>
         <span style="font-size:11px;color:var(--text3);font-weight:600;">${pending.length}개 진행중</span>
       </div>
-      <div style="padding:10px;display:flex;flex-direction:column;gap:7px;min-height:80px;">
-        ${all.length?all.map(t=>{
+      <div style="padding:10px;display:flex;flex-direction:column;gap:7px;flex:1;">
+        ${all.map(t=>{
           const dd=t.due?dayDiff(t.due):null;
           const dcls=dd===null?'due-ok':dueClass(dd);
           const dlbl=dd===null?'':dueLabel(dd,t.due);
-          return`<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-            <div onclick="toggleTeamTask(${t.id},${!t.done})" style="width:18px;height:18px;border:2px solid ${t.done?'var(--green)':'var(--border2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:${t.done?'var(--green)':'transparent'};margin-top:1px;transition:all .12s;">
+          return`<div onclick="openTeamTaskDetail(${t.id})" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;cursor:pointer;transition:border-color .12s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div onclick="event.stopPropagation();toggleTeamTask(${t.id},${!t.done})" style="width:18px;height:18px;border:2px solid ${t.done?'var(--green)':'var(--border2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:${t.done?'var(--green)':'transparent'};margin-top:1px;transition:all .12s;">
               ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;color:var(--text);${t.done?'text-decoration:line-through;color:var(--text3);':''}">${t.title}</div>
+              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.title}</div>
               ${t.due?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
             </div>
           </div>`;
-        }).join(''):'<div class="empty" style="padding:1.5rem;font-size:12px;">할일 없음</div>'}
+        }).join('')}
+        ${!all.length?'<div class="empty" style="padding:1.2rem;font-size:12px;">할일 없음</div>':''}
+        <div id="inline-form-${safeId}" style="display:none;background:#f8fafc;border:1.5px dashed var(--border);border-radius:8px;padding:10px;margin-top:2px;" data-assignee="${name}">
+          <input type="text" placeholder="할일 제목 입력..."
+            style="width:100%;font-size:13px;border:none;outline:none;background:transparent;margin-bottom:6px;color:var(--text);"
+            onkeydown="if(event.key==='Enter')saveInlineTask(this);if(event.key==='Escape')cancelInlineTask(this)">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="date" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;flex:1;min-width:0;">
+            <button onclick="saveInlineTask(this)" style="padding:4px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">저장</button>
+            <button onclick="cancelInlineTask(this)" style="padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">취소</button>
+          </div>
+        </div>
+        ${canAdd?`<button id="inline-btn-${safeId}" onclick="showInlineForm('${safeId}')" style="margin-top:4px;width:100%;padding:7px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;" onmouseover="this.style.background='var(--bg)';this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)';this.style.borderColor='var(--border)'"><i class="ti ti-plus"></i> 할일 추가</button>`:''}
       </div>
     </div>`;
   }).join('');
 }
 
+function showInlineForm(safeId){
+  const form=document.getElementById(`inline-form-${safeId}`);
+  const btn=document.getElementById(`inline-btn-${safeId}`);
+  if(!form)return;
+  form.style.display='block';
+  if(btn)btn.style.display='none';
+  form.querySelector('input[type=text]').focus();
+}
+
+async function saveInlineTask(el){
+  const form=el.closest('[data-assignee]');
+  const name=form.dataset.assignee;
+  const titleEl=form.querySelector('input[type=text]');
+  const dueEl=form.querySelector('input[type=date]');
+  const title=titleEl.value.trim();
+  const due=dueEl.value||null;
+  if(!title){titleEl.focus();return;}
+  const{data,error}=await sb.from('team_tasks').insert({title,assignee:name,due,done:false,created_by:currentUser?.id,created_by_name:currentProfile?.name||''}).select().single();
+  if(error){toast('저장 오류: '+error.message);return;}
+  cache.team_tasks.unshift(data);
+  renderTeamTasks();
+  toast('할일이 추가되었습니다.');
+}
+
+function cancelInlineTask(el){
+  const form=el.closest('[data-assignee]');
+  if(!form)return;
+  const safeId=form.dataset.assignee.replace(/\s/g,'_');
+  form.style.display='none';
+  const btn=document.getElementById(`inline-btn-${safeId}`);
+  if(btn)btn.style.display='';
+  form.querySelector('input[type=text]').value='';
+  form.querySelector('input[type=date]').value='';
+}
+
 async function toggleTeamTask(id,done){
   const{error}=await sb.from('team_tasks').update({done}).eq('id',id);
   if(error){toast('오류: '+error.message);return;}
-  const idx=cache.team_tasks.findIndex(t=>t.id===id);
+  const idx=(cache.team_tasks||[]).findIndex(t=>t.id===id);
   if(idx!==-1)cache.team_tasks[idx].done=done;
   renderTeamTasks();
 }
 
-function openTeamTaskModal(){
-  if(!currentUser&&!isGuest){toast('로그인 후 이용하세요.');return;}
+function openTeamTaskDetail(id){
+  const t=(cache.team_tasks||[]).find(x=>x.id===id);
+  if(!t)return;
+  editingTaskId=id;
   const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
-  const myName=currentProfile?.name||'';
-  const members=['임세진','이재성','김현구','이슬민'];
-  const opts=members.map(m=>`<option value="${m}"${(!isAdmin&&m===myName)||(!isAdmin&&members.indexOf(m)===0&&!myName)?'':''} ${!isAdmin&&m!==myName?'disabled':''} ${m===myName?'selected':''}>${m}${!isAdmin&&m!==myName?' (배정 불가)':''}</option>`).join('');
-  document.getElementById('tt-assignee').innerHTML=opts;
-  document.getElementById('tt-title').value='';
-  document.getElementById('tt-due').value='';
-  document.getElementById('team-task-modal').style.display='flex';
-  document.getElementById('tt-title').focus();
+  document.getElementById('tte-title').value=t.title||'';
+  document.getElementById('tte-due').value=t.due||'';
+  document.getElementById('tte-done').checked=!!t.done;
+  const ae=document.getElementById('tte-assignee');
+  ae.innerHTML=TT_MEMBERS.map(m=>`<option value="${m}"${m===t.assignee?' selected':''}${!isAdmin&&m!==t.assignee?' disabled':''}>${m}</option>`).join('');
+  ae.disabled=!isAdmin;
+  document.getElementById('team-task-edit-modal').style.display='flex';
+  document.getElementById('tte-title').focus();
 }
 
-async function saveTeamTask(){
-  const title=document.getElementById('tt-title').value.trim();
-  const assignee=document.getElementById('tt-assignee').value;
-  const due=document.getElementById('tt-due').value||null;
+async function saveTeamTaskDetail(){
+  if(!editingTaskId)return;
+  const title=document.getElementById('tte-title').value.trim();
+  const assignee=document.getElementById('tte-assignee').value;
+  const due=document.getElementById('tte-due').value||null;
+  const done=document.getElementById('tte-done').checked;
   if(!title){toast('제목을 입력하세요.');return;}
-  if(!assignee){toast('담당자를 선택하세요.');return;}
-  const{data,error}=await sb.from('team_tasks').insert({title,assignee,due,done:false,created_by:currentUser?.id,created_by_name:currentProfile?.name||''}).select().single();
+  const{error}=await sb.from('team_tasks').update({title,assignee,due,done}).eq('id',editingTaskId);
   if(error){toast('저장 오류: '+error.message);return;}
-  cache.team_tasks.unshift(data);
-  document.getElementById('team-task-modal').style.display='none';
+  const idx=(cache.team_tasks||[]).findIndex(x=>x.id===editingTaskId);
+  if(idx!==-1)Object.assign(cache.team_tasks[idx],{title,assignee,due,done});
+  document.getElementById('team-task-edit-modal').style.display='none';
   renderTeamTasks();
-  toast('할일이 추가되었습니다.');
+  toast('저장되었습니다.');
+}
+
+async function deleteTeamTask(){
+  if(!editingTaskId)return;
+  const t=(cache.team_tasks||[]).find(x=>x.id===editingTaskId);
+  if(!confirm(`"${t?.title||'이 할일'}"을 삭제하시겠습니까?`))return;
+  const{error}=await sb.from('team_tasks').delete().eq('id',editingTaskId);
+  if(error){toast('삭제 오류: '+error.message);return;}
+  cache.team_tasks=(cache.team_tasks||[]).filter(x=>x.id!==editingTaskId);
+  document.getElementById('team-task-edit-modal').style.display='none';
+  editingTaskId=null;
+  renderTeamTasks();
+  toast('삭제되었습니다.');
 }
 
 document.addEventListener('keydown',function(e){
@@ -5732,7 +5805,7 @@ document.addEventListener('keydown',function(e){
     {id:'supply-modal',fn:()=>document.getElementById('supply-modal').style.display='none'},
     {id:'metric-modal',fn:()=>document.getElementById('metric-modal').style.display='none'},
     {id:'today-tasks-modal',fn:()=>document.getElementById('today-tasks-modal').style.display='none'},
-    {id:'team-task-modal',fn:()=>document.getElementById('team-task-modal').style.display='none'},
+    {id:'team-task-edit-modal',fn:()=>document.getElementById('team-task-edit-modal').style.display='none'},
   ];
   for(const m of modals){
     const el=document.getElementById(m.id);
