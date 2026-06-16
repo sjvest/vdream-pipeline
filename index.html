@@ -2889,18 +2889,39 @@ async function saveTalent(){
 // ── MOU 체크리스트 ──
 let currentMouOrgId=null;
 const MOU_ITEMS=[
-  {id:'contract_draft',group:'내부 준비',label:'협약서 정제 — 초안 바탕으로 자사 공식 양식에 맞게 편집 및 검수'},
-  {id:'contract_print',group:'내부 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
-  {id:'contract_cover',group:'내부 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
-  {id:'logo_request',group:'상대 기관 조율',label:'CI(로고) 수령 — 상대 기관 고화질 로고 파일 요청'},
-  {id:'banner_confirm',group:'상대 기관 조율',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
-  {id:'attendee_list',group:'상대 기관 조율',label:'참석자 명단 — 양측 최종 참석자 명단(성함/직급) 확인'},
-  {id:'ceremony_order',group:'상대 기관 조율',label:'식순 및 사회 — 당일 식순 및 진행 주체 확정'},
-  {id:'seal_method',group:'상대 기관 조율',label:'날인 방식 확정 — 직인 날인 or 친필 서명 확인'},
-  {id:'contract_final',group:'당일 점검',label:'협약서 최종본 2부 & 커버 2개'},
-  {id:'company_seal',group:'당일 점검',label:'회사 직인/인감 및 인패드 지참'},
-  {id:'banner_bring',group:'당일 점검',label:'제작된 현수막 지참 (자사 제작 시)'},
+  // MOU 방식 결정
+  {id:'mou_type_face',group:'MOU 방식 결정',label:'대면 협약식으로 진행 확정'},
+  {id:'mou_type_doc',group:'MOU 방식 결정',label:'서면 협약으로 진행 확정'},
+
+  // 대면 진행 시
+  {id:'venue_confirm',group:'대면 진행 준비',label:'장소 조율 — 협약식 장소 확정 (브이드림 사무실 or 상대 기관 or 외부)'},
+  {id:'time_confirm',group:'대면 진행 준비',label:'일시 조율 — 협약식 날짜 및 시간 확정'},
+  {id:'attendee_list',group:'대면 진행 준비',label:'참석자 명단 — 양측 최종 참석자 성함·직책 확인'},
+  {id:'nameplate_prep',group:'대면 진행 준비',label:'명패 준비 — 참석자 성함·직책 기재 명패 제작'},
+  {id:'ceremony_order',group:'대면 진행 준비',label:'식순 확정 — 당일 진행 순서 및 사회 주체 결정'},
+  {id:'banner_confirm',group:'대면 진행 준비',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
+  {id:'seal_method',group:'대면 진행 준비',label:'날인 방식 확정 — 직인 날인 or 친필 서명 확인'},
+
+  // 서면 진행 시
+  {id:'doc_who_prepare',group:'서면 진행 준비',label:'협약서 준비 주체 확정 — 브이드림 or 상대 기관'},
+  {id:'doc_sign_method',group:'서면 진행 준비',label:'서명 방식 확정 — 직인/인감 or 전자서명'},
+  {id:'doc_send_method',group:'서면 진행 준비',label:'발송 방식 확정 — 우편 발송 or 직접 전달 or 이메일'},
+
+  // 협약서 준비
+  {id:'logo_request',group:'협약서 준비',label:'CI(로고) 수령 — 상대 기관 고화질 로고 파일 요청'},
+  {id:'logo_design',group:'협약서 준비',label:'디자인팀 요청 — 로고 삽입 및 협약서 디자인 작업 요청'},
+  {id:'contract_draft',group:'협약서 준비',label:'협약서 초안 작성 — 자사 공식 양식에 맞게 편집 및 검수'},
+  {id:'contract_confirm',group:'협약서 준비',label:'내용 최종 확인 — 양측 협약서 내용 검토 및 승인'},
+  {id:'contract_print',group:'협약서 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
+  {id:'contract_cover',group:'협약서 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
+
+  // 당일 점검 (대면)
+  {id:'contract_final',group:'당일 점검',label:'협약서 최종본 2부 & 커버 2개 지참'},
+  {id:'company_seal',group:'당일 점검',label:'직인/인감 및 인패드 지참'},
+  {id:'nameplate_bring',group:'당일 점검',label:'명패 지참 (참석자 성함·직책 확인)'},
+  {id:'banner_bring',group:'당일 점검',label:'현수막 지참 (자사 제작 시)'},
   {id:'business_card',group:'당일 점검',label:'참석자 명함 준비'},
+  {id:'photo_ready',group:'당일 점검',label:'협약식 사진 촬영 준비 (카메라/담당자 지정)'},
 ];
 function openMouDetail(orgId){
   currentMouOrgId=orgId;
