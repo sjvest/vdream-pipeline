@@ -2942,8 +2942,8 @@ function renderMouChecklist(org){
   const typeUI='<div style="margin-bottom:14px;">'
     +'<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">MOU 방식</div>'
     +'<div style="display:flex;gap:8px;">'
-    +'<button onclick="selectMouOption('mou_type','대면')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='대면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='대면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='대면'?'var(--teal)':'var(--text3)')+';">🤝 대면 협약식</button>'
-    +'<button onclick="selectMouOption('mou_type','서면')" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='서면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='서면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='서면'?'var(--teal)':'var(--text3)')+';">📄 서면 협약</button>'
+    +'<button onclick="selectMouOption(&quot;mou_type&quot;,&quot;대면&quot;)" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='대면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='대면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='대면'?'var(--teal)':'var(--text3)')+';">🤝 대면 협약식</button>'
+    +'<button onclick="selectMouOption(&quot;mou_type&quot;,&quot;서면&quot;)" style="flex:1;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;border:2px solid '+(mouType==='서면'?'var(--teal)':'var(--border)')+';background:'+(mouType==='서면'?'var(--teal-bg)':'#fff')+';color:'+(mouType==='서면'?'var(--teal)':'var(--text3)')+';">📄 서면 협약</button>'
     +'</div>'
     +(mouType?'<div style="margin-top:8px;font-size:11px;color:var(--teal);font-weight:600;">✅ '+mouType+' 협약으로 진행 확정</div>':'')
     +'</div>';
