@@ -4306,7 +4306,7 @@ async function renderJobs(){
   const now=new Date();
 
   // 요약 카드
-  const active=cache.jobs.filter(j=>j.status==='진행중');
+  const active=cache.jobs.filter(j=>j.status!=='완료');
   const done=cache.jobs.filter(j=>j.status==='완료').length;
   const urgent=active.filter(j=>j.deadline&&Math.floor((new Date(j.deadline)-now)/864e5)<=7).length;
   const totalTarget=active.reduce((a,j)=>a+(j.headcount||0),0);
