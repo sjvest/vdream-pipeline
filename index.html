@@ -369,6 +369,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('analytics')"><i class="ti ti-chart-dots"></i>데이터 분석</button>
   <button class="nav-item" id="nav-events" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리<span class="new-badge" id="badge-events" style="display:none;">0</span></button>
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
+  <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일</button>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">
       <div style="position:relative;flex-shrink:0;">
@@ -1218,7 +1219,40 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="team-grid" id="team-grid"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div></div></div>
 </div>
 
+<!-- 팀 할일 -->
+<div id="p-team-tasks" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">팀 할일</div>
+      <div class="page-sub" id="team-tasks-date"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openTeamTaskModal()"><i class="ti ti-plus"></i> 할일 추가</button>
+  </div>
+  <div id="team-tasks-board" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+    <div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div>
+  </div>
+</div>
+
 </div></div>
+
+<!-- 팀 할일 추가 모달 -->
+<div id="team-task-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal" style="max-width:400px;">
+  <div class="modal-head">
+    <div class="modal-title">할일 추가</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('team-task-modal').style.display='none'"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="fg"><label>제목 *</label><input id="tt-title" placeholder="할일 제목" onkeydown="if(event.key==='Enter')saveTeamTask()"></div>
+    <div class="fg"><label>담당자 *</label><select id="tt-assignee"></select></div>
+    <div class="fg"><label>마감일</label><input id="tt-due" type="date"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveTeamTask()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('team-task-modal').style.display='none'">취소</button>
+    </div>
+  </div>
+</div>
+</div>
 
 <!-- 기관 상세 모달 -->
 <div id="modal" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
@@ -1757,6 +1791,8 @@ async function loadAll(){
       sb.from('cold_contacts').select('*').order('logged_at',{ascending:false}),
     ]);
     cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];cache.events=ev.data||[];cache.jobs=jb.data||[];cache.cold=cc.data||[];
+    const{data:tasksData}=await sb.from('team_tasks').select('*').order('created_at',{ascending:false});
+    cache.team_tasks=tasksData||[];
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
@@ -1769,7 +1805,7 @@ async function loadAll(){
 }
 function renderCurrent(){
   const id=document.querySelector('.page.active')?.id;
-  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents,'p-jobs':renderJobs,'p-cold':renderCold,'p-analytics':renderAnalytics};
+  const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents,'p-jobs':renderJobs,'p-cold':renderCold,'p-analytics':renderAnalytics,'p-team-tasks':renderTeamTasks};
   if(id&&map[id])map[id]();
 }
 
@@ -1923,9 +1959,9 @@ function nav(page, pushState=true){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('p-'+page).classList.add('active');
-  const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6};
+  const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6,'team-tasks':7};
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
-  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg};
+  const r={dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg,'team-tasks':renderTeamTasks};
   if(r[page])r[page]();
   markPageSeen(page);
   // 브라우저 히스토리에 추가 (뒤로가기 지원)
@@ -1943,7 +1979,7 @@ window.addEventListener('popstate', function(e){
 // 페이지 로드 시 URL 해시 확인
 window.addEventListener('load', function(){
   const hash = location.hash.replace('#','');
-  const validPages = ['dashboard','pipeline','orgs','actions','talent','team','events','jobs','cold','analytics','add-org'];
+  const validPages = ['dashboard','pipeline','orgs','actions','talent','team','events','jobs','cold','analytics','add-org','team-tasks'];
   if(hash && validPages.includes(hash)){
     nav(hash, false);
   }
@@ -5601,6 +5637,81 @@ function renderMetricPeriod(){
   </div>`;
 }
 
+/* ── 팀 할일 ── */
+function renderTeamTasks(){
+  const el=document.getElementById('team-tasks-date');
+  if(el)el.textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const members=['임세진','이재성','김현구','이슬민'];
+  const tasks=cache.team_tasks||[];
+  const colors={임세진:'#eef2ff',이재성:'#f9f5ff',김현구:'#ecfdf3',이슬민:'#fffaeb'};
+  const txcolors={임세진:'#3b6ef8',이재성:'#6941c6',김현구:'#027a48',이슬민:'#b54708'};
+  document.getElementById('team-tasks-board').innerHTML=members.map(name=>{
+    const mine=tasks.filter(t=>t.assignee===name);
+    const pending=mine.filter(t=>!t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
+    const done=mine.filter(t=>t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
+    const all=[...pending,...done];
+    const bg=colors[name]||'#f4f6fa';
+    const tx=txcolors[name]||'#3d4f63';
+    return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);">
+      <div style="padding:12px 16px;background:${bg};border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:800;color:${tx};">${name}</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:600;">${pending.length}개 진행중</span>
+      </div>
+      <div style="padding:10px;display:flex;flex-direction:column;gap:7px;min-height:80px;">
+        ${all.length?all.map(t=>{
+          const dd=t.due?dayDiff(t.due):null;
+          const dcls=dd===null?'due-ok':dueClass(dd);
+          const dlbl=dd===null?'':dueLabel(dd,t.due);
+          return`<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div onclick="toggleTeamTask(${t.id},${!t.done})" style="width:18px;height:18px;border:2px solid ${t.done?'var(--green)':'var(--border2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:${t.done?'var(--green)':'transparent'};margin-top:1px;transition:all .12s;">
+              ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--text);${t.done?'text-decoration:line-through;color:var(--text3);':''}">${t.title}</div>
+              ${t.due?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
+            </div>
+          </div>`;
+        }).join(''):'<div class="empty" style="padding:1.5rem;font-size:12px;">할일 없음</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleTeamTask(id,done){
+  const{error}=await sb.from('team_tasks').update({done}).eq('id',id);
+  if(error){toast('오류: '+error.message);return;}
+  const idx=cache.team_tasks.findIndex(t=>t.id===id);
+  if(idx!==-1)cache.team_tasks[idx].done=done;
+  renderTeamTasks();
+}
+
+function openTeamTaskModal(){
+  if(!currentUser&&!isGuest){toast('로그인 후 이용하세요.');return;}
+  const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
+  const myName=currentProfile?.name||'';
+  const members=['임세진','이재성','김현구','이슬민'];
+  const opts=members.map(m=>`<option value="${m}"${(!isAdmin&&m===myName)||(!isAdmin&&members.indexOf(m)===0&&!myName)?'':''} ${!isAdmin&&m!==myName?'disabled':''} ${m===myName?'selected':''}>${m}${!isAdmin&&m!==myName?' (배정 불가)':''}</option>`).join('');
+  document.getElementById('tt-assignee').innerHTML=opts;
+  document.getElementById('tt-title').value='';
+  document.getElementById('tt-due').value='';
+  document.getElementById('team-task-modal').style.display='flex';
+  document.getElementById('tt-title').focus();
+}
+
+async function saveTeamTask(){
+  const title=document.getElementById('tt-title').value.trim();
+  const assignee=document.getElementById('tt-assignee').value;
+  const due=document.getElementById('tt-due').value||null;
+  if(!title){toast('제목을 입력하세요.');return;}
+  if(!assignee){toast('담당자를 선택하세요.');return;}
+  const{data,error}=await sb.from('team_tasks').insert({title,assignee,due,done:false,created_by:currentUser?.id,created_by_name:currentProfile?.name||''}).select().single();
+  if(error){toast('저장 오류: '+error.message);return;}
+  cache.team_tasks.unshift(data);
+  document.getElementById('team-task-modal').style.display='none';
+  renderTeamTasks();
+  toast('할일이 추가되었습니다.');
+}
+
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
   const modals=[
@@ -5621,6 +5732,7 @@ document.addEventListener('keydown',function(e){
     {id:'supply-modal',fn:()=>document.getElementById('supply-modal').style.display='none'},
     {id:'metric-modal',fn:()=>document.getElementById('metric-modal').style.display='none'},
     {id:'today-tasks-modal',fn:()=>document.getElementById('today-tasks-modal').style.display='none'},
+    {id:'team-task-modal',fn:()=>document.getElementById('team-task-modal').style.display='none'},
   ];
   for(const m of modals){
     const el=document.getElementById(m.id);
