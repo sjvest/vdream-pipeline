@@ -5032,7 +5032,24 @@ function renderContactLogItem(l,orgId){
     <div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;">
       ${hasMemo?`<div style="font-size:13px;font-weight:500;color:var(--text);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.7;margin-bottom:6px;">${l.memo}</div>`:''}
       ${threads.map(t=>`<div style="margin-top:6px;padding:8px 12px;background:#f8faff;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:600;">${fDate(t.date)} · ${t.by||''}</div><div style="white-space:pre-line;color:var(--text2);">${t.content}</div></div>`).join('')}
-      ${(()=>{return isInProgress?`<div id="thread-form-${l.id}" style="margin-top:8px;display:none;"><textarea id="thread-input-${l.id}" placeholder="추가 상담 내용..." style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-sm);min-height:60px;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea><div style="display:flex;gap:6px;margin-top:4px;"><button onclick="addThread(${l.id},${orgId})" style="padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">저장</button><button onclick="markLogComplete(${l.id},${orgId})" style="padding:5px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">✅ 완료 처리</button><button onclick="document.getElementById('thread-form-${l.id}').style.display='none'" style="padding:5px 10px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;">취소</button></div></div><button onclick="document.getElementById('thread-form-${l.id}').style.display='block'" style="margin-top:6px;font-size:11px;color:var(--accent);background:var(--accent-bg);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;">+ 추가 상담 내용</button>`:'';})()}
+      ${(()=>{
+        const hasThreads=Array.isArray(l.threads)&&l.threads.length>0;
+        return isInProgress?`
+          <div id="thread-form-${l.id}" style="margin-top:8px;display:none;">
+            <textarea id="thread-input-${l.id}" placeholder="추가 상담 내용..." style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-sm);min-height:60px;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button onclick="addThread(${l.id},${orgId})" style="padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;">저장</button>
+              <button onclick="document.getElementById('thread-form-${l.id}').style.display='none'" style="padding:5px 10px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;">취소</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+            <button onclick="document.getElementById('thread-form-${l.id}').style.display='block'" style="font-size:11px;color:var(--accent);background:var(--accent-bg);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;">+ 추가 상담 내용</button>
+            ${hasThreads
+              ? `<button onclick="markLogComplete(${l.id},${orgId})" style="font-size:11px;padding:4px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✅ 완료 처리</button>`
+              : `<span style="font-size:11px;color:var(--text3);">추가 상담 내용 작성 후 완료 처리 가능</span>`
+            }
+          </div>`:'';
+      })()}
     </div>
   </div>`;
 }
@@ -5059,10 +5076,13 @@ async function addThread(logId,orgId){
   toast('추가 상담 내용 저장됨 ✓');
 }
 async function markLogComplete(logId,orgId){
+  const log=cache.logs.find(l=>l.id===logId);
+  if(!log)return;
+  const hasThreads=Array.isArray(log.threads)&&log.threads.length>0;
+  if(!hasThreads){toast('추가 상담 내용을 먼저 작성해야 완료 처리할 수 있어요.');return;}
   const{error}=await sb.from('contact_logs').update({status:'완료'}).eq('id',logId);
   if(error){toast('오류: '+error.message);return;}
-  const log=cache.logs.find(l=>l.id===logId);
-  if(log)log.status='완료';
+  log.status='완료';
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
   toast('✅ 완료 처리됐어요!');
