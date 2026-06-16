@@ -2889,35 +2889,18 @@ async function saveTalent(){
 // ── MOU 체크리스트 ──
 let currentMouOrgId=null;
 const MOU_ITEMS=[
-  // 대면 진행 시
-  {id:'venue_confirm',group:'대면 진행 준비',label:'장소 조율 — 협약식 장소 확정 (브이드림 사무실 or 상대 기관 or 외부)'},
-  {id:'time_confirm',group:'대면 진행 준비',label:'일시 조율 — 협약식 날짜 및 시간 확정'},
-  {id:'attendee_list',group:'대면 진행 준비',label:'참석자 명단 — 양측 최종 참석자 성함·직책 확인'},
-  {id:'nameplate_prep',group:'대면 진행 준비',label:'명패 준비 — 참석자 성함·직책 기재 명패 제작'},
-  {id:'ceremony_order',group:'대면 진행 준비',label:'식순 확정 — 당일 진행 순서 및 사회 주체 결정'},
-  {id:'banner_confirm',group:'대면 진행 준비',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
-  {id:'seal_method',group:'대면 진행 준비',label:'날인 방식 확정 — 직인 날인 or 친필 서명 확인'},
-
-  // 서면 진행 시
-  {id:'doc_who_prepare',group:'서면 진행 준비',label:'협약서 준비 주체 확정 — 브이드림 or 상대 기관'},
-  {id:'doc_sign_method',group:'서면 진행 준비',label:'서명 방식 확정 — 직인/인감 or 전자서명'},
-  {id:'doc_send_method',group:'서면 진행 준비',label:'발송 방식 확정 — 우편 발송 or 직접 전달 or 이메일'},
-
-  // 협약서 준비
-  {id:'logo_request',group:'협약서 준비',label:'CI(로고) 수령 — 상대 기관 고화질 로고 파일 요청'},
-  {id:'logo_design',group:'협약서 준비',label:'디자인팀 요청 — 로고 삽입 및 협약서 디자인 작업 요청'},
-  {id:'contract_draft',group:'협약서 준비',label:'협약서 초안 작성 — 자사 공식 양식에 맞게 편집 및 검수'},
-  {id:'contract_confirm',group:'협약서 준비',label:'내용 최종 확인 — 양측 협약서 내용 검토 및 승인'},
-  {id:'contract_print',group:'협약서 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
-  {id:'contract_cover',group:'협약서 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
-
-  // 당일 점검 (대면)
-  {id:'contract_final',group:'당일 점검',label:'협약서 최종본 2부 & 커버 2개 지참'},
-  {id:'company_seal',group:'당일 점검',label:'직인/인감 및 인패드 지참'},
-  {id:'nameplate_bring',group:'당일 점검',label:'명패 지참 (참석자 성함·직책 확인)'},
-  {id:'banner_bring',group:'당일 점검',label:'현수막 지참 (자사 제작 시)'},
+  {id:'contract_draft',group:'내부 준비',label:'협약서 정제 — 초안 바탕으로 자사 공식 양식에 맞게 편집 및 검수'},
+  {id:'contract_print',group:'내부 준비',label:'최종 인쇄 — 날인용 협약서 최종본 출력 (2부)'},
+  {id:'contract_cover',group:'내부 준비',label:'협약서 커버 — 보관용 커버(폴더) 2개 준비'},
+  {id:'logo_request',group:'상대 기관 조율',label:'CI(로고) 수령 — 상대 기관 고화질 로고 파일 요청'},
+  {id:'banner_confirm',group:'상대 기관 조율',label:'현수막 조율 — 제작 주체 결정 및 문구 확정'},
+  {id:'attendee_list',group:'상대 기관 조율',label:'참석자 명단 — 양측 최종 참석자 명단(성함/직급) 확인'},
+  {id:'ceremony_order',group:'상대 기관 조율',label:'식순 및 사회 — 당일 식순 및 진행 주체 확정'},
+  {id:'seal_method',group:'상대 기관 조율',label:'날인 방식 확정 — 직인 날인 or 친필 서명 확인'},
+  {id:'contract_final',group:'당일 점검',label:'협약서 최종본 2부 & 커버 2개'},
+  {id:'company_seal',group:'당일 점검',label:'회사 직인/인감 및 인패드 지참'},
+  {id:'banner_bring',group:'당일 점검',label:'제작된 현수막 지참 (자사 제작 시)'},
   {id:'business_card',group:'당일 점검',label:'참석자 명함 준비'},
-  {id:'photo_ready',group:'당일 점검',label:'협약식 사진 촬영 준비 (카메라/담당자 지정)'},
 ];
 function openMouDetail(orgId){
   currentMouOrgId=orgId;
@@ -2954,7 +2937,7 @@ function openMouDetail(orgId){
 function renderMouChecklist(org){
   const checklist=org.mou_checklist||{};
   const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
-  const groups=['MOU 방식 결정','대면 진행 준비','서면 진행 준비','협약서 준비','당일 점검'];
+  const groups=['내부 준비','상대 기관 조율','당일 점검'];
   return`
     <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -2967,199 +2950,17 @@ function renderMouChecklist(org){
     </div>
     ${groups.map(g=>{
       const items=MOU_ITEMS.filter(i=>i.group===g);
-
-      // MOU 방식 결정 → 전체 동적 UI
-      if(g==='MOU 방식 결정'){
-        const mouType=checklist['mou_type']||'';
-        const venueOwner=checklist['venue_owner']||'';
-        const signMethod=checklist['sign_method']||'';
-        const docOwner=checklist['doc_owner']||'';
-        const attendees=checklist['attendees']||[];
-        const openSection=checklist['open_section']||'';
-
-        // 섹션 아코디언 렌더 함수
-        function sectionBlock(id, title, content2){
-          const isOpen=openSection===id;
-          return '<div style="border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;">'
-            +'<div onclick="toggleMouSection(''+id+'')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:'+(isOpen?'var(--accent-bg)':'#fff')+';font-size:12px;font-weight:700;color:'+(isOpen?'var(--accent)':'var(--text)')+';">'
-            +'<span>'+title+'</span>'
-            +'<i class="ti ti-chevron-'+(isOpen?'up':'down')+'" style="font-size:13px;"></i>'
-            +'</div>'
-            +(isOpen?'<div style="padding:12px 14px;border-top:1px solid var(--border);background:#fafafa;">'+content2+'</div>':'')
-            +'</div>';
-        }
-
-        let html='<div style="margin-bottom:16px;">'
-          +'<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">MOU 방식 결정</div>'
-          +'<div style="display:flex;gap:8px;margin-bottom:12px;">'
-          +['대면','서면'].map(v=>'<button onclick="selectMouOption('mou_type',''+v+'')" style="flex:1;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(mouType===v?'var(--teal)':'var(--border)')+';background:'+(mouType===v?'var(--teal-bg)':'#fff')+';color:'+(mouType===v?'var(--teal)':'var(--text3)')+';">'+(v==='대면'?'🤝 대면 협약식':'📄 서면 협약')+'</button>').join('')
-          +'</div>';
-
-        if(mouType==='대면'){
-          // 장소 주체 선택
-          html+='<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">협약식 장소 주체</div>'
-            +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'
-            +['브이드림 사무실','상대 기관','외부 장소'].map(v=>'<button onclick="selectMouOption('venue_owner',''+v+'')" style="padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(venueOwner===v?'var(--accent)':'var(--border)')+';background:'+(venueOwner===v?'var(--accent-bg)':'#fff')+';color:'+(venueOwner===v?'var(--accent)':'var(--text3)')+';">'+v+'</button>').join('')
-            +'</div>';
-
-          if(venueOwner){
-            // 참석자 명단
-            const atStr=attendees.map((a,i)=>'<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
-              +'<input value="'+(a.name||'')+'" placeholder="성함" oninput="updateAttendee('+i+','name',this.value)" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;">'
-              +'<input value="'+(a.title||'')+'" placeholder="직책" oninput="updateAttendee('+i+','title',this.value)" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;">'
-              +'<button onclick="removeAttendee('+i+')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:4px;">✕</button>'
-              +'</div>').join('');
-            const attendeeContent='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">브이드림 측 + 상대 기관 측 참석자를 모두 입력해주세요</div>'
-              +atStr
-              +'<button onclick="addAttendee()" style="font-size:11px;color:var(--accent);background:var(--accent-bg);border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:700;margin-top:4px;">+ 참석자 추가</button>';
-            html+=sectionBlock('attendees','👥 참석자 명단 ('+attendees.length+'명)',attendeeContent);
-
-            // 협약서 준비
-            const contractItems=['협약서 초안 작성 및 검수','협약서 최종본 출력 (2부)','보관용 커버(폴더) 2개 준비','디자인팀 로고 작업 요청','상대 기관 CI(로고) 수령'];
-            const contractContent=contractItems.map(it=>'<div onclick="toggleMouSubItem('contract_'+''+it.replace(/\s/g,'_')+'''+')" style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;">'
-              +'<div style="width:16px;height:16px;border-radius:4px;border:2px solid '+(checklist['contract_'+it.replace(/\s/g,'_')]?'var(--teal)':'var(--border)')+';background:'+(checklist['contract_'+it.replace(/\s/g,'_')]?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-              +(checklist['contract_'+it.replace(/\s/g,'_')]?'<i class="ti ti-check" style="font-size:9px;color:#fff;"></i>':'')
-              +'</div><span style="font-size:12px;">'+it+'</span></div>').join('');
-            html+=sectionBlock('contract','📄 협약서 준비',contractContent);
-
-            // 명패 준비
-            const nameplateContent='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">참석자 명단 기준으로 명패를 제작해주세요</div>'
-              +(attendees.length?attendees.map(a=>'<div style="padding:5px 10px;background:var(--bg);border-radius:6px;font-size:12px;margin-bottom:4px;">'+a.name+' · '+a.title+'</div>').join(''):'<div style="font-size:12px;color:var(--text3);">참석자 명단을 먼저 입력해주세요</div>')
-              +'<div style="margin-top:10px;">'
-              +'<div onclick="toggleMouSubItem('nameplate_done')" style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;">'
-              +'<div style="width:16px;height:16px;border-radius:4px;border:2px solid '+(checklist['nameplate_done']?'var(--teal)':'var(--border)')+';background:'+(checklist['nameplate_done']?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;">'
-              +(checklist['nameplate_done']?'<i class="ti ti-check" style="font-size:9px;color:#fff;"></i>':'')
-              +'</div><span style="font-size:12px;">명패 제작 완료</span></div></div>';
-            html+=sectionBlock('nameplate','🪧 명패 준비',nameplateContent);
-
-            // 날인 방식
-            const signContent='<div style="display:flex;gap:8px;margin-bottom:6px;">'
-              +['직인 날인','친필 서명'].map(v=>'<button onclick="selectMouOption('sign_method',''+v+'')" style="flex:1;padding:7px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(signMethod===v?'var(--teal)':'var(--border)')+';background:'+(signMethod===v?'var(--teal-bg)':'#fff')+';color:'+(signMethod===v?'var(--teal)':'var(--text3)')+';">'+v+'</button>').join('')
-              +'</div>'
-              +(signMethod?'<div style="font-size:11px;color:var(--accent);font-weight:600;margin-top:4px;">✅ '+signMethod+' 확정</div>':'<div style="font-size:11px;color:var(--text3);">날인 방식을 선택해주세요</div>');
-            html+=sectionBlock('sign','🖊️ 날인 방식',signContent);
-          }
-        }
-
-        if(mouType==='서면'){
-          // 협약서 작성 주체
-          const docContent='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">협약서를 어느 쪽에서 준비할지 선택해주세요</div>'
-            +'<div style="display:flex;gap:8px;margin-bottom:10px;">'
-            +['브이드림','상대 기관'].map(v=>'<button onclick="selectMouOption('doc_owner',''+v+'')" style="flex:1;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid '+(docOwner===v?'var(--accent)':'var(--border)')+';background:'+(docOwner===v?'var(--accent-bg)':'#fff')+';color:'+(docOwner===v?'var(--accent)':'var(--text3)')+';">'+v+'</button>').join('')
-            +'</div>'
-            +(docOwner==='브이드림'?
-              '<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">준비 항목</div>'
-              +['협약서 초안 작성 및 검수','디자인팀 로고 작업 요청','상대 기관 CI(로고) 수령','협약서 최종본 발송'].map(it=>'<div onclick="toggleMouSubItem('doc_'+it.replace(/\s/g,'_')+'')" style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;">'
-                +'<div style="width:16px;height:16px;border-radius:4px;border:2px solid '+(checklist['doc_'+it.replace(/\s/g,'_')]?'var(--teal)':'var(--border)')+';background:'+(checklist['doc_'+it.replace(/\s/g,'_')]?'var(--teal)':'#fff')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-                +(checklist['doc_'+it.replace(/\s/g,'_')]?'<i class="ti ti-check" style="font-size:9px;color:#fff;"></i>':'')
-                +'</div><span style="font-size:12px;">'+it+'</span></div>').join('')
-              :'')
-            +(docOwner==='상대 기관'?'<div style="font-size:11px;color:var(--accent);font-weight:600;">📨 상대 기관에서 협약서 수신 후 내용 검토</div>':'');
-          html+=sectionBlock('docowner','📋 협약서 작성 주체',docContent);
-
-          // 서명 방식
-          const signContent2='<div style="display:flex;gap:8px;">'
-            +['직인 날인','친필 서명','전자서명'].map(v=>'<button onclick="selectMouOption('sign_method',''+v+'')" style="flex:1;padding:7px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;border:2px solid '+(signMethod===v?'var(--teal)':'var(--border)')+';background:'+(signMethod===v?'var(--teal-bg)':'#fff')+';color:'+(signMethod===v?'var(--teal)':'var(--text3)')+';">'+v+'</button>').join('')
-            +'</div>';
-          html+=sectionBlock('sign2','🖊️ 서명 방식',signContent2);
-        }
-
-        html+='</div>';
-        return html;
-      }
-
-      return'';
+      return`<div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
+        ${items.map(item=>`
+          <div onclick="toggleMouItem('${item.id}')" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;cursor:pointer;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+            <div style="width:18px;height:18px;border-radius:4px;border:2px solid ${checklist[item.id]?'var(--teal)':'var(--border)'};background:${checklist[item.id]?'var(--teal)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+              ${checklist[item.id]?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+            </div>
+            <span style="font-size:12px;color:${checklist[item.id]?'var(--text3)':'var(--text)'};text-decoration:${checklist[item.id]?'line-through':'none'};line-height:1.4;">${item.label}</span>
+          </div>`).join('')}
+      </div>`;
     }).join('')}`;
-}
-// 아코디언 섹션 토글
-function toggleMouSection(sectionId){
-  const orgId=currentMouOrgId||currentOrgId;
-  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
-  const checklist={...o.mou_checklist||{}};
-  checklist['open_section']=checklist['open_section']===sectionId?'':sectionId;
-  o.mou_checklist=checklist;
-  sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
-  if(document.getElementById('mou-detail-modal').style.display!=='none'){
-    openMouDetail(orgId);
-  } else {
-    const wrap=document.getElementById('mou-checklist-wrap');
-    if(wrap)wrap.innerHTML=renderMouChecklist(o);
-  }
-}
-
-// 서브 체크박스 토글
-async function toggleMouSubItem(itemId){
-  await toggleMouItem(itemId);
-}
-
-// 참석자 추가
-function addAttendee(){
-  const orgId=currentMouOrgId||currentOrgId;
-  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
-  const checklist={...o.mou_checklist||{}};
-  const attendees=[...(checklist['attendees']||[])];
-  attendees.push({name:'',title:''});
-  checklist['attendees']=attendees;
-  o.mou_checklist=checklist;
-  sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
-  if(document.getElementById('mou-detail-modal').style.display!=='none'){
-    openMouDetail(orgId);
-  } else {
-    const wrap=document.getElementById('mou-checklist-wrap');
-    if(wrap)wrap.innerHTML=renderMouChecklist(o);
-  }
-}
-
-// 참석자 수정 (디바운스)
-let _attendeeTimer=null;
-function updateAttendee(idx,field,val){
-  const orgId=currentMouOrgId||currentOrgId;
-  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
-  const checklist={...o.mou_checklist||{}};
-  const attendees=[...(checklist['attendees']||[])];
-  if(!attendees[idx])return;
-  attendees[idx]={...attendees[idx],[field]:val};
-  checklist['attendees']=attendees;
-  o.mou_checklist=checklist;
-  clearTimeout(_attendeeTimer);
-  _attendeeTimer=setTimeout(()=>{
-    sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
-  },800);
-}
-
-// 참석자 삭제
-function removeAttendee(idx){
-  const orgId=currentMouOrgId||currentOrgId;
-  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
-  const checklist={...o.mou_checklist||{}};
-  const attendees=[...(checklist['attendees']||[])];
-  attendees.splice(idx,1);
-  checklist['attendees']=attendees;
-  o.mou_checklist=checklist;
-  sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
-  if(document.getElementById('mou-detail-modal').style.display!=='none'){
-    openMouDetail(orgId);
-  } else {
-    const wrap=document.getElementById('mou-checklist-wrap');
-    if(wrap)wrap.innerHTML=renderMouChecklist(o);
-  }
-}
-
-async function selectMouOption(key, value){
-  const orgId=currentMouOrgId||currentOrgId;
-  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
-  const checklist={...o.mou_checklist||{}};
-  // 같은 값 클릭 시 해제
-  checklist[key]=checklist[key]===value?'':value;
-  const{error}=await sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
-  if(error){toast('오류: '+error.message);return;}
-  o.mou_checklist=checklist;
-  if(document.getElementById('mou-detail-modal').style.display!=='none'){
-    openMouDetail(orgId);
-  } else {
-    const wrap=document.getElementById('mou-checklist-wrap');
-    if(wrap)wrap.innerHTML=renderMouChecklist(o);
-  }
 }
 async function toggleMouItem(itemId){
   const orgId=currentMouOrgId||currentOrgId;
