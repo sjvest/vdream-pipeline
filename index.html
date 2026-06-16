@@ -2958,7 +2958,7 @@ function openMouDetail(orgId){
 function renderMouChecklist(org){
   const checklist=org.mou_checklist||{};
   const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
-  const groups=['내부 준비','상대 기관 조율','당일 점검'];
+  const groups=['MOU 방식 결정','대면 진행 준비','서면 진행 준비','협약서 준비','당일 점검'];
   return`
     <div style="background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
