@@ -2889,10 +2889,6 @@ async function saveTalent(){
 // ── MOU 체크리스트 ──
 let currentMouOrgId=null;
 const MOU_ITEMS=[
-  // MOU 방식 결정
-  {id:'mou_type_face',group:'MOU 방식 결정',label:'대면 협약식으로 진행 확정'},
-  {id:'mou_type_doc',group:'MOU 방식 결정',label:'서면 협약으로 진행 확정'},
-
   // 대면 진행 시
   {id:'venue_confirm',group:'대면 진행 준비',label:'장소 조율 — 협약식 장소 확정 (브이드림 사무실 or 상대 기관 or 외부)'},
   {id:'time_confirm',group:'대면 진행 준비',label:'일시 조율 — 협약식 날짜 및 시간 확정'},
@@ -2971,6 +2967,29 @@ function renderMouChecklist(org){
     </div>
     ${groups.map(g=>{
       const items=MOU_ITEMS.filter(i=>i.group===g);
+
+      // MOU 방식 결정 & 장소 주체 → 라디오 선택형
+      if(g==='MOU 방식 결정'){
+        const mouType=checklist['mou_type']||'';
+        const venueOwner=checklist['venue_owner']||'';
+        return`<div style="margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">MOU 방식 결정</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            ${['대면','서면'].map(v=>`
+              <button onclick="selectMouOption('mou_type','${v}')" style="flex:1;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid ${mouType===v?'var(--teal)':'var(--border)'};background:${mouType===v?'var(--teal-bg)':'#fff'};color:${mouType===v?'var(--teal)':'var(--text3)'};">${v==='대면'?'🤝 대면 협약식':'📄 서면 협약'}</button>
+            `).join('')}
+          </div>
+          ${mouType==='대면'?`
+            <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">협약식 장소 주체</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${['브이드림 사무실','상대 기관','외부 장소'].map(v=>`
+                <button onclick="selectMouOption('venue_owner','${v}')" style="padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;border:2px solid ${venueOwner===v?'var(--accent)':'var(--border)'};background:${venueOwner===v?'var(--accent-bg)':'#fff'};color:${venueOwner===v?'var(--accent)':'var(--text3)'};">${v}</button>
+              `).join('')}
+            </div>
+          `:''}
+        </div>`;
+      }
+
       return`<div style="margin-bottom:12px;">
         <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${g}</div>
         ${items.map(item=>`
@@ -2982,6 +3001,22 @@ function renderMouChecklist(org){
           </div>`).join('')}
       </div>`;
     }).join('')}`;
+}
+async function selectMouOption(key, value){
+  const orgId=currentMouOrgId||currentOrgId;
+  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return;
+  const checklist={...o.mou_checklist||{}};
+  // 같은 값 클릭 시 해제
+  checklist[key]=checklist[key]===value?'':value;
+  const{error}=await sb.from('orgs').update({mou_checklist:checklist}).eq('id',orgId);
+  if(error){toast('오류: '+error.message);return;}
+  o.mou_checklist=checklist;
+  if(document.getElementById('mou-detail-modal').style.display!=='none'){
+    openMouDetail(orgId);
+  } else {
+    const wrap=document.getElementById('mou-checklist-wrap');
+    if(wrap)wrap.innerHTML=renderMouChecklist(o);
+  }
 }
 async function toggleMouItem(itemId){
   const orgId=currentMouOrgId||currentOrgId;
