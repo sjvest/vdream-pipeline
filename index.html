@@ -1243,7 +1243,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div class="modal-body">
     <div class="fg"><label>제목</label><input id="tte-title" onkeydown="if(event.key==='Enter')saveTeamTaskDetail()"></div>
-    <div class="fg"><label>담당자</label><select id="tte-assignee"></select></div>
+    <div class="fg" id="tte-assignee-wrap"><label>담당자 <span style="font-size:10px;color:var(--text3);">(임세진만 변경 가능)</span></label><select id="tte-assignee"></select></div>
     <div class="fg"><label>마감일</label><input id="tte-due" type="date"></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:18px;">
       <input type="checkbox" id="tte-done" style="width:16px;height:16px;accent-color:var(--green);"> 완료 처리
@@ -1251,7 +1251,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveTeamTaskDetail()"><i class="ti ti-check"></i> 저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('team-task-edit-modal').style.display='none'">취소</button>
-      <button class="btn btn-ghost" style="margin-left:auto;color:var(--red);border-color:var(--red-bg);" onclick="deleteTeamTask()"><i class="ti ti-trash"></i> 삭제</button>
+      <button id="tte-delete-btn" class="btn btn-ghost" style="margin-left:auto;color:var(--red);border-color:var(--red-bg);" onclick="deleteTeamTask()"><i class="ti ti-trash"></i> 삭제</button>
     </div>
   </div>
 </div>
@@ -5644,40 +5644,49 @@ function renderMetricPeriod(){
 const TT_MEMBERS=['임세진','이재성','김현구','이슬민'];
 const TT_BG={임세진:'#eef2ff',이재성:'#f9f5ff',김현구:'#ecfdf3',이슬민:'#fffaeb'};
 const TT_TX={임세진:'#3b6ef8',이재성:'#6941c6',김현구:'#027a48',이슬민:'#b54708'};
+const TT_EMAIL={'sjvest@vdream.co.kr':'임세진','leejs@vdream.co.kr':'이재성','kimhg@vdream.co.kr':'김현구','lsm@vdream.co.kr':'이슬민'};
 let editingTaskId=null;
+
+function getCurrentMember(){
+  const email=currentUser?.email||'';
+  return TT_EMAIL[email]||currentProfile?.name||'';
+}
 
 function renderTeamTasks(){
   const el=document.getElementById('team-tasks-date');
   if(el)el.textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   const tasks=cache.team_tasks||[];
   const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
-  const myName=currentProfile?.name||'';
+  const myName=getCurrentMember();
   document.getElementById('team-tasks-board').innerHTML=TT_MEMBERS.map(name=>{
-    const mine=tasks.filter(t=>t.assignee===name);
-    const pending=mine.filter(t=>!t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
-    const done=mine.filter(t=>t.done).sort((a,b)=>(!a.due?1:!b.due?-1:a.due.localeCompare(b.due)));
+    const mine=tasks.filter(t=>t.assigned_to===name);
+    const pending=mine.filter(t=>!t.done).sort((a,b)=>(!a.due_date?1:!b.due_date?-1:a.due_date.localeCompare(b.due_date)));
+    const done=mine.filter(t=>t.done).sort((a,b)=>(!a.due_date?1:!b.due_date?-1:a.due_date.localeCompare(b.due_date)));
     const all=[...pending,...done];
     const bg=TT_BG[name]||'#f4f6fa';
     const tx=TT_TX[name]||'#3d4f63';
     const canAdd=isAdmin||myName===name;
     const safeId=name.replace(/\s/g,'_');
+    const pendingCnt=pending.length;
     return`<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;">
-      <div style="padding:12px 16px;background:${bg};border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-        <span style="font-size:13px;font-weight:800;color:${tx};">${name}</span>
-        <span style="font-size:11px;color:var(--text3);font-weight:600;">${pending.length}개 진행중</span>
+      <div style="padding:13px 16px;background:${bg};border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <span style="font-size:14px;font-weight:800;color:${tx};">${name}</span>
+        ${pendingCnt?`<span style="font-size:11px;font-weight:700;padding:2px 9px;background:${tx};color:#fff;border-radius:12px;">${pendingCnt}</span>`:'<span style="font-size:11px;color:var(--text3);">완료</span>'}
       </div>
       <div style="padding:10px;display:flex;flex-direction:column;gap:7px;flex:1;">
         ${all.map(t=>{
-          const dd=t.due?dayDiff(t.due):null;
+          const dd=t.due_date?dayDiff(t.due_date):null;
           const dcls=dd===null?'due-ok':dueClass(dd);
-          const dlbl=dd===null?'':dueLabel(dd,t.due);
-          return`<div onclick="openTeamTaskDetail(${t.id})" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;cursor:pointer;transition:border-color .12s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          const dlbl=dd===null?'':dueLabel(dd,t.due_date);
+          const urgent=!t.done&&dd!==null&&dd<=3;
+          const canDel=isAdmin||t.assigned_to===myName||t.created_by===myName;
+          return`<div onclick="openTeamTaskDetail(${t.id})" style="background:var(--surface);border:1.5px solid var(--border);${urgent?'border-left:3px solid var(--red);':''}border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;cursor:pointer;transition:border-color .12s;${t.done?'opacity:.55;':''}box-shadow:var(--shadow-sm);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='${urgent?'var(--red)':'var(--border)'}'">
             <div onclick="event.stopPropagation();toggleTeamTask(${t.id},${!t.done})" style="width:18px;height:18px;border:2px solid ${t.done?'var(--green)':'var(--border2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:${t.done?'var(--green)':'transparent'};margin-top:1px;transition:all .12s;">
               ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
             </div>
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.title}</div>
-              ${t.due?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
+              ${t.due_date?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
             </div>
           </div>`;
         }).join('')}
@@ -5709,15 +5718,16 @@ function showInlineForm(safeId){
 
 async function saveInlineTask(el){
   const form=el.closest('[data-assignee]');
-  const name=form.dataset.assignee;
+  const assigned_to=form.dataset.assignee;
   const titleEl=form.querySelector('input[type=text]');
   const dueEl=form.querySelector('input[type=date]');
   const title=titleEl.value.trim();
-  const due=dueEl.value||null;
+  const due_date=dueEl.value||null;
   if(!title){titleEl.focus();return;}
-  const{data,error}=await sb.from('team_tasks').insert({title,assignee:name,due,done:false,created_by:currentUser?.id,created_by_name:currentProfile?.name||''}).select().single();
+  const currentMember=getCurrentMember()||'임세진';
+  const{data,error}=await sb.from('team_tasks').insert({title,assigned_to,created_by:currentMember,due_date,done:false}).select().single();
   if(error){toast('저장 오류: '+error.message);return;}
-  cache.team_tasks.unshift(data);
+  cache.team_tasks.push(data);
   renderTeamTasks();
   toast('할일이 추가되었습니다.');
 }
@@ -5746,12 +5756,16 @@ function openTeamTaskDetail(id){
   if(!t)return;
   editingTaskId=id;
   const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
+  const myName=getCurrentMember();
+  const canDel=isAdmin||t.assigned_to===myName||t.created_by===myName;
   document.getElementById('tte-title').value=t.title||'';
-  document.getElementById('tte-due').value=t.due||'';
+  document.getElementById('tte-due').value=t.due_date||'';
   document.getElementById('tte-done').checked=!!t.done;
   const ae=document.getElementById('tte-assignee');
-  ae.innerHTML=TT_MEMBERS.map(m=>`<option value="${m}"${m===t.assignee?' selected':''}${!isAdmin&&m!==t.assignee?' disabled':''}>${m}</option>`).join('');
+  ae.innerHTML=TT_MEMBERS.map(m=>`<option value="${m}"${m===t.assigned_to?' selected':''}${!isAdmin&&m!==t.assigned_to?' disabled':''}>${m}</option>`).join('');
   ae.disabled=!isAdmin;
+  const delBtn=document.getElementById('tte-delete-btn');
+  if(delBtn)delBtn.style.display=canDel?'':'none';
   document.getElementById('team-task-edit-modal').style.display='flex';
   document.getElementById('tte-title').focus();
 }
@@ -5759,14 +5773,14 @@ function openTeamTaskDetail(id){
 async function saveTeamTaskDetail(){
   if(!editingTaskId)return;
   const title=document.getElementById('tte-title').value.trim();
-  const assignee=document.getElementById('tte-assignee').value;
-  const due=document.getElementById('tte-due').value||null;
+  const assigned_to=document.getElementById('tte-assignee').value;
+  const due_date=document.getElementById('tte-due').value||null;
   const done=document.getElementById('tte-done').checked;
   if(!title){toast('제목을 입력하세요.');return;}
-  const{error}=await sb.from('team_tasks').update({title,assignee,due,done}).eq('id',editingTaskId);
+  const{error}=await sb.from('team_tasks').update({title,assigned_to,due_date,done}).eq('id',editingTaskId);
   if(error){toast('저장 오류: '+error.message);return;}
   const idx=(cache.team_tasks||[]).findIndex(x=>x.id===editingTaskId);
-  if(idx!==-1)Object.assign(cache.team_tasks[idx],{title,assignee,due,done});
+  if(idx!==-1)Object.assign(cache.team_tasks[idx],{title,assigned_to,due_date,done});
   document.getElementById('team-task-edit-modal').style.display='none';
   renderTeamTasks();
   toast('저장되었습니다.');
@@ -5775,6 +5789,9 @@ async function saveTeamTaskDetail(){
 async function deleteTeamTask(){
   if(!editingTaskId)return;
   const t=(cache.team_tasks||[]).find(x=>x.id===editingTaskId);
+  const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
+  const myName=getCurrentMember();
+  if(!isAdmin&&t?.assigned_to!==myName&&t?.created_by!==myName){toast('삭제 권한이 없습니다.');return;}
   if(!confirm(`"${t?.title||'이 할일'}"을 삭제하시겠습니까?`))return;
   const{error}=await sb.from('team_tasks').delete().eq('id',editingTaskId);
   if(error){toast('삭제 오류: '+error.message);return;}
