@@ -564,6 +564,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         📷 명함 사진 업로드
       </button>
       <div id="ocr-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+      <img id="card-preview" style="max-width:200px;border-radius:8px;margin-top:8px;display:none;">
     </div>
     <div class="form-section">
       <div class="fsec-title">📇 명함 사진</div>
@@ -4866,6 +4867,15 @@ function clearCardPreview(){
     </label>`;
 }
 
+async function uploadBusinessCard(file, orgName){
+  const ext=file.name.split('.').pop()||'jpg';
+  const fileName=`${Date.now()}_${(orgName||'card').replace(/\s/g,'_')}.${ext}`;
+  const{data,error}=await sb.storage.from('business-cards').upload(fileName,file,{cacheControl:'3600',upsert:false});
+  if(error){console.warn('명함 업로드 실패:',error);return null;}
+  const{data:urlData}=sb.storage.from('business-cards').getPublicUrl(fileName);
+  return urlData.publicUrl;
+}
+
 async function analyzeBusinessCard(input){
   const file=input.files[0];if(!file)return;
   const status=document.getElementById('ocr-status');
@@ -4918,6 +4928,10 @@ async function analyzeBusinessCard(input){
     }
     if(info.address)document.getElementById('n-address').value=info.address;
     if(info.website)document.getElementById('n-website').value=info.website;
+    const cardUrl=await uploadBusinessCard(file,info.org_name||'');
+    if(cardUrl)window._lastCardUrl=cardUrl;
+    const preview=document.getElementById('card-preview');
+    if(preview){preview.src=URL.createObjectURL(file);preview.style.display='block';}
     status.textContent='✅ 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
     status.style.color='var(--green)';
   }catch(e){
@@ -4951,6 +4965,7 @@ async function saveOrg(){
     website:document.getElementById('n-website').value.trim()||null,
     region:document.getElementById('n-region').value||null,
     address:document.getElementById('n-address').value.trim()||null,
+    business_card_url:window._lastCardUrl||null,
   };
 
   // ── 수정 모드 ──
@@ -4999,7 +5014,7 @@ async function saveOrg(){
     if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
-  clearOrgForm();clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='💾 저장';
+  clearOrgForm();window._lastCardUrl=null;clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='💾 저장';
   toast('기관 등록 완료!');updateUrgentCount();updateNavBadges();nav('orgs');
   sendGChatOrgAlert(orgRow.name, orgRow.member);
 }
@@ -5046,6 +5061,7 @@ function openOrg(id){
         <i class="ti ti-camera"></i> 📇 명함 사진 등록
         <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
       </label>`}
+    ${o.business_card_url?`<img src="${o.business_card_url}" style="width:100%;max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px;cursor:pointer;" onclick="window.open('${o.business_card_url}','_blank')" title="명함 사진 클릭 시 원본 보기">`:''}
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span>
