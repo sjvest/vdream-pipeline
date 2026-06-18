@@ -4,29 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V:Dream 기관 인재영입 파이프라인 v5</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
- :root{
-  --bg:#f4f6fa;--surface:#ffffff;--border:#e4e7ec;--border2:#c8cdd8;
-  --text:#111827;--text2:#374151;--text3:#6B7280;
-  --accent:#584C9D;--accent-bg:#EEEAF8;--accent-dark:#433594;
-  --green:#027a48;--green-bg:#d1fadf;
-  --amber:#b54708;--amber-bg:#fef3c7;
-  --red:#c0200f;--red-bg:#fee4e2;
-  --purple:#8377C2;--purple-bg:#EEEAF8;
-  --teal:#38A89F;--teal-bg:#D6F0EE;
-  --sidebar:#433594;--sidebar-text:rgba(255,255,255,.6);--sidebar-active:#ffffff;
-  --radius:14px;--radius-sm:9px;--radius-xs:6px;
-  --shadow-sm:0 1px 4px rgba(16,24,40,.07);
-  --shadow:0 4px 12px rgba(16,24,40,.09);
-  --shadow-lg:0 16px 40px rgba(16,24,40,.14);
+:root{
+  --accent:#584C9D;
+  --accent-bg:#F0EFF9;
+  --accent-light:#8377C2;
+  --accent-deep:#433594;
+  --green:#5DBEB6;
+  --green-bg:#EDF8F7;
+  --teal:#38A89F;
+  --purple:#584C9D;
+  --purple-bg:#F0EFF9;
+  --red:#C0392B;
+  --red-bg:#FEE2E2;
+  --orange:#C07A00;
+  --orange-bg:#FEF3C7;
+  --blue:#1D4ED8;
+  --blue-bg:#EFF6FF;
+  --text:#111827;
+  --text2:#374151;
+  --text3:#6B7280;
+  --border:#E2E2EA;
+  --bg:#F8F8FA;
+  --bg2:#F1F1F5;
+  --white:#ffffff;
+  --radius:10px;
+  --radius-sm:6px;
+  --shadow:0 1px 4px rgba(88,76,157,0.08);
 }
-html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
+html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
 .app{display:flex;height:100vh;overflow:hidden;}
 
 /* ── 설정 배너 ── */
