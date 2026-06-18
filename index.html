@@ -122,6 +122,7 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .fg-row{display:grid;gap:14px;}
 .fg-2{grid-template-columns:1fr 1fr;}
 .fg-3{grid-template-columns:1fr 1fr 1fr;}
+#p-add-org .form-section .fg input,#p-add-org .form-section .fg select{font-size:12px;padding:6px 8px;}
 
 /* ── 버튼 ── */
 .btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
@@ -553,29 +554,23 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div class="form-section">
       <div class="fsec-title">기관 기본 정보</div>
-      <div class="fg-row fg-3">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
         <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관"></div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
-        <div class="fg"><label>연결 행사</label><select id="n-event-id"><option value="">없음</option></select></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div></div>
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
         <div class="fg"><label>모바일</label><input type="text" id="n-mobile" placeholder="010-0000-0000"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="fg"><label>팩스</label><input type="text" id="n-fax" placeholder="02-0000-0000"></div>
-        <div class="fg"><label>이메일</label>
+        <div class="fg" style="grid-column:span 2;"><label>팩스</label><input type="text" id="n-fax" placeholder="02-0000-0000"></div>
+        <div class="fg" style="grid-column:span 2;"><label>이메일</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <div contenteditable="true" id="n-email" readonly onfocus="this.removeAttribute('readonly')"
-              style="flex:2;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:42px;line-height:1.5;cursor:text;color:var(--text);"
+              style="flex:2;font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:32px;line-height:1.5;cursor:text;color:var(--text);"
               placeholder="이메일 앞부분"></div>
-            <span style="font-size:13px;color:var(--text3);font-weight:600;">@</span>
-            <select id="n-email-domain" onchange="toggleOrgEmailCustom()" style="font-size:11px;padding:10px 6px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:110px;">
+            <span style="font-size:12px;color:var(--text3);font-weight:600;">@</span>
+            <select id="n-email-domain" onchange="toggleOrgEmailCustom()" style="font-size:12px;padding:6px 4px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:100px;">
               <option value="">직접입력</option>
               <option value="naver.com">naver.com</option>
               <option value="gmail.com">gmail.com</option>
@@ -593,27 +588,26 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
               <option value="org">org</option>
             </select>
             <input id="n-email-custom" placeholder="도메인" readonly onfocus="this.removeAttribute('readonly')"
-              style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:120px;">
+              style="display:none;font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:100px;">
           </div>
         </div>
-      </div>
-      <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
         <div class="fg"><label>동행 여부</label><select id="n-accompany"><option value="">없음</option><option>대표 동행</option><option>2인 이상</option></select></div>
         <div class="fg"><label>현재 단계</label><select id="n-stage"><option value="0">발굴</option><option value="1">컨택 시도</option><option value="2">미팅 완료</option><option value="3">관계 형성</option><option value="4">MOU 예정</option><option value="5">MOU 완료</option><option value="6">인재영입 완료</option></select></div>
-      </div>
-      <div class="fg-row fg-3">
+        <div></div>
         <div class="fg"><label>미팅 전 메일</label><select id="n-premeil"><option value="0">불필요</option><option value="1">발송 완료</option><option value="2">미발송(요구됨)</option></select></div>
         <div class="fg"><label>특수학교 직무협의</label><select id="n-school"><option value="0">해당없음</option><option value="1">협의 필요</option><option value="2">협의 완료</option></select></div>
         <div class="fg"><label>첫 미팅일</label><input id="n-date" type="date"></div>
-        <div class="fg"><label>MOU 예정일</label><input id="n-mou-date" type="date"></div>
+        <div></div>
+        <div class="fg" style="grid-column:span 2;"><label>연결 행사</label><select id="n-event-id"><option value="">없음</option></select></div>
+        <div class="fg" style="grid-column:span 2;"><label>MOU 예정일</label><input id="n-mou-date" type="date"></div>
       </div>
       <div class="fg"><label>메모</label><textarea id="n-memo" placeholder="미팅 내용, 기관 니즈, 특이사항 등"></textarea></div>
       <div class="fg-row fg-2">
         <div class="fg"><label>지역</label><select id="n-region"><option value="">선택</option><option>서울</option><option>경기</option><option>인천</option><option>부산</option><option>대구</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select></div>
         <div class="fg"><label>주소</label><input id="n-address" placeholder="예: 서울시 강남구 테헤란로 123"></div>
       </div>
-      <div class="fg"><label>기관 웹사이트</label><div style="display:flex;align-items:center;gap:8px;"><input id="n-website" placeholder="https://www.example.or.kr" style="flex:1;" oninput="validateOrgUrl(this)"><button type="button" id="n-website-btn" onclick="openOrgUrl()" style="display:none;padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;white-space:nowrap;"><i class="ti ti-external-link"></i> 열기</button></div></div>
+      <div class="fg"><label>기관 웹사이트</label><div style="display:flex;align-items:center;gap:8px;"><input id="n-website" placeholder="https://www.example.or.kr" style="flex:1;" oninput="validateOrgUrl(this)"><button type="button" id="n-website-btn" onclick="openOrgUrl()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;white-space:nowrap;"><i class="ti ti-external-link"></i> 열기</button></div></div>
     </div>
     <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
     <div class="form-section" id="member-history-section" style="display:none;">
