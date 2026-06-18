@@ -122,7 +122,11 @@ html,body{height:100%;font-family:'Pretendard',sans-serif;font-size:13px;line-he
 .fg-row{display:grid;gap:14px;}
 .fg-2{grid-template-columns:1fr 1fr;}
 .fg-3{grid-template-columns:1fr 1fr 1fr;}
-#p-add-org .form-section .fg input,#p-add-org .form-section .fg select{font-size:12px;padding:6px 8px;}
+#p-add-org>.card{max-width:600px;}
+#p-add-org .form-section .fg{gap:3px;margin-bottom:10px;}
+#p-add-org .form-section .fg label{font-size:11px;margin-bottom:0;}
+#p-add-org .form-section .fg input,#p-add-org .form-section .fg select,#p-add-org .form-section .fg textarea{font-size:12px;padding:5px 8px;}
+#p-add-org .form-section .fg input,#p-add-org .form-section .fg select{height:32px;box-sizing:border-box;}
 
 /* ── 버튼 ── */
 .btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
@@ -554,7 +558,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div class="form-section">
       <div class="fsec-title">기관 기본 정보</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
         <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관"></div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
@@ -567,10 +571,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg" style="grid-column:span 2;"><label>이메일</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <div contenteditable="true" id="n-email" readonly onfocus="this.removeAttribute('readonly')"
-              style="flex:2;font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:32px;line-height:1.5;cursor:text;color:var(--text);max-width:150px;"
+              style="flex:2;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;min-height:32px;line-height:1.5;cursor:text;color:var(--text);max-width:150px;"
               placeholder="이메일 앞부분"></div>
             <span style="font-size:12px;color:var(--text3);font-weight:600;">@</span>
-            <select id="n-email-domain" onchange="toggleOrgEmailCustom()" style="font-size:12px;padding:6px 4px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:130px;">
+            <select id="n-email-domain" onchange="toggleOrgEmailCustom()" style="font-size:12px;padding:5px 4px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);max-width:130px;height:32px;box-sizing:border-box;">
               <option value="">직접입력</option>
               <option value="naver.com">naver.com</option>
               <option value="gmail.com">gmail.com</option>
