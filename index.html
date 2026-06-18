@@ -559,8 +559,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
         <div class="fg"><label>연결 행사</label><select id="n-event-id"><option value="">없음</option></select></div>
       </div>
-      <div class="fg-row fg-3">
+      <div class="fg-row fg-4">
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
+        <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
         <div class="fg"><label>이메일</label>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -589,6 +590,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
               style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:120px;">
           </div>
         </div>
+      </div>
+      <div class="fg-row fg-3">
+        <div class="fg"><label>모바일</label><input type="text" id="n-mobile" placeholder="010-0000-0000"></div>
+        <div class="fg"><label>팩스</label><input type="text" id="n-fax" placeholder="02-0000-0000"></div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
@@ -3969,7 +3974,10 @@ function loadOrgForEdit(orgId){
   document.getElementById('n-cat').value=o.cat||'복지관';
   document.getElementById('n-source').value=o.source||'서칭';
   document.getElementById('n-contact').value=o.contact||'';
+  document.getElementById('n-contact-title').value=o.contact_title||'';
   document.getElementById('n-phone').value=o.phone||'';
+  document.getElementById('n-mobile').value=o.mobile||'';
+  document.getElementById('n-fax').value=o.fax||'';
   document.getElementById('n-stage').value=o.stage||0;
   document.getElementById('n-member').value=o.member||'';
   document.getElementById('n-accompany').value=o.accompany||'';
@@ -4863,7 +4871,7 @@ async function analyzeBusinessCard(input){
       {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
         contents:[{parts:[
           {inline_data:{mime_type:file.type,data:base64}},
-          {text:`이 명함 이미지에서 아래 정보를 추출해서 JSON 형식으로만 반환해줘. 없는 항목은 null로:\n{"org_name":"기관/회사명","contact_name":"담당자 이름","contact_title":"직책","phone":"전화번호","email":"이메일","address":"주소","website":"웹사이트"}\nJSON 외에 다른 텍스트는 절대 포함하지 마.`}
+          {text:`이 명함 이미지에서 아래 정보를 추출해서 JSON 형식으로만 반환해줘. 없는 항목은 null로:\n{"org_name":"기관/회사명","contact_name":"담당자 이름","contact_title":"직책","mobile":"휴대폰번호","fax":"팩스번호","phone":"전화번호","email":"이메일","address":"주소","website":"웹사이트"}\nJSON 외에 다른 텍스트는 절대 포함하지 마.`}
         ]}]
       })}
     );
@@ -4876,6 +4884,8 @@ async function analyzeBusinessCard(input){
     if(info.contact_name)document.getElementById('n-contact').value=info.contact_name;
     const titleEl=document.getElementById('n-contact-title');
     if(titleEl&&info.contact_title)titleEl.value=info.contact_title;
+    if(info.mobile)document.getElementById('n-mobile').value=info.mobile;
+    if(info.fax)document.getElementById('n-fax').value=info.fax;
     if(info.phone)document.getElementById('n-phone').value=info.phone;
     if(info.email){
       const parts=info.email.split('@');
@@ -4916,7 +4926,7 @@ async function saveOrg(){
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const orgRow={
     name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,event_id:document.getElementById('n-event-id')?.value?parseInt(document.getElementById('n-event-id').value):null,
-    contact:document.getElementById('n-contact').value.trim(),phone:document.getElementById('n-phone').value.trim(),email:getOrgEmailValue(),
+    contact:document.getElementById('n-contact').value.trim(),contact_title:document.getElementById('n-contact-title')?.value||null,phone:document.getElementById('n-phone').value.trim(),mobile:document.getElementById('n-mobile')?.value||null,fax:document.getElementById('n-fax')?.value||null,email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
     date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,memo:document.getElementById('n-memo').value.trim(),
@@ -4976,7 +4986,7 @@ async function saveOrg(){
   sendGChatOrgAlert(orgRow.name, orgRow.member);
 }
 function clearOrgForm(){
-  ['n-name','n-contact','n-phone','n-date','n-mou-date','n-memo','n-address'].forEach(id=>document.getElementById(id).value='');
+  ['n-name','n-contact','n-contact-title','n-phone','n-mobile','n-fax','n-date','n-mou-date','n-memo','n-address'].forEach(id=>document.getElementById(id).value='');
   const regionEl=document.getElementById('n-region');if(regionEl)regionEl.value='';
   const emailEl=document.getElementById('n-email');
   if(emailEl)emailEl.textContent='';
@@ -5052,7 +5062,10 @@ function openOrg(id){
         :`<span>${o.contact||'—'}</span>`}
       </div>
     </div>
+    ${o.contact_title?`<div class="info-row"><span class="info-key">직책</span><span>${o.contact_title}</span></div>`:''}
     <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
+    ${o.mobile?`<div class="info-row"><span class="info-key">모바일</span><span>${o.mobile}</span></div>`:''}
+    ${o.fax?`<div class="info-row"><span class="info-key">팩스</span><span>${o.fax}</span></div>`:''}
     <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
     ${o.region||o.address?`<div class="info-row"><span class="info-key">지역/주소</span><span>${[o.region,o.address].filter(Boolean).join(' · ')}</span></div>`:''}
     <div class="info-row"><span class="info-key">웹사이트</span><span>${o.website?`<a href="${o.website}" target="_blank" style="color:var(--accent);text-decoration:none;">${o.website} <i class="ti ti-external-link"></i></a>`:'—'}</span></div>
