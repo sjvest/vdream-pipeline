@@ -5832,9 +5832,8 @@ async function saveInlineTask(el){
   if(error){toast('저장 오류: '+error.message);return;}
   cache.team_tasks.push(data);
   renderTeamTasks();
+  sendGChat('📋 *팀 할일 등록*\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
   toast('할일이 추가되었습니다.');
-  const GCHAT_WEBHOOK='https://chat.googleapis.com/v1/spaces/AAQAF9dCz9I/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=OwHjDcNH2qE7zd4YzGXpx2GPI6FbQWZd5Cf5ZGLy8Ts';
-  fetch(GCHAT_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`📋 *팀 할일 등록*\n담당자: ${assigned_to}\n내용: ${title}${due_date?'\n마감일: '+due_date:''}\n등록자: ${currentMember||'임세진'}`})}).catch(e=>console.warn('구챗 알림 실패:',e));
 }
 
 function cancelInlineTask(el){
