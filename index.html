@@ -392,7 +392,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('analytics')"><i class="ti ti-chart-dots"></i>데이터 분석</button>
   <button class="nav-item" id="nav-events" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리<span class="new-badge" id="badge-events" style="display:none;">0</span></button>
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
-  <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일</button>
+  <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">
       <div style="position:relative;flex-shrink:0;">
@@ -5756,6 +5756,9 @@ function renderTeamTasks(){
   const el=document.getElementById('team-tasks-date');
   if(el)el.textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   const tasks=cache.team_tasks||[];
+  const undone=tasks.filter(t=>!t.done).length;
+  const badge=document.getElementById('team-tasks-badge');
+  if(badge){badge.textContent=undone>0?undone:'';badge.style.display=undone>0?'inline-flex':'none';}
   const isAdmin=currentUser?.email==='sjvest@vdream.co.kr';
   const myName=getCurrentMember();
   document.getElementById('team-tasks-board').innerHTML=TT_MEMBERS.map(name=>{
@@ -5830,6 +5833,8 @@ async function saveInlineTask(el){
   cache.team_tasks.push(data);
   renderTeamTasks();
   toast('할일이 추가되었습니다.');
+  const GCHAT_WEBHOOK='https://chat.googleapis.com/v1/spaces/AAQAF9dCz9I/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=OwHjDcNH2qE7zd4YzGXpx2GPI6FbQWZd5Cf5ZGLy8Ts';
+  fetch(GCHAT_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:`📋 *팀 할일 등록*\n담당자: ${assigned_to}\n내용: ${title}${due_date?'\n마감일: '+due_date:''}\n등록자: ${currentMember||'임세진'}`})}).catch(e=>console.warn('구챗 알림 실패:',e));
 }
 
 function cancelInlineTask(el){
