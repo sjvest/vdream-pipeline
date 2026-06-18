@@ -559,10 +559,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
         <div class="fg"><label>연결 행사</label><select id="n-event-id"><option value="">없음</option></select></div>
       </div>
-      <div class="fg-row fg-4">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
+        <div class="fg"><label>모바일</label><input type="text" id="n-mobile" placeholder="010-0000-0000"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="fg"><label>팩스</label><input type="text" id="n-fax" placeholder="02-0000-0000"></div>
         <div class="fg"><label>이메일</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <div contenteditable="true" id="n-email" readonly onfocus="this.removeAttribute('readonly')"
@@ -590,10 +596,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
               style="display:none;font-size:12px;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:120px;">
           </div>
         </div>
-      </div>
-      <div class="fg-row fg-3">
-        <div class="fg"><label>모바일</label><input type="text" id="n-mobile" placeholder="010-0000-0000"></div>
-        <div class="fg"><label>팩스</label><input type="text" id="n-fax" placeholder="02-0000-0000"></div>
       </div>
       <div class="fg-row fg-3">
         <div class="fg"><label>담당 팀원</label><select id="n-member"><option value="">선택</option><option>김지현</option><option>박서준</option><option>이수민</option><option>최예진</option><option>정현우</option></select></div>
