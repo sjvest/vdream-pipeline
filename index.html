@@ -2768,8 +2768,9 @@ function renderActions(){
       mouList.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
         ${mouOrgs.map(o=>{
           const checklist=o.mou_checklist||{};
-          const done=MOU_ITEMS.filter(i=>checklist[i.id]).length;
-          const total=MOU_ITEMS.length;
+          const allItems=getMouAllItems(checklist);
+          const done=allItems.filter(i=>checklist[i.id]).length;
+          const total=allItems.length;
           const pct=Math.round(done/total*100);
           const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-new Date())/864e5):null;
           const dDayLabel=mouDays===null?'예정일 미설정':mouDays<0?`D+${Math.abs(mouDays)} 초과`:mouDays===0?'오늘!':mouDays<=7?`🚨 D-${mouDays}`:`D-${mouDays}`;
