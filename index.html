@@ -972,7 +972,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div class="modal-body">
     <div class="fg-row fg-2">
-      <div class="fg"><label>고객사명 *</label><input id="job-company" placeholder="예: GS건설"></div>
+      <div class="fg" style="position:relative;">
+        <label>고객사명 *</label>
+        <input id="job-company" placeholder="예: GS건설" oninput="searchExistingJob(this.value)" autocomplete="off">
+        <div id="job-company-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--teal);border-radius:var(--radius-sm);z-index:999;max-height:200px;overflow-y:auto;box-shadow:var(--shadow-lg);"></div>
+      </div>
       <div class="fg"><label>직무/포지션 *</label><input id="job-title" placeholder="예: 미술강사, 사무보조"></div>
     </div>
     <div class="fg-row fg-3">
@@ -4714,6 +4718,40 @@ async function updateJobCount(jobId, count){
   if(j)j.current_count=parseInt(count);
   toast(`확보 인원 ${count}명으로 업데이트 ✓`);
   renderJobs();
+}
+function searchExistingJob(kw){
+  const dropdown=document.getElementById('job-company-dropdown');
+  if(!kw||!kw.trim()){dropdown.style.display='none';return;}
+  const results=(cache.jobs||[]).filter(j=>j.company.includes(kw)&&j.id!==currentJobId).slice(0,8);
+  if(!results.length){dropdown.style.display='none';return;}
+  dropdown.innerHTML=results.map(j=>`
+    <div onclick="loadExistingJob(${j.id})" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <span><b>${j.company}</b> · ${j.job_title}</span>
+      <span style="font-size:11px;color:var(--text3);">${j.status}</span>
+    </div>`).join('');
+  dropdown.style.display='block';
+}
+function loadExistingJob(id){
+  const j=cache.jobs.find(x=>x.id===id);if(!j)return;
+  document.getElementById('job-company-dropdown').style.display='none';
+  currentJobId=id;
+  document.getElementById('job-modal-title').textContent='채용 건 수정';
+  document.getElementById('job-delete-btn').style.display=currentUser?.email==='sjvest@vdream.co.kr'?'':'none';
+  document.getElementById('job-company').value=j.company||'';
+  document.getElementById('job-title').value=j.job_title||'';
+  document.getElementById('job-headcount').value=j.headcount||'';
+  document.getElementById('job-current').value=j.current_count||0;
+  document.getElementById('job-deadline').value=j.deadline||'';
+  document.getElementById('job-status').value=(j.status==='완료'?'완료':'서칭중');
+  document.getElementById('job-disability').value=j.disability_type||'';
+  document.getElementById('job-severity').value=j.severity||'상관없음';
+  document.getElementById('job-location').value=j.location||'';
+  document.getElementById('job-requirements').value=j.requirements||'■ 기업 요구조건 : \n■ 우대사항 : ';
+  document.getElementById('job-jd').value=j.jd||'■ 근무조건 : 주5일 / 4시간 30분(휴게시간 30분 포함)\n■ 급여: 세전 약 108만원\n■ 입사예정일: ';
+  document.getElementById('job-searched-orgs').value=(j.searched_orgs||[]).join(', ');
+  document.getElementById('job-notes').value=j.notes||'■ 특이사항 : ';
+  document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===j.member?' selected':''}>${p.name}</option>`).join('');
+  toast('기존 채용건을 불러왔어요. 수정 후 저장하세요 ✓');
 }
 function searchJobOrg(kw){
   const dropdown=document.getElementById('job-org-dropdown');
