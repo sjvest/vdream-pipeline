@@ -1026,6 +1026,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>기업 주소지</label><input id="job-location" placeholder="예: 서울시 강남구 테헤란로 123"></div>
     </div>
     <div class="fg"><label>기업 요구조건</label><textarea id="job-requirements" style="min-height:72px;" placeholder="예: 포토샵 가능자 우대, 주 20시간 근무, OA 기본 가능자 등"></textarea></div>
+    <div class="fg"><label>채용 JD <span style="font-size:11px;color:var(--text3);font-weight:400;">(직무기술서 · 상세 조건)</span></label><textarea id="job-jd" style="min-height:100px;" placeholder="예: 주요 업무, 자격 요건, 우대 사항, 복리후생 등 JD 내용을 입력하세요"></textarea></div>
+    <div class="fg"><label>서칭 인재 기관 <span style="font-size:11px;color:var(--text3);font-weight:400;">(쉼표로 구분)</span></label><input id="job-searched-orgs" placeholder="예: 서울장애인복지관, 마포종합복지관"></div>
     <div class="fg"><label>특이사항</label><textarea id="job-notes" style="min-height:56px;" placeholder="예: 담당자 김과장 선호 조건, 이전 매칭 실패 사유 등"></textarea></div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveJob()"><i class="ti ti-check"></i> 저장</button>
@@ -4619,7 +4621,7 @@ async function renderJobs(){
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
-    return`<tr style="${j.status==='완료'?'opacity:.55':''}">
+    return`<tr onclick="toggleJobRow(${j.id},event)" style="cursor:pointer;${j.status==='완료'?'opacity:.55':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">
@@ -4649,10 +4651,27 @@ async function renderJobs(){
       </td>
       <td style="padding:13px 16px;"><select onchange="cycleJobStatusSelect(Number(${j.id}),this.value)" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select></td>
       <td style="padding:13px 16px;">
-        <button onclick="openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
+        <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
+      </td>
+    </tr>
+    <tr id="job-detail-${j.id}" style="display:none;">
+      <td colspan="10" style="padding:0;">
+        <div style="padding:14px 20px 16px 20px;background:var(--bg);border-top:1px solid var(--border);border-bottom:2px solid var(--teal);">
+          ${(j.searched_orgs&&j.searched_orgs.length)?`<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:700;color:var(--text3);margin-right:8px;">🏢 서칭 기관</span>${j.searched_orgs.map(o=>`<span style="display:inline-block;padding:2px 8px;background:var(--accent-bg);color:var(--accent);border-radius:20px;font-size:11px;font-weight:600;margin:2px;">${o}</span>`).join('')}</div>`:''}
+          ${j.requirements?`<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);">📋 요구조건</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.requirements}</div></div>`:''}
+          ${j.jd?`<div><span style="font-size:11px;font-weight:700;color:var(--text3);">📄 JD</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;background:var(--surface);padding:10px;border-radius:6px;border:1px solid var(--border);">${j.jd}</div></div>`:''}
+          ${j.notes?`<div style="margin-top:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);">💬 특이사항</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.notes}</div></div>`:''}
+        </div>
       </td>
     </tr>`;
   }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+}
+function toggleJobRow(jobId,event){
+  if(event&&event.target&&(event.target.tagName==='SELECT'||event.target.tagName==='BUTTON'||event.target.closest('button')||event.target.closest('select')))return;
+  const detail=document.getElementById(`job-detail-${jobId}`);
+  if(!detail)return;
+  const isOpen=detail.style.display!=='none';
+  detail.style.display=isOpen?'none':'table-row';
 }
 async function cycleJobStatusSelect(jobId, newStatus){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
@@ -4726,7 +4745,7 @@ function openAddJob(){
   currentJobId=null;
   document.getElementById('job-modal-title').textContent='채용 건 등록';
   document.getElementById('job-delete-btn').style.display='none';
-  ['job-company','job-title','job-disability','job-location','job-notes','job-requirements'].forEach(id=>document.getElementById(id).value='');
+  ['job-company','job-title','job-disability','job-location','job-notes','job-requirements','job-jd','job-searched-orgs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-deadline').value='';
@@ -4751,6 +4770,8 @@ function openEditJob(id){
   document.getElementById('job-severity').value=j.severity||'상관없음';
   document.getElementById('job-location').value=j.location||'';
   document.getElementById('job-requirements').value=j.requirements||'';
+  document.getElementById('job-jd').value=j.jd||'';
+  document.getElementById('job-searched-orgs').value=(j.searched_orgs||[]).join(', ');
   document.getElementById('job-notes').value=j.notes||'';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===j.member?' selected':''}>${p.name}</option>`).join('');
   document.getElementById('job-modal').style.display='flex';
@@ -4772,6 +4793,8 @@ async function saveJob(){
     work_type:'재택근무',
     location:document.getElementById('job-location').value.trim(),
     requirements:document.getElementById('job-requirements').value.trim(),
+    jd:document.getElementById('job-jd').value.trim(),
+    searched_orgs:document.getElementById('job-searched-orgs').value.split(',').map(s=>s.trim()).filter(Boolean),
     notes:document.getElementById('job-notes').value.trim(),
     created_by:currentUser?.id||null,created_by_name:myName
   };
