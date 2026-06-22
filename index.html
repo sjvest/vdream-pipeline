@@ -3969,8 +3969,8 @@ function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   document.getElementById('confirm-sub').textContent=sub||'';
   document.getElementById('confirm-msg').textContent=msg;
   document.getElementById('confirm-ok-btn').textContent=okLabel;
-  document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
-  document.getElementById('confirm-ok-btn').style.color='#fff';
+  const okBtn=document.getElementById('confirm-ok-btn');
+  okBtn.style.cssText=`background:${type==='danger'?'#dc2626':type==='warning'?'#f59e0b':'var(--accent)'};color:#fff;font-weight:700;`;
   confirmCallback=onOk;
   document.getElementById('confirm-modal').style.display='flex';
 }
