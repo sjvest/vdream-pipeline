@@ -5215,6 +5215,9 @@ async function analyzeBusinessCard(input){
     if(cardUrl)window._lastCardUrl=cardUrl;
     const preview=document.getElementById('card-preview');
     if(preview){preview.src=URL.createObjectURL(file);preview.style.display='block';}
+    cardImageBase64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
+    const wrap=document.getElementById('card-upload-wrap');
+    if(wrap){wrap.innerHTML=`<div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button></div>`;}
     status.textContent='✅ 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
     status.style.color='var(--green)';
   }catch(e){
