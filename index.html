@@ -538,6 +538,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div style="display:flex;align-items:center;gap:8px;">
       <span id="draft-status" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;"></span>
       <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()"><i class="ti ti-x"></i> 신규 등록으로 전환</button>
+      <button class="btn btn-ghost btn-sm" onclick="nav('orgs')" title="기관 목록으로"><i class="ti ti-arrow-left"></i> 나가기</button>
     </div>
   </div>
 
@@ -5106,9 +5107,14 @@ function closeCardCamera(){
 async function captureCard(){
   const video=document.getElementById('card-video');
   const canvas=document.getElementById('card-canvas');
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
-  canvas.getContext('2d').drawImage(video,0,0);
+  const vw=video.videoWidth, vh=video.videoHeight;
+  const guideW=vw*0.85;
+  const guideH=guideW*(9/16);
+  const guideX=(vw-guideW)/2;
+  const guideY=(vh-guideH)/2;
+  canvas.width=guideW;
+  canvas.height=guideH;
+  canvas.getContext('2d').drawImage(video, guideX, guideY, guideW, guideH, 0, 0, guideW, guideH);
   closeCardCamera();
   canvas.toBlob(async(blob)=>{
     const file=new File([blob],'card_'+Date.now()+'.jpg',{type:'image/jpeg'});
