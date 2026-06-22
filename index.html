@@ -5330,9 +5330,9 @@ function openOrg(id){
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
-    ${o.card_image?`
+    ${(o.card_image||o.business_card_url)?`
       <div style="max-width:360px;aspect-ratio:9/5;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;">
-        <img src="${o.card_image}" style="width:100%;height:100%;object-fit:contain;display:block;" alt="명함 사진">
+        <img src="${o.card_image||o.business_card_url}" style="width:100%;height:100%;object-fit:contain;display:block;" alt="명함 사진">
       </div>
       <div style="display:flex;gap:6px;margin-bottom:12px;">
         <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);background:var(--surface);">
@@ -5347,7 +5347,6 @@ function openOrg(id){
         <i class="ti ti-camera"></i> 📇 명함 사진 등록
         <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
       </label>`}
-    ${o.business_card_url?`<img src="${o.business_card_url}" style="width:100%;max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px;cursor:pointer;" onclick="window.open('${o.business_card_url}','_blank')" title="명함 사진 클릭 시 원본 보기">`:''}
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span>
