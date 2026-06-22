@@ -558,13 +558,40 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="card"><div class="card-body">
     <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border:2px dashed #4285f4;border-radius:12px;text-align:center;">
       <div style="font-size:13px;font-weight:700;color:#4285f4;margin-bottom:8px;">📷 명함으로 자동 입력</div>
-      <input type="file" id="business-card-input" accept="image/*" style="display:none;" onchange="analyzeBusinessCard(this)">
-      <button type="button" onclick="document.getElementById('business-card-input').click()"
-        style="padding:8px 20px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-        📷 명함 사진 업로드
-      </button>
+      <input type="file" id="business-card-input" accept="image/*" capture="environment" style="display:none;" onchange="analyzeBusinessCard(this)">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" onclick="openCardCamera()"
+          style="padding:8px 20px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          📷 카메라로 찍기
+        </button>
+        <button type="button" onclick="document.getElementById('business-card-input-gallery').click()"
+          style="padding:8px 16px;background:#fff;color:#4285f4;border:1.5px solid #4285f4;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          🖼 갤러리에서 선택
+        </button>
+      </div>
+      <input type="file" id="business-card-input-gallery" accept="image/*" style="display:none;" onchange="analyzeBusinessCard(this)">
       <div id="ocr-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
       <img id="card-preview" style="max-width:200px;border-radius:8px;margin-top:8px;display:none;">
+      <div id="card-camera-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="position:relative;width:100%;max-width:480px;">
+          <video id="card-video" autoplay playsinline style="width:100%;display:block;"></video>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+            <div style="width:85%;aspect-ratio:16/9;border:2.5px solid #4285f4;border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.5);position:relative;">
+              <div style="position:absolute;top:-2px;left:-2px;width:20px;height:20px;border-top:4px solid #fff;border-left:4px solid #fff;border-radius:4px 0 0 0;"></div>
+              <div style="position:absolute;top:-2px;right:-2px;width:20px;height:20px;border-top:4px solid #fff;border-right:4px solid #fff;border-radius:0 4px 0 0;"></div>
+              <div style="position:absolute;bottom:-2px;left:-2px;width:20px;height:20px;border-bottom:4px solid #fff;border-left:4px solid #fff;border-radius:0 0 0 4px;"></div>
+              <div style="position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;border-bottom:4px solid #fff;border-right:4px solid #fff;border-radius:0 0 4px 0;"></div>
+              <div style="position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;white-space:nowrap;font-weight:600;">명함을 안에 맞춰주세요</div>
+            </div>
+          </div>
+        </div>
+        <canvas id="card-canvas" style="display:none;"></canvas>
+        <div style="display:flex;gap:16px;margin-top:24px;align-items:center;">
+          <button onclick="closeCardCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">취소</button>
+          <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:24px;">📷</button>
+          <button onclick="switchCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">🔄 전환</button>
+        </div>
+      </div>
     </div>
     <div class="form-section">
       <div class="fsec-title">📇 명함 사진</div>
@@ -5049,6 +5076,49 @@ function renderTeam(){
   }).join('');
 }
 
+let _cardStream=null;
+let _cardFacingMode='environment';
+async function openCardCamera(){
+  const modal=document.getElementById('card-camera-modal');
+  modal.style.display='flex';
+  await startCardCamera();
+}
+async function startCardCamera(){
+  if(_cardStream){_cardStream.getTracks().forEach(t=>t.stop());}
+  try{
+    _cardStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:_cardFacingMode,width:{ideal:1920},height:{ideal:1080}},audio:false
+    });
+    document.getElementById('card-video').srcObject=_cardStream;
+  }catch(e){
+    toast('카메라 접근 실패: '+e.message);
+    closeCardCamera();
+  }
+}
+async function switchCamera(){
+  _cardFacingMode=_cardFacingMode==='environment'?'user':'environment';
+  await startCardCamera();
+}
+function closeCardCamera(){
+  if(_cardStream){_cardStream.getTracks().forEach(t=>t.stop());_cardStream=null;}
+  document.getElementById('card-camera-modal').style.display='none';
+}
+async function captureCard(){
+  const video=document.getElementById('card-video');
+  const canvas=document.getElementById('card-canvas');
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  closeCardCamera();
+  canvas.toBlob(async(blob)=>{
+    const file=new File([blob],'card_'+Date.now()+'.jpg',{type:'image/jpeg'});
+    const dt=new DataTransfer();
+    dt.items.add(file);
+    const input=document.getElementById('business-card-input');
+    input.files=dt.files;
+    analyzeBusinessCard(input);
+  },'image/jpeg',0.92);
+}
 // ── 명함 사진 ──
 function previewCard(event){
   const file=event.target.files[0];if(!file)return;
