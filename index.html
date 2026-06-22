@@ -3970,6 +3970,7 @@ function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
   document.getElementById('confirm-msg').textContent=msg;
   document.getElementById('confirm-ok-btn').textContent=okLabel;
   document.getElementById('confirm-ok-btn').style.background=type==='danger'?'#dc2626':type==='warning'?'var(--amber)':'var(--accent)';
+  document.getElementById('confirm-ok-btn').style.color='#fff';
   confirmCallback=onOk;
   document.getElementById('confirm-modal').style.display='flex';
 }
