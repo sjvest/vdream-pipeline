@@ -4745,7 +4745,10 @@ function openAddJob(){
   currentJobId=null;
   document.getElementById('job-modal-title').textContent='채용 건 등록';
   document.getElementById('job-delete-btn').style.display='none';
-  ['job-company','job-title','job-disability','job-location','job-notes','job-requirements','job-jd','job-searched-orgs'].forEach(id=>document.getElementById(id).value='');
+  ['job-company','job-title','job-disability','job-location','job-searched-orgs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('job-jd').value='■ 근무조건 : 주5일 / 4시간 30분(휴게시간 30분 포함)\n■ 급여: 세전 약 108만원\n■ 입사예정일: ';
+  document.getElementById('job-requirements').value='■ 기업 요구조건 : \n■ 우대사항 : ';
+  document.getElementById('job-notes').value='■ 특이사항 : ';
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-deadline').value='';
