@@ -2338,7 +2338,10 @@ function renderDashboard(){
   const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
   document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
     <div class="action-item" style="cursor:default;">
-      <div style="flex:1;"><div class="action-text">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
+      <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done});renderDashboard()">
+        ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+      </div>
+      <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
       <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
     </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
   const expiryEl=document.getElementById('dash-contract-expiry');
