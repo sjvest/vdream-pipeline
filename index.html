@@ -5415,11 +5415,18 @@ function openOrg(id){
         <option value="통화">📞 통화</option><option value="미팅">🤝 미팅</option>
         <option value="이메일">✉️ 이메일</option><option value="문자">💬 문자</option><option value="기타">📌 기타</option>
       </select>
-      <select id="log-status" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
-        <option value="완료">✅ 완료</option><option value="진행중">🔄 진행중</option>
+      <select id="log-status" onchange="toggleRecontactDate()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
+        <option value="완료">✅ 완료</option><option value="진행중">🔄 진행중</option><option value="재연락 필요">🔔 재연락 필요</option>
       </select>
       <input id="log-summary" placeholder="제목" style="flex:1;min-width:120px;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
       <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+    </div>
+    <div id="recontact-date-wrap" style="display:none;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
+        <span style="font-size:12px;font-weight:700;color:#b54708;">🔔 재연락 예정일</span>
+        <input id="log-recontact-date" type="date" style="font-size:12px;padding:5px 10px;border:1px solid #fcd34d;border-radius:6px;background:#fff;">
+        <span style="font-size:11px;color:#b54708;">← 입력 시 후속 액션에 자동 등록돼요</span>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:6px;">
       <input id="log-our-members" placeholder="우리 측 참석자 (예: 임세진, 이재성)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
@@ -5640,6 +5647,11 @@ function toggleLogDetail(id){
   el.style.display=open?'block':'none';
   if(icon)icon.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
 }
+function toggleRecontactDate(){
+  const status=document.getElementById('log-status')?.value;
+  const wrap=document.getElementById('recontact-date-wrap');
+  if(wrap)wrap.style.display=status==='재연락 필요'?'block':'none';
+}
 async function addContactLog(orgId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const summary=document.getElementById('log-summary').value.trim();
@@ -5657,12 +5669,25 @@ async function addContactLog(orgId){
   cache.logs.unshift(data);
   await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
   const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=date;
+  if(status==='재연락 필요'){
+    const recontactDate=document.getElementById('log-recontact-date')?.value||null;
+    const orgName=o?.name||'';
+    const actionText=`${orgName} 재연락`;
+    const{data:actionData}=await sb.from('actions').insert({org_id:orgId,text:actionText,due:recontactDate||null,done:false,created_by:currentUser?.id||null,created_by_name:myName,member:myName}).select().single();
+    if(actionData){cache.actions=cache.actions||[];cache.actions.unshift(actionData);}
+    toast('히스토리 추가 + 재연락 후속액션 자동 등록 ✓');
+  } else {
+    toast('히스토리 추가됨 ✓');
+  }
   document.getElementById('log-summary').value='';
   document.getElementById('log-memo').value='';
+  document.getElementById('log-status').value='완료';
+  if(document.getElementById('log-recontact-date'))document.getElementById('log-recontact-date').value='';
+  toggleRecontactDate();
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
-  toast('히스토리 추가됨 ✓');
   updateNavBadges();
+  renderActions();
 }
 async function deleteContactLog(logId,orgId){
   const myName=currentProfile?.name||'';
