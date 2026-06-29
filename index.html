@@ -2335,7 +2335,8 @@ function renderDashboard(){
   if(greetEl){const name=currentProfile?.name||'팀장님';const h=now.getHours();const greet=h<12?'좋은 아침이에요':h<18?'안녕하세요':'수고하셨어요';greetEl.textContent=`${greet}, ${name} 👋`;}
   const total=orgs.length,mou=orgs.filter(o=>o.stage>=4).length,active=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
   const placed=tals.filter(t=>t.status==='합격').length,failed=tals.filter(t=>t.status==='불합격').length,recruiting=tals.filter(t=>t.status==='지원중'||t.status==='면접').length;
-  const needContactCount=orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30).length;
+  const needContact=orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
+  const needContactCount=needContact.length;
   const mouSoon=orgs.filter(o=>o.stage===4&&o.mou_date&&Math.floor((new Date(o.mou_date)-now)/864e5)<=7&&Math.floor((new Date(o.mou_date)-now)/864e5)>=0).length;
   const pendingActs=acts.filter(a=>!a.done).length;
   const thisMonth=orgs.filter(o=>o.created_at&&new Date(o.created_at).getMonth()===now.getMonth()&&new Date(o.created_at).getFullYear()===now.getFullYear()).length;
@@ -2383,7 +2384,6 @@ function renderDashboard(){
       <div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${total?Math.round(s.cnt/total*100):0}%;background:currentColor;border-radius:3px;" class="${s.cls}"></div></div>
       <span style="font-size:11px;font-weight:500;width:18px;text-align:right;">${s.cnt}</span>
     </div>`).join('');
-  const needContact=cache.orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
   document.getElementById('dash-contact').innerHTML=needContact.length?needContact.map(o=>{
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
     return`<div class="action-item" style="cursor:pointer;" onclick="openOrg(${o.id})">
