@@ -38,8 +38,8 @@
   --bg2:#F1F3F5;
   --white:#ffffff;
   --surface:#ffffff;
-  --sidebar:#EAE8F5;
-  --sidebar-text:#4C4480;
+  --sidebar:#D8D4EE;
+  --sidebar-text:#3D3680;
   --sidebar-active:rgba(88,76,157,0.12);
   --sidebar-accent:#38A89F;
   --radius:10px;
@@ -2328,50 +2328,53 @@ function checkAlerts(manual=false){
 }
 
 function renderDashboard(){
-  document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const now=new Date();
+  document.getElementById('today-date').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   const orgs=cache.orgs,acts=cache.actions,tals=cache.talents;
-  const total=orgs.length,mou=orgs.filter(o=>o.stage>=4).length;
-  const active=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
-  const placed=tals.filter(t=>t.status==='합격').length;
-  const failed=tals.filter(t=>t.status==='불합격').length;
-  const recruiting=tals.filter(t=>t.status==='지원중'||t.status==='면접').length;
+  const greetEl=document.getElementById('dash-greeting');
+  if(greetEl){const name=currentProfile?.name||'팀장님';const h=now.getHours();const greet=h<12?'좋은 아침이에요':h<18?'안녕하세요':'수고하셨어요';greetEl.textContent=`${greet}, ${name} 👋`;}
+  const total=orgs.length,mou=orgs.filter(o=>o.stage>=4).length,active=orgs.filter(o=>o.stage>=1&&o.stage<=3).length;
+  const placed=tals.filter(t=>t.status==='합격').length,failed=tals.filter(t=>t.status==='불합격').length,recruiting=tals.filter(t=>t.status==='지원중'||t.status==='면접').length;
+  const needContactCount=orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30).length;
+  const mouSoon=orgs.filter(o=>o.stage===4&&o.mou_date&&Math.floor((new Date(o.mou_date)-now)/864e5)<=7&&Math.floor((new Date(o.mou_date)-now)/864e5)>=0).length;
+  const pendingActs=acts.filter(a=>!a.done).length;
+  const thisMonth=orgs.filter(o=>o.created_at&&new Date(o.created_at).getMonth()===now.getMonth()&&new Date(o.created_at).getFullYear()===now.getFullYear()).length;
   document.getElementById('metrics').innerHTML=`
-    <div class="metric metric-clickable" onclick="openMetricModal('orgs')"><div class="metric-label">등록 기관</div><div id="metric-card-orgs"><div class="metric-value">${total}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('active')"><div class="metric-label">관계 형성 중</div><div id="metric-card-active"><div class="metric-value">${active}</div><div class="metric-sub">건 진행 · 클릭해서 보기</div></div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('mou')"><div class="metric-label">MOU 체결</div><div class="metric-value">${mou}</div><div class="metric-sub">개 기관 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('talents')"><div class="metric-label">인재영입 현황</div><div class="metric-value">${tals.length}</div><div class="metric-sub">명 전체 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openRecruitModal()"><div class="metric-label">채용 투입</div><div class="metric-value">${recruiting}</div><div class="metric-sub">명 진행 중 · 클릭해서 보기</div></div>
-    <div class="metric metric-clickable" onclick="openSupplyModal()"><div class="metric-label">채용 현황</div><div class="metric-value" style="font-size:18px;line-height:1.4;"><span style="color:var(--green);">합격 ${placed}</span><br><span style="color:var(--red);font-size:15px;">불합격 ${failed}</span></div><div class="metric-sub">클릭해서 보기</div></div>
+    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--red);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">오늘 연락 필요</div><div class="metric-value" style="color:var(--red);">${needContactCount}</div><div class="metric-sub">30일 이상 미연락</div></div>
+    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--accent);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">이번주 MOU 예정</div><div class="metric-value" style="color:var(--accent);">${mouSoon}</div><div class="metric-sub">7일 이내 일정</div></div>
+    <div class="metric metric-clickable" onclick="nav('actions')" style="border-top:3px solid var(--amber);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">미완료 후속액션</div><div class="metric-value" style="color:${pendingActs>5?'var(--red)':'var(--amber)'};">${pendingActs}</div><div class="metric-sub">처리 대기 중</div></div>
+    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--orange);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">30일 이상 미연락</div><div class="metric-value" style="color:var(--orange);">${needContactCount}</div><div class="metric-sub">관계 관리 필요</div></div>
+    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--green);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">이번달 신규기관</div><div class="metric-value" style="color:var(--green);">${thisMonth}</div><div class="metric-sub">이번달 등록</div></div>
+    <div class="metric metric-clickable" onclick="openMetricModal('talents')" style="border-top:3px solid var(--purple);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">인재영입 현황</div><div class="metric-value" style="font-size:18px;line-height:1.3;"><span style="color:var(--green);">합격 ${placed}</span> <span style="color:var(--red);font-size:14px;">불합격 ${failed}</span></div><div class="metric-sub">전체 ${tals.length}명</div></div>
   `;
-  renderTrendChart(currentChartMode);
-  setPeriod(currentPeriod||'today');
-  // 알림 자동 체크
-  setTimeout(()=>checkAlerts(false),500);
-  const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
-  document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
-    <div class="action-item" style="cursor:default;">
-      <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done});renderDashboard()">
-        ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
-      </div>
-      <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
-      <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
-    </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
-  const expiryEl=document.getElementById('dash-contract-expiry');
-  if(expiryEl){
-    const expiring=tals.filter(t=>t.status==='합격'&&t.contract_end_date).map(t=>{
-      const org=orgs.find(o=>o.id===t.org_id);
-      const diff=Math.ceil((new Date(t.contract_end_date)-new Date())/864e5);
-      return{...t,orgName:org?.name||'—',diff};
-    }).filter(t=>t.diff<=30).sort((a,b)=>a.diff-b.diff);
-    expiryEl.innerHTML=expiring.length?expiring.map(t=>{
-      const label=t.diff<0?`D+${Math.abs(t.diff)}`:`D-${t.diff}`;
-      const icon=t.diff<0?'⚠️':'🔴';
-      const color=t.diff<0?'#f97316':'var(--red)';
-      return`<div class="action-item" style="cursor:pointer;" onclick="nav('talent')">
-        <div style="flex:1;"><div class="action-text">${icon} ${t.name} 계약만료 ${label}</div><div style="font-size:10px;color:var(--text3);">${t.orgName} · ${fDate(t.contract_end_date)}</div></div>
-        <div class="action-due due-over" style="color:${color};">${label}</div>
+  const urgentOrgs=[...orgs].filter(o=>o.stage>0).map(o=>{
+    const lastDays=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
+    const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-now)/864e5):null;
+    const orgActs=acts.filter(a=>a.org_id===o.id&&!a.done);
+    const urgentAct=orgActs.filter(a=>a.due&&Math.floor((new Date(a.due)-now)/864e5)<=3).length;
+    let score=0;
+    if(o.is_starred)score+=100;
+    if(urgentAct>0)score+=50;
+    if(mouDays!==null&&mouDays<=7&&mouDays>=0)score+=40;
+    if(lastDays!==null&&lastDays>=30)score+=30;
+    else if(lastDays!==null&&lastDays>=14)score+=15;
+    return{...o,lastDays,mouDays,orgActs,urgentAct,score};
+  }).sort((a,b)=>b.score-a.score).slice(0,6);
+  const urgentEl=document.getElementById('dash-urgent-orgs');
+  if(urgentEl){
+    urgentEl.innerHTML=urgentOrgs.length?urgentOrgs.map(o=>{
+      const leftColor=o.urgentAct>0?'var(--red)':o.mouDays!==null&&o.mouDays<=7?'var(--accent)':o.lastDays>=30?'var(--orange)':'var(--border)';
+      return`<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${leftColor};border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;transition:box-shadow .15s;" onclick="openOrg(${o.id})" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow='none'">
+        <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;">${o.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${o.cat||''} ${o.region?'· '+o.region:''} ${o.member?'· '+o.member:''}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px;">
+          ${o.mouDays!==null&&o.mouDays<=14?`<div style="font-size:11px;color:var(--accent);font-weight:700;">📋 MOU ${o.mouDays<0?'D+'+Math.abs(o.mouDays)+' 초과':'D-'+o.mouDays}</div>`:''}
+          ${o.lastDays!==null?`<div style="font-size:11px;color:${o.lastDays>=30?'var(--red)':o.lastDays>=14?'var(--orange)':'var(--text3)'};">📞 마지막 연락 ${o.lastDays}일 전</div>`:'<div style="font-size:11px;color:var(--red);">📞 연락 기록 없음</div>'}
+          ${o.orgActs.length?`<div style="font-size:11px;color:${o.urgentAct?'var(--red)':'var(--text3)'};">✅ 후속액션 ${o.orgActs.length}건${o.urgentAct?` (D-3 이내 ${o.urgentAct}건)`:''}</div>`:''}
+        </div>
+        <button onclick="event.stopPropagation();openOrg(${o.id})" style="width:100%;padding:5px;background:var(--accent-bg);color:var(--accent);border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">기관 열기 →</button>
       </div>`;
-    }).join(''):'<div class="empty">만료 임박 계약 없음 ✓</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--text3);padding:20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);">오늘 처리할 급한 기관이 없어요 ✓</div>';
   }
   const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
   document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
