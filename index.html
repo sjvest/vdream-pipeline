@@ -11,38 +11,42 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --accent:#584C9D;
-  --accent-bg:#F0EFF9;
-  --accent-light:#8377C2;
-  --accent-deep:#433594;
-  --green:#5DBEB6;
-  --green-bg:#EDF8F7;
-  --teal:#38A89F;
+  --accent:#2563EB;
+  --accent-bg:#EFF6FF;
+  --accent-light:#60A5FA;
+  --accent-deep:#1D4ED8;
   --purple:#584C9D;
   --purple-bg:#F0EFF9;
-  --red:#C0392B;
+  --teal:#38A89F;
+  --teal-bg:#EDF8F7;
+  --green:#10B981;
+  --green-bg:#D1FAE5;
+  --red:#EF4444;
   --red-bg:#FEE2E2;
-  --orange:#C07A00;
+  --amber:#F59E0B;
+  --amber-bg:#FEF3C7;
+  --orange:#F59E0B;
   --orange-bg:#FEF3C7;
-  --blue:#1D4ED8;
+  --blue:#2563EB;
   --blue-bg:#EFF6FF;
   --text:#111827;
   --text2:#374151;
   --text3:#6B7280;
-  --border:#E2E2EA;
-  --bg:#F8F8FA;
-  --bg2:#F1F1F5;
+  --border:#E5E7EB;
+  --border2:#D1D5DB;
+  --bg:#F7F8FA;
+  --bg2:#F1F3F5;
   --white:#ffffff;
   --surface:#ffffff;
-  --sidebar:#C5BFEA;
-  --sidebar-text:#584C9D;
-  --sidebar-active:rgba(255,255,255,0.13);
-  --sidebar-accent:#5DBEB6;
+  --sidebar:#EAE8F5;
+  --sidebar-text:#4C4480;
+  --sidebar-active:rgba(88,76,157,0.12);
+  --sidebar-accent:#38A89F;
   --radius:10px;
   --radius-sm:6px;
-  --shadow:0 1px 4px rgba(88,76,157,0.08);
-  --shadow-sm:0 1px 3px rgba(88,76,157,0.06);
-  --shadow-lg:0 8px 32px rgba(88,76,157,0.16);
+  --shadow:0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.10);
 }
 html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;}
 .app{display:flex;height:100vh;overflow:hidden;}
@@ -58,21 +62,20 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .config-box .note{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
 
 /* ── 사이드바 ── */
-.sidebar{width:220px;flex-shrink:0;background:#584C9D;display:flex;flex-direction:column;padding:0;}
-.logo{padding:22px 20px 18px;}
-.logo-title{font-size:16px;font-weight:800;color:#584C9D;letter-spacing:-.4px;}
-.logo-sub{font-size:10px;color:rgba(88,76,157,0.5);margin-top:3px;font-weight:400;}
-.nav-divider{height:1px;background:rgba(88,76,157,0.1);margin:6px 16px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:2px 10px;cursor:pointer;color:rgba(255,255,255,0.7);border:none;background:none;width:calc(100% - 20px);text-align:left;font-size:12px;font-weight:500;transition:all .14s;border-radius:10px;}
-.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
-.nav-item.active{background:rgba(255,255,255,0.13);color:#fff;font-weight:700;border-left:2px solid #5DBEB6;}
-.nav-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0;}
-.nav-section{padding:14px 20px 5px;font-size:10px;color:rgba(88,76,157,0.4);letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+.sidebar{width:200px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;padding:0;border-right:1px solid var(--border);}
+.logo{padding:16px 16px 12px;}
+.logo-title{font-size:15px;font-weight:800;color:var(--purple);letter-spacing:-.4px;}
+.logo-sub{font-size:10px;color:var(--sidebar-text);margin-top:2px;font-weight:400;opacity:.6;}
+.nav-divider{height:1px;background:rgba(76,68,128,.1);margin:4px 12px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 8px;cursor:pointer;color:var(--sidebar-text);border:none;background:none;width:calc(100% - 16px);text-align:left;font-size:12px;font-weight:500;transition:all .14s;border-radius:8px;opacity:.7;}
+.nav-item:hover{background:rgba(88,76,157,.08);opacity:1;}
+.nav-item.active{background:rgba(88,76,157,.12);color:var(--purple);font-weight:700;opacity:1;border-left:2px solid var(--teal);}
+.nav-item i{font-size:15px;width:16px;text-align:center;flex-shrink:0;}
+.nav-section{padding:10px 16px 4px;font-size:10px;color:var(--sidebar-text);letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.5;}
 .urgent-count{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
 .new-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--accent);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
-.sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(88,76,157,0.1);font-size:11px;color:rgba(88,76,157,0.4);}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(76,68,128,.1);font-size:11px;color:var(--sidebar-text);opacity:.6;}
 .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#555;margin-right:6px;}
-.conn-dot.ok{background:#34d399;}
 
 /* ── 메인 콘텐츠 ── */
 .main{flex:1;overflow-y:auto;background:var(--bg);}
@@ -394,20 +397,20 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
   <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
   <div class="sidebar-bottom">
-    <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='none'">
+    <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(88,76,157,.08)'" onmouseout="this.style.background='none'">
       <div style="position:relative;flex-shrink:0;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;" id="user-avatar">?</div>
-        <div id="user-status-dot" style="display:none;position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;background:#34d399;border:2px solid #584C9D;"></div>
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;" id="user-avatar">?</div>
+        <div id="user-status-dot" style="display:none;position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#34d399;border:2px solid var(--sidebar);"></div>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-status-label">프로필 설정</div>
+        <div style="font-size:11px;font-weight:700;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
+        <div style="font-size:10px;color:var(--sidebar-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.6;" id="user-status-label">프로필 설정</div>
       </div>
-      <i class="ti ti-settings" style="font-size:13px;color:rgba(255,255,255,.3);flex-shrink:0;"></i>
+      <i class="ti ti-settings" style="font-size:12px;color:var(--sidebar-text);opacity:.4;flex-shrink:0;"></i>
     </div>
-    <button onclick="openAuditLog()" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.3);font-size:10px;cursor:pointer;text-align:center;margin-bottom:4px;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">📋 수정/삭제 로그</button>
-    <button onclick="doLogout()" style="width:100%;padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:none;color:rgba(255,255,255,.3);font-size:10px;cursor:pointer;text-align:center;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">로그아웃</button>
-    <div style="margin-top:8px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
+    <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">📋 수정/삭제 로그</button>
+    <button onclick="doLogout()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">로그아웃</button>
+    <div style="margin-top:6px;font-size:10px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
   </div>
 </div>
 <div class="main">
@@ -415,14 +418,23 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 대시보드 -->
 <div id="p-dashboard" class="page active">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">대시보드</div><div class="page-sub" id="today-date"></div></div>
+    <div class="page-header-left">
+      <div class="page-title" id="dash-greeting">안녕하세요 👋</div>
+      <div class="page-sub" id="today-date"></div>
+    </div>
     <button class="btn btn-ghost btn-sm" onclick="checkAlertsAndSendGChat()"><i class="ti ti-bell"></i> 알림 확인</button>
   </div>
-
-  <!-- 오늘 알림 배너 -->
-  <div id="alert-banner" style="display:none;margin-bottom:20px;"></div>
-
+  <div id="alert-banner" style="display:none;margin-bottom:16px;"></div>
   <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
+  <div style="margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:800;color:var(--text);">🔥 오늘 우선 처리할 기관</div>
+      <button onclick="nav('orgs')" style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;">전체 보기 →</button>
+    </div>
+    <div id="dash-urgent-orgs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">
+      <div class="loading"><div class="spin"></div></div>
+    </div>
+  </div>
 
   <!-- 기간별 보고 섹션 -->
   <div class="card" style="margin-bottom:16px;">
