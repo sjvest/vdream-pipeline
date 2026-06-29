@@ -2377,6 +2377,15 @@ function renderDashboard(){
       </div>`;
     }).join(''):'<div style="font-size:13px;color:var(--text3);padding:20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);">오늘 처리할 급한 기관이 없어요 ✓</div>';
   }
+  const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
+  document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
+    <div class="action-item" style="cursor:default;">
+      <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done});renderDashboard()">
+        ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+      </div>
+      <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
+      <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
+    </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
   const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:orgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
   document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
