@@ -5341,23 +5341,16 @@ function openOrg(id){
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
-    ${(o.card_image||o.business_card_url)?`
-      <div style="max-width:360px;aspect-ratio:9/5;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;">
-        <img src="${o.card_image||o.business_card_url}" style="width:100%;height:100%;object-fit:contain;display:block;" alt="명함 사진">
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:12px;">
-        <label style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--text2);background:var(--surface);">
-          <i class="ti ti-refresh"></i> 명함 변경
+    <div id="biz-cards-wrap" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text3);">📇 명함</span>
+        <label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--teal);background:var(--teal-bg);">
+          <i class="ti ti-plus"></i> 명함 추가
           <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
         </label>
-        <button onclick="removeCardImage(${id})" style="padding:5px 12px;border:1.5px solid #fca5a5;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:#dc2626;background:#fee2e2;">
-          <i class="ti ti-trash"></i> 명함 삭제
-        </button>
-      </div>`
-    :`<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px dashed var(--border2);border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);background:#fafbfc;margin-bottom:12px;">
-        <i class="ti ti-camera"></i> 📇 명함 사진 등록
-        <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
-      </label>`}
+      </div>
+      <div id="biz-cards-list">로딩 중...</div>
+    </div>
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span>
@@ -5500,6 +5493,7 @@ function openOrg(id){
   `;
   document.getElementById('modal').querySelector('.modal').classList.add('modal-org');
   document.getElementById('modal').style.display='flex';
+  loadBizCards(id);
   setTimeout(()=>initModalDrag(),50);
   // 날짜 항상 오늘로 세팅
   const logDateEl=document.getElementById('log-date');
@@ -5803,20 +5797,43 @@ async function toggleActionModal(id,done){
   const a=cache.actions.find(x=>x.id===id);if(a){a.done=!done;a.completed_by_name=completedBy;}
   updateUrgentCount();openOrg(currentOrgId);toast(!done?'완료 처리됨 ✓':'완료 취소됨');
 }
-async function handleModalCardImage(event, orgId){
+async function loadBizCards(orgId){
+  const wrap=document.getElementById('biz-cards-list');
+  if(!wrap)return;
+  const{data,error}=await sb.from('business_cards').select('*').eq('org_id',orgId).order('created_at',{ascending:false});
+  if(error){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);">불러오기 실패</div>';return;}
+  const o=cache.orgs.find(x=>x.id===orgId);
+  const legacyUrl=o?.business_card_url||o?.card_image||null;
+  const cards=data||[];
+  if(!cards.length&&!legacyUrl){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
+  const renderCard=(url,cardId,info)=>`
+    <div style="position:relative;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
+      <img src="${url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="window.open('${url}','_blank')" title="클릭 시 원본 보기">
+      ${info?`<div style="padding:6px 10px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);">
+        ${info.contact_name?`<span style="font-weight:700;">${info.contact_name}</span> `:''}
+        ${info.position?`<span style="color:var(--text3);">${info.position}</span>`:''}
+        ${info.phone?`<span style="margin-left:6px;color:var(--text3);">${info.phone}</span>`:''}
+      </div>`:''}
+      ${cardId?`<button onclick="removeBusinessCard(${cardId},${orgId})" style="position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;font-weight:700;"><i class="ti ti-trash"></i></button>`:''}
+    </div>`;
+  wrap.innerHTML=cards.map(c=>renderCard(c.url,c.id,c)).join('')+(legacyUrl&&!cards.find(c=>c.url===legacyUrl)?renderCard(legacyUrl,null,null):'');
+}
+async function handleModalCardImage(event,orgId){
   const file=event.target.files[0];
   if(!file)return;
-  const reader=new FileReader();
-  reader.onload=async(e)=>{
-    const base64=e.target.result;
-    const{error}=await sb.from('orgs').update({card_image:base64}).eq('id',orgId);
-    if(error){toast('오류: '+error.message);return;}
-    const o=cache.orgs.find(x=>x.id===orgId);
-    if(o)o.card_image=base64;
-    toast('명함 등록 완료 ✓');
-    openOrg(orgId);
-  };
-  reader.readAsDataURL(file);
+  const url=await uploadBusinessCard(file,'card');
+  if(!url){toast('업로드 실패');return;}
+  const{error}=await sb.from('business_cards').insert({org_id:orgId,url});
+  if(error){toast('오류: '+error.message);return;}
+  toast('명함 등록 완료 ✓');
+  openOrg(orgId);
+}
+async function removeBusinessCard(cardId,orgId){
+  if(!confirm('이 명함을 삭제하시겠어요?'))return;
+  const{error}=await sb.from('business_cards').delete().eq('id',cardId);
+  if(error){toast('오류: '+error.message);return;}
+  toast('명함 삭제 완료');
+  openOrg(orgId);
 }
 async function removeCardImage(orgId){
   if(!confirm('명함 사진을 삭제하시겠어요?'))return;
