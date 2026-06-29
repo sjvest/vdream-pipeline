@@ -2383,7 +2383,6 @@ function renderDashboard(){
       <div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${total?Math.round(s.cnt/total*100):0}%;background:currentColor;border-radius:3px;" class="${s.cls}"></div></div>
       <span style="font-size:11px;font-weight:500;width:18px;text-align:right;">${s.cnt}</span>
     </div>`).join('');
-  const now=new Date();
   const needContact=cache.orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
   document.getElementById('dash-contact').innerHTML=needContact.length?needContact.map(o=>{
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
