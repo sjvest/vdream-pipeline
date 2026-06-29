@@ -2734,7 +2734,12 @@ function memberBadge(name){
 }
 function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';const fr=document.getElementById('filter-region');if(fr)fr.value='';renderOrgs();}
 function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const fr=document.getElementById('filter-region')?.value||'';const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(fr&&o.region!==fr)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw)&&!(o.region||'').toLowerCase().includes(kw)&&!(o.address||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs||fr;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
-  rows.sort((a,b)=>(b.is_starred?1:0)-(a.is_starred?1:0));
+  rows.sort((a,b)=>{
+    if(b.is_starred!==a.is_starred)return (b.is_starred?1:0)-(a.is_starred?1:0);
+    const da=a.lastcontact?Math.floor((now-new Date(a.lastcontact))/864e5):9999;
+    const db=b.lastcontact?Math.floor((now-new Date(b.lastcontact))/864e5):9999;
+    return db-da;
+  });
   if(window.innerWidth<=768){
     const MCOLOR={'임세진':'#3b82f6','이재성':'#f59e0b','이슬민':'#f97316'};
     const MBG={'임세진':'#eff6ff','이재성':'#fffbeb','이슬민':'#fff7ed'};
@@ -2770,8 +2775,10 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const oa=actionsForOrg(o.id);
     const pending=oa.filter(a=>!a.done).length,urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
-    const daysLabel=days!==null?(days===0?'오늘':days+'일 전'):'—';
-    const daysColor=days>=30?'#c0200f':days>=14?'#b54708':'#64748b';
+    const daysLabel=days!==null?(days===0?'오늘':days+'일 전'):'미연락';
+    const daysColor=days===null?'#dc2626':days>=30?'#c0200f':days>=14?'#b54708':days>=7?'#d97706':'#64748b';
+    const daysBg=days===null?'#fee2e2':days>=30?'#fee2e2':days>=14?'#fff7ed':days>=7?'#fffbeb':'transparent';
+    const daysFw=days===null||days>=7?'800':'400';
     const starredBg=o.is_starred?'#fffbeb':'';
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
@@ -2786,7 +2793,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
       <td style="padding:14px 16px;"><span class="badge ${STAGE_CLS[o.stage]}" style="font-size:11px;">${STAGES[o.stage]}</span>
         ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
       </td>
-      <td style="padding:14px 16px;font-size:12px;font-weight:600;color:${daysColor};">${daysLabel}</td>
+      <td style="padding:14px 16px;"><span style="font-size:12px;font-weight:${daysFw};color:${daysColor};background:${daysBg};padding:${daysBg!=='transparent'?'2px 8px':'0'};border-radius:${daysBg!=='transparent'?'12px':'0'};">${daysLabel}</span></td>
       <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;">⚠ ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
     </tr>`;}).join(''):`<tr><td colspan="8" class="empty">해당 기관 없음</td></tr>`;
 }
