@@ -1866,8 +1866,8 @@ function scheduleDailyTasksPopup(){
 }
 async function loadAll(){
   try{
-    const [o,a,t,l,p,ev,jb,cc]=await Promise.all([
-      sb.from('orgs').select('*').order('created_at',{ascending:false}),
+    const [o,a,t,l,p,ev,jb,cc,tt]=await Promise.all([
+      sb.from('orgs').select('id,name,cat,region,stage,member,mou_date,lastcontact,is_starred,website,phone,address,email,contact_name,contact_title,org_memo,mou_checklist,business_card_url,card_image,event_id,created_at,created_by,created_by_name,intro_method,intro_detail').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
       sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
@@ -1875,10 +1875,9 @@ async function loadAll(){
       sb.from('events').select('*').order('date',{ascending:false}),
       sb.from('jobs').select('*').order('created_at',{ascending:false}),
       sb.from('cold_contacts').select('*').order('logged_at',{ascending:false}),
+      sb.from('team_tasks').select('*').order('created_at',{ascending:false}),
     ]);
-    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];cache.events=ev.data||[];cache.jobs=jb.data||[];cache.cold=cc.data||[];
-    const{data:tasksData}=await sb.from('team_tasks').select('*').order('created_at',{ascending:false});
-    cache.team_tasks=tasksData||[];
+    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];cache.events=ev.data||[];cache.jobs=jb.data||[];cache.cold=cc.data||[];cache.team_tasks=tt.data||[];
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
@@ -1886,6 +1885,7 @@ async function loadAll(){
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
+    scheduleJobSearchAlert();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
