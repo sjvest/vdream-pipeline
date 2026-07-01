@@ -767,6 +767,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="page-header-left"><div class="page-title">인재 영입</div><div class="page-sub">기관별 영입 인재 · 합격 추적</div></div>
     <button class="btn btn-primary btn-sm" onclick="openAddTalent()"><i class="ti ti-plus"></i> 영입 등록</button>
   </div>
+  <div id="talent-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
   <div style="display:flex;gap:6px;margin-bottom:14px;">
     <button id="talent-tab-active" onclick="switchTalentTab('active')" style="padding:7px 18px;border-radius:6px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;">진행중</button>
     <button id="talent-tab-hired" onclick="switchTalentTab('hired')" style="padding:7px 18px;border-radius:6px;border:1px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;background:none;color:var(--text3);">합격완료</button>
@@ -2903,6 +2904,17 @@ function renderTalent(){
   const CHANNEL_BADGE={'기관연계':'b-blue','협단체':'b-teal','특수학교':'b-purple','카페':'b-amber','인스타그램':'b-amber','페이스북':'b-teal','소개':'b-green','기타온라인':'b-gray'};
   const CHANNEL_ICON={'기관연계':'🏢','협단체':'🤲','특수학교':'🏫','카페':'📋','인스타그램':'📱','페이스북':'📘','소개':'🤝','기타온라인':'🌐'};
   const TH='padding:11px 14px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;';
+  const tals=cache.talents;
+  const expiringSoon=tals.filter(t=>t.status==='합격'&&t.contract_end_date&&Math.ceil((new Date(t.contract_end_date)-new Date())/864e5)<=30&&Math.ceil((new Date(t.contract_end_date)-new Date())/864e5)>=0).length;
+  const summaryEl=document.getElementById('talent-summary');
+  if(summaryEl){summaryEl.innerHTML=[
+    {label:'전체 지원자',val:tals.length,color:'var(--text)',bg:'var(--surface)'},
+    {label:'진행중',val:tals.filter(t=>t.status!=='합격').length,color:'var(--accent)',bg:'var(--accent-bg)'},
+    {label:'합격',val:tals.filter(t=>t.status==='합격').length,color:'var(--green)',bg:'var(--green-bg)'},
+    {label:'대기자',val:tals.filter(t=>t.is_waitlist).length,color:'var(--amber)',bg:'var(--amber-bg)'},
+    {label:'불합격',val:tals.filter(t=>t.status==='불합격').length,color:'var(--red)',bg:'var(--red-bg)'},
+    {label:'계약만료 임박',val:expiringSoon,color:'var(--red)',bg:'#fee2e2'},
+  ].map(s=>`<div style="background:${s.bg};border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;text-align:center;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">${s.label}</div><div style="font-size:22px;font-weight:800;color:${s.color};">${s.val}</div></div>`).join('');}
   const thead=document.getElementById('talent-thead');
   const tbody=document.getElementById('talent-tbody');
 
@@ -2910,6 +2922,7 @@ function renderTalent(){
   if(currentTalentTab==='hired'){
     if(thead)thead.innerHTML=`<tr style="background:#f1f4f9;">
       <th style="${TH}">지원자명</th><th style="${TH}">직무</th><th style="${TH}">연결 기관</th>
+      <th style="${TH}">입사 회사</th><th style="${TH}">입사일</th>
       <th style="${TH}">담당팀원</th><th style="${TH}">합격일</th>
       <th style="${TH}">계약 만료일</th><th style="${TH}">D-day</th>
       <th style="${TH}">재직상태</th><th style="${TH}">채용건</th>
@@ -2934,6 +2947,8 @@ function renderTalent(){
         <td style="padding:14px 16px;font-weight:700;font-size:13px;">${t.name}</td>
         <td style="font-size:12px;color:var(--text2);">${t.job||'—'}</td>
         <td style="font-size:12px;color:var(--text2);">${org?.name||'—'}</td>
+        <td style="font-size:12px;font-weight:600;color:var(--accent);">${t.hire_company||'—'}</td>
+        <td style="font-size:12px;color:var(--text2);">${t.join_date?fDate(t.join_date):'—'}</td>
         <td><span class="member-pill">${t.member||'—'}</span></td>
         <td style="font-size:12px;color:var(--text2);">${fDate(t.date)}</td>
         <td style="font-size:12px;color:var(--text2);">${t.contract_end_date?fDate(t.contract_end_date):'—'}</td>
@@ -2961,7 +2976,7 @@ function renderTalent(){
     const ch=t.channel||'기관연계';
     const orgOrRef=['기관연계','협단체','특수학교'].includes(ch)?org?.name||'—':ch==='소개'?t.referrer||'—':'—';
     return`<tr onclick="openTalentDetail(${t.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
-      <td style="padding:14px 16px;font-weight:700;font-size:13px;">${t.name}</td>
+      <td style="padding:14px 16px;font-weight:700;font-size:13px;">${t.name}${t.is_waitlist?'<span style="margin-left:6px;padding:2px 7px;background:var(--amber-bg);color:var(--amber);border-radius:10px;font-size:10px;font-weight:700;">대기</span>':''}</td>
       <td><span class="badge ${CHANNEL_BADGE[ch]||'b-gray'}" style="font-size:11px;">${CHANNEL_ICON[ch]||''} ${ch}</span></td>
       <td style="font-size:12px;color:var(--text2);">${orgOrRef}</td>
       <td style="font-size:12px;color:var(--text2);">${t.job||'—'}</td>
@@ -3074,6 +3089,9 @@ function renderTalentForms(){
         <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>지원일</label><input type="date" id="t-date-${i}" value="${today()}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>지원서등록</option><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>취소</option></select></div>
+        <div class="fg"><label>입사 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="실제 입사 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>입사일</label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px;"><input type="checkbox" id="t-waitlist-${i}" style="width:16px;height:16px;cursor:pointer;"><label for="t-waitlist-${i}" style="font-size:13px;cursor:pointer;">대기자</label></div>
         <div class="fg" style="grid-column:1/-1;"><label>메모</label><input type="text" id="t-memo-${i}" placeholder="메모" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
       </div>
     </div>
@@ -3101,6 +3119,7 @@ async function saveTalent(){
       date:document.getElementById(`t-date-${i}`).value||null,
       status:document.getElementById(`t-status-${i}`).value,
       memo:document.getElementById(`t-memo-${i}`).value.trim(),
+      hire_company:document.getElementById(`t-hirecompany-${i}`)?.value.trim()||null,
       created_by:currentUser?.id||null,created_by_name:myName
     });
   }
