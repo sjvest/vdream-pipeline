@@ -1868,7 +1868,7 @@ function scheduleDailyTasksPopup(){
 async function loadAll(){
   try{
     const [o,a,t,l,p,ev,jb,cc,tt,ca]=await Promise.all([
-      sb.from('orgs').select('id,name,cat,region,stage,member,mou_date,lastcontact,is_starred,website,phone,address,email,contact_name,contact_title,org_memo,mou_checklist,business_card_url,card_image,event_id,created_at,created_by,created_by_name,intro_method,intro_detail').order('created_at',{ascending:false}),
+      sb.from('orgs').select('id,name,cat,region,stage,member,mou_date,lastcontact,is_starred,website,phone,address,email,contact_name,contact_title,org_memo,mou_checklist,business_card_url,card_image,event_id,created_at,created_by,created_by_name').order('created_at',{ascending:false}),
       sb.from('actions').select('*').order('due',{ascending:true}),
       sb.from('talents').select('*').order('created_at',{ascending:false}),
       sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
