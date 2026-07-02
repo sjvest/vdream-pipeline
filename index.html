@@ -3145,6 +3145,10 @@ function renderTalentForms(){
       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">👤 지원자 ${i+1}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="fg"><label>지원자명 *</label><input type="text" id="t-name-${i}" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>생년월일</label><input type="date" id="t-birthdate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>장애유형</label><select id="t-distype-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>지체</option><option>뇌병변</option><option>시각</option><option>청각</option><option>언어</option><option>지적</option><option>자폐성</option><option>정신</option><option>신장</option><option>심장</option><option>호흡기</option><option>간</option><option>안면</option><option>장루·요루</option><option>뇌전증</option></select></div>
+        <div class="fg"><label>장애등급</label><select id="t-disgrade-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>중증</option><option>경증</option></select></div>
         <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>지원일</label><input type="date" id="t-date-${i}" value="${today()}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>지원서등록</option><option>지원중</option><option>면접</option><option>합격</option><option>불합격</option><option>취소</option></select></div>
@@ -3179,6 +3183,10 @@ async function saveTalent(){
       status:document.getElementById(`t-status-${i}`).value,
       memo:document.getElementById(`t-memo-${i}`).value.trim(),
       hire_company:document.getElementById(`t-hirecompany-${i}`)?.value.trim()||null,
+      phone:document.getElementById(`t-phone-${i}`)?.value.trim()||null,
+      birth_date:document.getElementById(`t-birthdate-${i}`)?.value||null,
+      disability_type:document.getElementById(`t-distype-${i}`)?.value||null,
+      disability_grade:document.getElementById(`t-disgrade-${i}`)?.value||null,
       created_by:currentUser?.id||null,created_by_name:myName
     });
   }
