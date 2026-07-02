@@ -2751,6 +2751,49 @@ function memberBadge(name){
   return`<span style="display:inline-flex;align-items:center;padding:4px 12px;background:${s.bg};color:${s.c};border-radius:20px;font-size:11px;font-weight:700;">${name}</span>`;
 }
 function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';const fr=document.getElementById('filter-region');if(fr)fr.value='';renderOrgs();}
+function calcHealthScore(orgId){
+  const o=cache.orgs.find(x=>x.id===orgId);if(!o)return{score:0,details:[]};
+  const now=new Date();let score=100;const details=[];
+  const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):999;
+  if(days>=60){score-=30;details.push({label:'마지막 연락',sub:days+'일 전',delta:-30});}
+  else if(days>=30){score-=15;details.push({label:'마지막 연락',sub:days+'일 전',delta:-15});}
+  else if(days<999)details.push({label:'마지막 연락',sub:days+'일 전',delta:0});
+  const pending=(cache.actions||[]).filter(a=>a.org_id===orgId&&!a.done).length;
+  if(pending>=3){score-=10;details.push({label:'미완료 후속액션',sub:pending+'건',delta:-10});}
+  else if(pending>0)details.push({label:'미완료 후속액션',sub:pending+'건',delta:0});
+  if(o.stage===4&&o.mou_date){const md=Math.floor((new Date(o.mou_date)-now)/864e5);if(md<0){score-=15;details.push({label:'MOU 예정일 초과',sub:'D+'+Math.abs(md),delta:-15});}}
+  if(o.stage>=5){score+=10;details.push({label:'MOU 완료',sub:'',delta:+10});}
+  const tals=(cache.talents||[]).filter(t=>(t.source_org_id||t.org_id)===orgId).length;
+  if(tals>0){score+=10;details.push({label:'지원자 유입',sub:tals+'명',delta:+10});}
+  const hired=(cache.applications||[]).filter(a=>a.org_id===orgId&&(a.status==='합격'||a.status==='입사완료')).length;
+  if(hired>0){score+=15;details.push({label:'입사자',sub:hired+'명',delta:+15});}
+  score=Math.min(100,Math.max(0,score));
+  return{score,details};
+}
+function healthBadge(score,clickable=false){
+  const emoji=score>=90?'🟢':score>=70?'🔵':score>=50?'🟡':score>=30?'🟠':'🔴';
+  const color=score>=90?'#065f46':score>=70?'#1e40af':score>=50?'#b54708':score>=30?'#c2410c':'#dc2626';
+  const bg=score>=90?'#d1fae5':score>=70?'#dbeafe':score>=50?'#fef3c7':score>=30?'#ffedd5':'#fee2e2';
+  return`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${color};${clickable?'cursor:pointer;':''}white-space:nowrap;">${emoji}${score}</span>`;
+}
+function showHealthDetail(orgId,event){
+  if(event)event.stopPropagation();
+  const{score,details}=calcHealthScore(orgId);
+  const o=cache.orgs.find(x=>x.id===orgId);
+  const label=score>=90?'매우 건강':score>=70?'관리 양호':score>=50?'관리 필요':score>=30?'위험':'즉시 관리';
+  const rows=details.map(d=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:12px;"><span style="color:#374151;">${d.label}${d.sub?` (${d.sub})`:''}</span><span style="font-weight:800;color:${d.delta>0?'#059669':d.delta<0?'#dc2626':'#6b7280'};">${d.delta>0?'+'+d.delta:d.delta===0?'—':d.delta}</span></div>`).join('');
+  const msgHtml=`<div style="margin-bottom:12px;">${healthBadge(score)} <span style="font-size:12px;color:#6b7280;margin-left:6px;">${label}</span></div>${rows}<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:800;"><span>최종 점수</span><span style="color:${score>=70?'#059669':'#dc2626'};">${score}점</span></div>`;
+  const msgEl=document.getElementById('confirm-msg');
+  document.getElementById('confirm-title').textContent=`🏥 ${o?.name||''} Health Score`;
+  document.getElementById('confirm-sub').textContent='';
+  document.getElementById('confirm-icon').textContent='🏥';
+  document.getElementById('confirm-icon').style.background='#dbeafe';
+  if(msgEl)msgEl.innerHTML=msgHtml;
+  const okBtn=document.getElementById('confirm-ok-btn');
+  if(okBtn){okBtn.textContent='닫기';okBtn.style.cssText='background:var(--accent);color:#fff;font-weight:700;';}
+  confirmCallback=()=>{};
+  document.getElementById('confirm-modal').style.display='flex';
+}
 function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const fr=document.getElementById('filter-region')?.value||'';const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(fr&&o.region!==fr)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw)&&!(o.region||'').toLowerCase().includes(kw)&&!(o.address||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs||fr;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
   rows.sort((a,b)=>{
     if(b.is_starred!==a.is_starred)return (b.is_starred?1:0)-(a.is_starred?1:0);
