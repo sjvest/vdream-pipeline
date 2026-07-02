@@ -1261,40 +1261,33 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 데이터 분석 페이지 -->
 <div id="p-analytics" class="page">
   <div class="page-header">
-    <div class="page-header-left"><div class="page-title">데이터 분석</div><div class="page-sub">기간별 · 팀원별 업무 현황 분석</div></div>
+    <div class="page-header-left"><div class="page-title">V:Scout Analytics</div><div class="page-sub">운영 인사이트 · 의사결정 대시보드</div></div>
+    <select id="an-member" onchange="renderAnalytics()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 팀원</option></select>
   </div>
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="chart-tab active" id="an-btn-thisweek" onclick="setAnalyticsPeriod('thisweek')">이번 주</button>
-      <button class="chart-tab" id="an-btn-lastweek" onclick="setAnalyticsPeriod('lastweek')">지난 주</button>
-      <button class="chart-tab" id="an-btn-thismonth" onclick="setAnalyticsPeriod('thismonth')">이번 달</button>
-      <button class="chart-tab" id="an-btn-lastmonth" onclick="setAnalyticsPeriod('lastmonth')">지난 달</button>
-      <input type="date" id="an-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-      <span style="font-size:12px;color:var(--text3);">~</span>
-      <input type="date" id="an-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-      <button class="btn btn-primary btn-sm" onclick="setAnalyticsPeriod('custom')"><i class="ti ti-search"></i> 조회</button>
-      <select id="an-member" onchange="renderAnalytics()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
-        <option value="">전체 팀원</option>
-      </select>
-      <span id="an-period-label" style="font-size:12px;color:var(--text3);margin-left:4px;"></span>
-    </div>
+  <div id="an-today" style="margin-bottom:16px;"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="chart-tab active" id="an-btn-thisweek" onclick="setAnalyticsPeriod('thisweek')">이번 주</button>
+    <button class="chart-tab" id="an-btn-lastweek" onclick="setAnalyticsPeriod('lastweek')">지난 주</button>
+    <button class="chart-tab" id="an-btn-thismonth" onclick="setAnalyticsPeriod('thismonth')">이번 달</button>
+    <button class="chart-tab" id="an-btn-lastmonth" onclick="setAnalyticsPeriod('lastmonth')">지난 달</button>
+    <input type="date" id="an-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    <span style="font-size:12px;color:var(--text3);">~</span>
+    <input type="date" id="an-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    <button class="btn btn-primary btn-sm" onclick="setAnalyticsPeriod('custom')"><i class="ti ti-search"></i> 조회</button>
+    <span id="an-period-label" style="font-size:12px;color:var(--text3);margin-left:4px;"></span>
   </div>
-  <div id="an-metrics" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;"></div>
+  <div id="an-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-building" style="color:var(--accent)"></i>기관 파이프라인 현황</div><div class="card-body" id="an-pipeline"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-users" style="color:var(--purple)"></i>팀원별 업무량</div><div class="card-body" id="an-workload"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-filter" style="color:var(--accent)"></i>② 기관 퍼널 · 전환율</div><div class="card-body" id="an-funnel"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-trophy" style="color:var(--amber)"></i>③ TOP 기관 · 입사 성과</div><div class="card-body" id="an-top-orgs" style="max-height:360px;overflow-y:auto;"></div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-arrow-merge" style="color:var(--teal)"></i>지원자 유입 경로</div><div class="card-body" id="an-channel"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-briefcase" style="color:var(--amber)"></i>채용 건 현황</div><div class="card-body" id="an-jobs"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-user-check" style="color:var(--purple)"></i>④ 담당자별 성과 KPI</div><div class="card-body" id="an-member-kpi"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-route" style="color:var(--teal)"></i>⑤ 발굴 경로 · ROI</div><div class="card-body" id="an-route"></div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-calendar-event" style="color:var(--green)"></i>행사 효과</div><div class="card-body" id="an-events"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-user-check" style="color:var(--green)"></i>인재영입 → 채용 현황</div><div class="card-body" id="an-hire"></div></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-map-pin" style="color:var(--accent)"></i>기관 발굴경로 현황</div><div class="card-body" id="an-source"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-building-community" style="color:var(--purple)"></i>기관 유형별 현황</div><div class="card-body" id="an-cat"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-map-pin" style="color:var(--green)"></i>⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-bulb" style="color:var(--red)"></i>⑦ 운영 인사이트</div><div class="card-body" id="an-insight"></div></div>
   </div>
 </div>
 
@@ -3360,201 +3353,34 @@ function setAnalyticsPeriod(type){
 }
 function renderAnalytics(){
   const memberSel=document.getElementById('an-member');
-  if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){
-    cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});
-  }
+  if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});}
   const filterMember=memberSel?.value||'';
   const s=document.getElementById('an-start')?.value;
   const e=document.getElementById('an-end')?.value;
-  if(!s||!e)return;
-  const start=new Date(s);start.setHours(0,0,0,0);
-  const end=new Date(e);end.setHours(23,59,59,999);
-  const inRange=dateStr=>{if(!dateStr)return false;const d=new Date(dateStr);return d>=start&&d<=end;};
-  const byMember=arr=>filterMember?arr.filter(x=>x.member===filterMember||x.created_by_name===filterMember):arr;
-
-  // ── 핵심 지표 ──
-  const newOrgs=byMember(cache.orgs.filter(o=>inRange(o.created_at)));
-  const newLogs=byMember(cache.logs.filter(l=>inRange(l.logged_at||l.created_at)));
-  const newCold=byMember(cache.cold?.filter(c=>inRange(c.logged_at||c.created_at))||[]);
-  const newTalents=byMember(cache.talents.filter(t=>inRange(t.created_at)));
-  const hired=byMember(cache.talents.filter(t=>inRange(t.created_at)&&t.status==='합격'));
-  document.getElementById('an-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">신규 기관 등록</div><div class="metric-value" style="color:var(--accent);">${newOrgs.length}</div><div class="metric-sub">개 기관</div></div>
-    <div class="metric"><div class="metric-label">컨택 히스토리</div><div class="metric-value" style="color:var(--purple);">${newLogs.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--teal);">${newCold.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">지원자 유입</div><div class="metric-value" style="color:var(--amber);">${newTalents.length}</div><div class="metric-sub">명</div></div>
-    <div class="metric"><div class="metric-label">채용 완료</div><div class="metric-value" style="color:var(--green);">${hired.length}</div><div class="metric-sub">명</div></div>
-  `;
-
-  // ── 기관 파이프라인 ──
-  const STAGE_NAMES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'인재영입 완료',9:'보류'};
-  const stageData=[0,1,2,3,4,5,6].map(s=>({name:STAGE_NAMES[s],count:cache.orgs.filter(o=>o.stage===s&&(filterMember?o.member===filterMember:true)).length}));
-  const maxStage=Math.max(...stageData.map(x=>x.count),1);
-  document.getElementById('an-pipeline').innerHTML=`
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      ${stageData.map(s=>`
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:80px;font-size:11px;color:var(--text3);text-align:right;flex-shrink:0;">${s.name}</div>
-          <div style="flex:1;background:#f1f4f9;border-radius:20px;height:20px;overflow:hidden;">
-            <div style="width:${Math.round(s.count/maxStage*100)}%;height:100%;background:var(--accent);border-radius:20px;display:flex;align-items:center;padding-left:8px;transition:width .3s;">
-              ${s.count>0?`<span style="font-size:11px;font-weight:700;color:#fff;">${s.count}</span>`:''}
-            </div>
-          </div>
-          <div style="width:30px;font-size:12px;font-weight:700;color:var(--text);">${s.count}</div>
-        </div>`).join('')}
-    </div>
-    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">기관별 지원자 유입 TOP 5</div>
-      ${cache.orgs.filter(o=>filterMember?o.member===filterMember:true).map(o=>({
-        name:o.name,
-        count:cache.talents.filter(t=>t.org_id===o.id).length
-      })).filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,5).map(x=>`
-        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
-          <span>${x.name}</span><span style="font-weight:700;color:var(--accent);">${x.count}명</span>
-        </div>`).join('')||'<div class="empty" style="font-size:12px;">데이터 없음</div>'}
-    </div>`;
-
-  // ── 팀원별 업무량 ──
-  const members=cache.profiles;
-  document.getElementById('an-workload').innerHTML=`
-    <table style="width:100%;border-collapse:collapse;font-size:12px;">
-      <thead><tr style="background:#f8f9fc;">
-        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">팀원</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">기관등록</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">히스토리</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">신규컨택</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">인재영입</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">합계</th>
-      </tr></thead>
-      <tbody>
-        ${members.filter(m=>filterMember?m.name===filterMember:true).map(m=>{
-          const orgCnt=cache.orgs.filter(o=>inRange(o.created_at)&&o.created_by_name===m.name).length;
-          const logCnt=cache.logs.filter(l=>inRange(l.logged_at||l.created_at)&&l.created_by_name===m.name).length;
-          const coldCnt=(cache.cold||[]).filter(c=>inRange(c.logged_at||c.created_at)&&c.created_by_name===m.name).length;
-          const talCnt=cache.talents.filter(t=>inRange(t.created_at)&&t.member===m.name).length;
-          const total=orgCnt+logCnt+coldCnt+talCnt;
-          return`<tr>
-            <td style="padding:9px 12px;font-weight:600;">${m.name}</td>
-            <td style="padding:9px 12px;text-align:center;color:var(--accent);font-weight:700;">${orgCnt}</td>
-            <td style="padding:9px 12px;text-align:center;color:var(--purple);font-weight:700;">${logCnt}</td>
-            <td style="padding:9px 12px;text-align:center;color:var(--teal);font-weight:700;">${coldCnt}</td>
-            <td style="padding:9px 12px;text-align:center;color:var(--amber);font-weight:700;">${talCnt}</td>
-            <td style="padding:9px 12px;text-align:center;font-weight:800;font-size:13px;">${total}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>`;
-
-  // ── 지원자 유입 경로 ──
-  const channels=['기관연계','협단체','특수학교','카페','인스타그램','페이스북','소개','기타온라인'];
-  const CHANNEL_ICON={'기관연계':'🏢','협단체':'🤲','특수학교':'🏫','카페':'📋','인스타그램':'📱','페이스북':'📘','소개':'🤝','기타온라인':'🌐'};
-  const chData=channels.map(ch=>({ch,count:newTalents.filter(t=>(t.channel||'기관연계')===ch).length})).filter(x=>x.count>0).sort((a,b)=>b.count-a.count);
-  const maxCh=Math.max(...chData.map(x=>x.count),1);
-  document.getElementById('an-channel').innerHTML=chData.length?`
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      ${chData.map(x=>`
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:90px;font-size:11px;color:var(--text3);text-align:right;flex-shrink:0;">${CHANNEL_ICON[x.ch]||''} ${x.ch}</div>
-          <div style="flex:1;background:#f1f4f9;border-radius:20px;height:20px;overflow:hidden;">
-            <div style="width:${Math.round(x.count/maxCh*100)}%;height:100%;background:var(--teal);border-radius:20px;display:flex;align-items:center;padding-left:8px;">
-              ${x.count>0?`<span style="font-size:11px;font-weight:700;color:#fff;">${x.count}</span>`:''}
-            </div>
-          </div>
-          <div style="width:30px;font-size:12px;font-weight:700;">${x.count}</div>
-        </div>`).join('')}
-    </div>`:'<div class="empty">해당 기간 인재영입 없음</div>';
-
-  // ── 채용 건 현황 ──
-  const jobs=cache.jobs||[];
-  const jobActive=jobs.filter(j=>j.status==='진행중');
-  const jobDone=jobs.filter(j=>j.status==='완료');
-  const jobDelay=jobActive.filter(j=>{if(!j.deadline)return false;return Math.floor((new Date(j.deadline)-new Date())/864e5)<0;});
-  const jobOnTime=jobActive.filter(j=>{if(!j.deadline)return false;return Math.floor((new Date(j.deadline)-new Date())/864e5)>=0;});
-  document.getElementById('an-jobs').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="padding:14px;background:var(--accent-bg);border-radius:var(--radius-sm);text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:var(--accent);">${jobOnTime.length}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">진행중</div>
-      </div>
-      <div style="padding:14px;background:var(--red-bg);border-radius:var(--radius-sm);text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:var(--red);">${jobDelay.length}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">지연</div>
-      </div>
-      <div style="padding:14px;background:var(--green-bg);border-radius:var(--radius-sm);text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:var(--green);">${jobDone.length}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">완료</div>
-      </div>
-      <div style="padding:14px;background:var(--amber-bg);border-radius:var(--radius-sm);text-align:center;">
-        <div style="font-size:22px;font-weight:800;color:var(--amber);">${jobActive.reduce((a,j)=>a+Math.max(0,(j.headcount||0)-(j.current_count||0)),0)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">미충원 인원</div>
-      </div>
-    </div>
-    ${jobDelay.length?`<div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ 지연 채용 건</div>
-    ${jobDelay.map(j=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
-      <span style="font-weight:600;">${j.company}</span>
-      <span style="color:var(--red);">${j.current_count||0}/${j.headcount}명</span>
-    </div>`).join('')}`:''}`;
-
-  // ── 행사 효과 ──
-  const events=cache.events||[];
-  document.getElementById('an-events').innerHTML=events.length?`
-    <table style="width:100%;border-collapse:collapse;font-size:12px;">
-      <thead><tr style="background:#f8f9fc;">
-        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">행사명</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">날짜</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">명함</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">미팅</th>
-      </tr></thead>
-      <tbody>
-        ${events.filter(e=>inRange(e.date)).map(e=>`
-          <tr>
-            <td style="padding:8px 12px;font-weight:600;">${e.name}</td>
-            <td style="padding:8px 12px;text-align:center;color:var(--text3);">${fDate(e.date)}</td>
-            <td style="padding:8px 12px;text-align:center;color:var(--accent);font-weight:700;">${e.result_cards!=null?e.result_cards:'—'}</td>
-            <td style="padding:8px 12px;text-align:center;color:var(--teal);font-weight:700;">${e.result_meetings!=null?e.result_meetings:'—'}</td>
-          </tr>`).join('')||'<tr><td colspan="4" class="empty" style="font-size:12px;">해당 기간 행사 없음</td></tr>'}
-      </tbody>
-    </table>`:'<div class="empty">등록된 행사 없음</div>';
-
-  // ── 인재영입 → 채용 현황 ──
-  const hireByChannel=channels.map(ch=>({
-    ch,
-    total:newTalents.filter(t=>(t.channel||'기관연계')===ch).length,
-    hired:newTalents.filter(t=>(t.channel||'기관연계')===ch&&t.status==='합격').length
-  })).filter(x=>x.total>0);
-  document.getElementById('an-hire').innerHTML=hireByChannel.length?`
-    <table style="width:100%;border-collapse:collapse;font-size:12px;">
-      <thead><tr style="background:#f8f9fc;">
-        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">채널</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">지원</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">채용</th>
-        <th style="padding:8px 12px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1.5px solid var(--border);">채용률</th>
-      </tr></thead>
-      <tbody>
-        ${hireByChannel.map(x=>`
-          <tr>
-            <td style="padding:8px 12px;">${CHANNEL_ICON[x.ch]||''} ${x.ch}</td>
-            <td style="padding:8px 12px;text-align:center;font-weight:700;">${x.total}</td>
-            <td style="padding:8px 12px;text-align:center;color:var(--green);font-weight:700;">${x.hired}</td>
-            <td style="padding:8px 12px;text-align:center;color:${x.hired/x.total>0.5?'var(--green)':'var(--amber)'};font-weight:700;">${Math.round(x.hired/x.total*100)}%</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>`:'<div class="empty">해당 기간 인재영입 없음</div>';
-
-  const SOURCES=['서칭','행사·전시회','명함·소개','인바운드'];
-  const SOURCE_ICON={'서칭':'🔍','행사·전시회':'🎪','명함·소개':'🤝','인바운드':'📞'};
-  const SOURCE_COLOR={'서칭':'var(--accent)','행사·전시회':'var(--green)','명함·소개':'var(--amber)','인바운드':'var(--purple)'};
-  const allOrgs=cache.orgs.filter(o=>filterMember?o.member===filterMember:true);
-  const srcData=SOURCES.map(s=>({src:s,total:allOrgs.filter(o=>o.source===s).length,mou:allOrgs.filter(o=>o.source===s&&o.stage>=5).length,newCnt:newOrgs.filter(o=>o.source===s).length})).sort((a,b)=>b.total-a.total);
-  const maxSrc=Math.max(...srcData.map(x=>x.total),1);
-  const totalAllOrgs=allOrgs.length||1;
-  document.getElementById('an-source').innerHTML='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">'+srcData.map(x=>'<div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:600;">'+SOURCE_ICON[x.src]+' '+x.src+'</span><span style="font-size:11px;color:var(--text3);">전체 '+x.total+'개 · MOU '+x.mou+'개 · 신규 '+x.newCnt+'개</span></div><div style="background:#f1f4f9;border-radius:20px;height:22px;overflow:hidden;"><div style="width:'+Math.round(x.total/maxSrc*100)+'%;height:100%;background:'+SOURCE_COLOR[x.src]+';border-radius:20px;display:flex;align-items:center;padding-left:10px;">'+(x.total>0?'<span style="font-size:11px;font-weight:700;color:#fff;">'+Math.round(x.total/totalAllOrgs*100)+'%</span>':'')+' </div></div></div>').join('')+'</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">'+srcData.map(x=>'<div style="text-align:center;padding:12px 8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);"><div style="font-size:20px;">'+SOURCE_ICON[x.src]+'</div><div style="font-size:10px;color:var(--text3);margin:3px 0;">'+x.src+'</div><div style="font-size:22px;font-weight:800;color:'+SOURCE_COLOR[x.src]+';">'+x.total+'</div><div style="font-size:10px;color:var(--green);">MOU '+x.mou+'개</div></div>').join('')+'</div>';
-
-  const CATS=['복지관','재활센터','특수학교','자립생활센터','협회·협단체','기타'];
-  const CAT_COLORS=['var(--accent)','var(--purple)','var(--teal)','var(--amber)','var(--green)','var(--text3)'];
-  const catData=CATS.map((c,i)=>({cat:c,color:CAT_COLORS[i],total:allOrgs.filter(o=>o.cat===c).length,mou:allOrgs.filter(o=>o.cat===c&&o.stage>=5).length})).filter(x=>x.total>0).sort((a,b)=>b.total-a.total);
-  const maxCat=Math.max(...catData.map(x=>x.total),1);
-  document.getElementById('an-cat').innerHTML=catData.length?'<div style="display:flex;flex-direction:column;gap:8px;">'+catData.map(x=>'<div style="display:flex;align-items:center;gap:10px;"><div style="width:90px;font-size:11px;color:var(--text3);text-align:right;flex-shrink:0;">'+x.cat+'</div><div style="flex:1;background:#f1f4f9;border-radius:20px;height:20px;overflow:hidden;"><div style="width:'+Math.round(x.total/maxCat*100)+'%;height:100%;background:'+x.color+';border-radius:20px;display:flex;align-items:center;padding-left:8px;">'+(x.total>0?'<span style="font-size:11px;font-weight:700;color:#fff;">'+x.total+'</span>':'')+' </div></div><div style="width:55px;font-size:11px;color:var(--text3);">MOU '+x.mou+'개</div></div>').join('')+'</div>':'<div class="empty">데이터 없음</div>';
+  const useAll=!s||!e;
+  const start=useAll?new Date('2000-01-01'):new Date(s);start.setHours(0,0,0,0);
+  const end=useAll?new Date('2099-12-31'):new Date(e);end.setHours(23,59,59,999);
+  const now=new Date();
+  const inRange=d=>{if(!d)return useAll;const dt=new Date(d);return dt>=start&&dt<=end;};
+  const byM=arr=>filterMember?arr.filter(x=>x.member===filterMember||x.created_by_name===filterMember):arr;
+  const O=cache.orgs||[];const A=cache.applications||[];const T=cache.talents||[];
+  const todayEl=document.getElementById('an-today');
+  if(todayEl){const urgents=[];O.filter(o=>o.mou_date&&Math.ceil((new Date(o.mou_date)-now)/864e5)<=3&&Math.ceil((new Date(o.mou_date)-now)/864e5)>=0).forEach(o=>urgents.push({type:'danger',label:'MOU D-'+Math.ceil((new Date(o.mou_date)-now)/864e5),text:o.name,onclick:`openOrg(${o.id})`}));O.filter(o=>o.lastcontact&&(now-new Date(o.lastcontact))/864e5>=30).slice(0,3).forEach(o=>urgents.push({type:'warning',label:'미연락 '+Math.floor((now-new Date(o.lastcontact))/864e5)+'일',text:o.name,onclick:`openOrg(${o.id})`}));A.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=14&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0).forEach(a=>{const t=T.find(x=>x.id===a.talent_id);urgents.push({type:'danger',label:'계약만료 D-'+Math.ceil((new Date(a.contract_end_date)-now)/864e5),text:t?.name||'—',onclick:''});});(cache.actions||[]).filter(a=>!a.done&&a.due&&Math.ceil((new Date(a.due)-now)/864e5)<=1).slice(0,3).forEach(a=>urgents.push({type:'warning',label:'후속액션 마감',text:a.text,onclick:`nav('actions')`}));if(!urgents.length){todayEl.style.display='none';}else{todayEl.style.display='block';todayEl.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;"><div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:8px;">⚡ 오늘 우선 처리</div><div style="display:flex;gap:8px;flex-wrap:wrap;">${urgents.map(u=>`<div onclick="${u.onclick}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:${u.type==='danger'?'#fee2e2':'#fef3c7'};border-radius:var(--radius-sm);cursor:${u.onclick?'pointer':'default'};"><span style="font-size:10px;font-weight:700;color:${u.type==='danger'?'#dc2626':'#b54708'};">${u.label}</span><span style="font-size:12px;font-weight:600;color:var(--text);">${u.text}</span></div>`).join('')}</div></div>`;}}
+  const pO=byM(O.filter(o=>inRange(o.created_at)));const pL=byM((cache.logs||[]).filter(l=>inRange(l.logged_at||l.created_at)));const pM=O.filter(o=>o.stage>=4&&inRange(o.mou_date));const pT=byM(T.filter(t=>inRange(t.created_at)));const pA=A.filter(a=>inRange(a.created_at));const pH=A.filter(a=>a.status==='합격'&&inRange(a.created_at));const pJ=A.filter(a=>a.status==='입사완료'&&inRange(a.created_at));
+  const kpiEl=document.getElementById('an-kpi');
+  if(kpiEl){const K=[{label:'신규 기관',val:pO.length,c:'var(--accent)',i:'ti-building'},{label:'컨택',val:pL.length,c:'var(--purple)',i:'ti-phone'},{label:'MOU',val:pM.length,c:'var(--teal)',i:'ti-file-check'},{label:'유입 지원자',val:pT.length,c:'var(--amber)',i:'ti-users'},{label:'채용 지원',val:pA.length,c:'var(--blue)',i:'ti-clipboard-list'},{label:'합격',val:pH.length,c:'var(--green)',i:'ti-circle-check'},{label:'입사완료',val:pJ.length,c:'#059669',i:'ti-door-enter'}];kpiEl.innerHTML=K.map(k=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;"><i class="ti ${k.i}" style="font-size:18px;color:${k.c};margin-bottom:4px;display:block;"></i><div style="font-size:22px;font-weight:800;color:${k.c};">${k.val}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${k.label}</div></div>`).join('');}
+  const fEl=document.getElementById('an-funnel');
+  if(fEl){const stages=[{l:'발굴',v:O.length,c:'var(--accent)'},{l:'관계형성',v:O.filter(o=>o.stage>=1).length,c:'var(--purple)'},{l:'미팅',v:O.filter(o=>o.stage>=2).length,c:'#8b5cf6'},{l:'MOU',v:O.filter(o=>o.stage>=4).length,c:'var(--teal)'},{l:'지원서 접수',v:T.length,c:'var(--amber)'},{l:'합격',v:A.filter(a=>a.status==='합격').length,c:'var(--green)'},{l:'입사완료',v:A.filter(a=>a.status==='입사완료').length,c:'#059669'}];const mx=stages[0].v||1;fEl.innerHTML=stages.map((s,i)=>{const prev=i>0?stages[i-1].v:null;const rate=prev&&prev>0?Math.round(s.v/prev*100):null;return`<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">${s.l}</span><span style="font-weight:800;color:${s.c};">${s.v}건${rate!==null?` <span style="font-size:10px;color:var(--text3);">(→${rate}%)</span>`:''}</span></div><div style="background:var(--bg);border-radius:20px;height:8px;overflow:hidden;"><div style="width:${Math.round(s.v/mx*100)}%;height:100%;background:${s.c};border-radius:20px;"></div></div></div>`;}).join('');}
+  const topEl=document.getElementById('an-top-orgs');
+  if(topEl){const os=O.map(o=>{const ot=T.filter(t=>(t.source_org_id||t.org_id)===o.id).length;const oa=A.filter(a=>a.org_id===o.id).length;const oh=A.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length;const rate=ot>0?Math.round(oh/ot*100):0;return{...o,ot,oa,oh,rate};}).filter(o=>o.ot>0||o.oh>0).sort((a,b)=>b.oh-a.oh||b.ot-a.ot).slice(0,10);topEl.innerHTML=os.length?`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:6px 8px;text-align:left;font-weight:700;color:var(--text3);">#</th><th style="padding:6px 8px;text-align:left;font-weight:700;color:var(--text3);">기관</th><th style="padding:6px 8px;text-align:center;font-weight:700;color:var(--text3);">유입</th><th style="padding:6px 8px;text-align:center;font-weight:700;color:var(--text3);">지원</th><th style="padding:6px 8px;text-align:center;font-weight:700;color:var(--text3);">입사</th><th style="padding:6px 8px;text-align:center;font-weight:700;color:var(--text3);">전환율</th></tr></thead><tbody>${os.map((o,i)=>`<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="openOrg(${o.id})" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><td style="padding:7px 8px;font-weight:800;color:${i<3?'var(--amber)':'var(--text3)'};">${i+1}</td><td style="padding:7px 8px;font-weight:700;">${o.name}</td><td style="padding:7px 8px;text-align:center;color:var(--text2);">${o.ot}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${o.oa}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${o.oh}</td><td style="padding:7px 8px;text-align:center;"><span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${o.rate>30?'var(--green-bg)':o.rate>10?'var(--amber-bg)':'var(--bg)'};color:${o.rate>30?'var(--green)':o.rate>10?'var(--amber)':'var(--text3)'};">${o.rate}%</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty">데이터 없음</div>';}
+  const mEl=document.getElementById('an-member-kpi');
+  if(mEl){const ms=cache.profiles.filter(p=>p.name).map(p=>{const mo=O.filter(o=>o.member===p.name);const mt=T.filter(t=>t.member===p.name);const ma=A.filter(a=>{const t=T.find(x=>x.id===a.talent_id);return t?.member===p.name;});const mh=ma.filter(a=>a.status==='합격'||a.status==='입사완료');const rate=mt.length>0?Math.round(mh.length/mt.length*100):0;return{name:p.name,o:mo.length,m:mo.filter(o=>o.stage>=4).length,t:mt.length,ap:ma.length,h:mh.length,rate};});mEl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:8px;text-align:left;font-weight:700;color:var(--text3);">담당자</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">기관</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">MOU</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">유입</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">지원</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">입사</th><th style="padding:8px;text-align:center;font-weight:700;color:var(--text3);">전환율</th></tr></thead><tbody>${ms.map(m=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px;font-weight:700;">${m.name}</td><td style="padding:8px;text-align:center;color:var(--accent);">${m.o}</td><td style="padding:8px;text-align:center;color:var(--teal);">${m.m}</td><td style="padding:8px;text-align:center;color:var(--amber);">${m.t}</td><td style="padding:8px;text-align:center;color:var(--blue);">${m.ap}</td><td style="padding:8px;text-align:center;font-weight:800;color:var(--green);">${m.h}</td><td style="padding:8px;text-align:center;"><span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${m.rate>30?'var(--green-bg)':m.rate>10?'var(--amber-bg)':'var(--bg)'};color:${m.rate>30?'var(--green)':m.rate>10?'var(--amber)':'var(--text3)'};">${m.rate}%</span></td></tr>`).join('')}</tbody></table>`;}
+  const rEl=document.getElementById('an-route');
+  if(rEl){rEl.innerHTML=[{l:'서칭',ch:'서칭'},{l:'인바운드',ch:'인바운드'},{l:'행사·전시회',ch:'행사'},{l:'소개',ch:'소개'},{l:'기관연계',ch:'기관연계'}].map(r=>{const rt=T.filter(t=>t.channel===r.ch);const rh=A.filter(a=>{const t=T.find(x=>x.id===a.talent_id);return t?.channel===r.ch&&(a.status==='합격'||a.status==='입사완료');});const cv=rt.length>0?Math.round(rh.length/rt.length*100):0;return`<div style="padding:9px 0;border-bottom:1px solid var(--border);"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;">${r.l}</span><div style="display:flex;gap:8px;font-size:11px;"><span style="color:var(--amber);">유입 ${rt.length}</span><span style="color:var(--green);font-weight:800;">입사 ${rh.length}</span><span style="padding:1px 7px;border-radius:10px;background:${cv>20?'var(--green-bg)':cv>10?'var(--amber-bg)':'var(--bg)'};color:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--text3)'};">${cv}%</span></div></div><div style="background:var(--bg);border-radius:20px;height:6px;overflow:hidden;"><div style="width:${Math.min(cv*2,100)}%;height:100%;background:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--border)'};border-radius:20px;"></div></div></div>`;}).join('');}
+  const rgEl=document.getElementById('an-region');
+  if(rgEl){const rm={};O.forEach(o=>{const r=o.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].o++;});T.forEach(t=>{const org=O.find(o=>o.id===(t.source_org_id||t.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].t++;});A.filter(a=>a.status==='합격'||a.status==='입사완료').forEach(a=>{const t=T.find(x=>x.id===a.talent_id);const org=O.find(o=>o.id===(t?.source_org_id||t?.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].h++;});rgEl.innerHTML=Object.entries(rm).sort((a,b)=>b[1].h-a[1].h||b[1].t-a[1].t).slice(0,8).map(([r,v])=>{const rate=v.t>0?Math.round(v.h/v.t*100):0;return`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="font-weight:700;flex:1;">${r}</span><span style="color:var(--accent);">기관 ${v.o}</span><span style="color:var(--amber);">유입 ${v.t}</span><span style="font-weight:800;color:var(--green);">입사 ${v.h}</span><span style="padding:1px 6px;border-radius:10px;font-size:10px;background:${rate>20?'var(--green-bg)':'var(--bg)'};color:${rate>20?'var(--green)':'var(--text3)'};">${rate}%</span></div>`;}).join('');}
+  const iEl=document.getElementById('an-insight');
+  if(iEl){const ins=[];const mn=O.filter(o=>o.stage>=4&&T.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);if(mn.length)ins.push({t:'warning',msg:`MOU 체결 후 지원자 유입 없는 기관 ${mn.length}곳: ${mn.slice(0,3).map(o=>o.name).join(', ')}${mn.length>3?` 외 ${mn.length-3}곳`:''}`});const tn=O.filter(o=>T.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&A.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length===0);if(tn.length)ins.push({t:'warning',msg:`지원자 3명 이상이지만 입사 없는 기관 ${tn.length}곳: ${tn.slice(0,3).map(o=>o.name).join(', ')}`});const exp=A.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명 — 재계약·신규 매칭 검토 필요`});const nc=O.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳 — 재연락 권장`});const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=T.filter(t=>t.channel===ch).length;const ch2=A.filter(a=>{const t=T.find(x=>x.id===a.talent_id);return t?.channel===ch&&(a.status==='합격'||a.status==='입사완료');}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);if(chStats.length)ins.push({t:'success',msg:`전환율 가장 높은 발굴경로: ${chStats[0].ch} (${chStats[0].rate}%)`});if(chStats.length>1)ins.push({t:'warning',msg:`전환율 가장 낮은 발굴경로: ${chStats[chStats.length-1].ch} (${chStats[chStats.length-1].rate}%) — 방식 재검토 필요`});const thisM=new Date(now.getFullYear(),now.getMonth(),1);const topM=cache.profiles.map(p=>{const h=A.filter(a=>{const t=T.find(x=>x.id===a.talent_id);return t?.member===p.name&&(a.status==='합격'||a.status==='입사완료')&&new Date(a.created_at)>=thisM;}).length;return{name:p.name,h};}).sort((a,b)=>b.h-a.h)[0];if(topM?.h>0)ins.push({t:'success',msg:`이번달 입사 성과 TOP 담당자: ${topM.name} (${topM.h}명)`});if(!ins.length)ins.push({t:'success',msg:'현재 특별한 위험 신호가 없습니다 ✓'});const bg={warning:'#fef3c7',danger:'#fee2e2',success:'#d1fae5'};const tc={warning:'#b54708',danger:'#dc2626',success:'#065f46'};const ic={warning:'⚠️',danger:'🚨',success:'✅'};iEl.innerHTML=ins.map(i=>`<div style="padding:10px 12px;background:${bg[i.t]};border-radius:var(--radius-sm);margin-bottom:8px;font-size:12px;color:${tc[i.t]};line-height:1.5;">${ic[i.t]} ${i.msg}</div>`).join('');}
 }
 
 // ── 팀원 실적 ──
