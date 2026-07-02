@@ -1880,7 +1880,6 @@ async function loadAll(){
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
-    scheduleJobSearchAlert();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
