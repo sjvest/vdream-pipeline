@@ -2889,9 +2889,30 @@ function renderActions(){
   const doneEl=document.getElementById('actions-done');
   const doneCount=document.getElementById('done-count');
   if(doneEl){
+    const now=new Date();
+    const recentDone=done.filter(a=>{if(!a.due&&!a.completed_at)return true;const d=new Date(a.completed_at||a.due);return(now-d)/864e5<=7;});
+    const oldDone=done.filter(a=>{if(!a.due&&!a.completed_at)return false;const d=new Date(a.completed_at||a.due);return(now-d)/864e5>7;});
     doneCount.textContent=`총 ${done.length}건`;
-    doneEl.innerHTML=done.length?done.map(a=>ri(a,true)).join(''):'<div class="empty" style="padding:1rem 0;">완료된 액션 없음</div>';
+    doneEl.innerHTML=done.length?`
+      ${recentDone.map(a=>ri(a,true)).join('')}
+      ${oldDone.length?`
+        <div id="old-done-toggle" onclick="toggleOldDone()" style="display:flex;align-items:center;gap:6px;padding:10px 0;cursor:pointer;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:4px;">
+          <i class="ti ti-chevron-down" id="old-done-icon"></i>
+          <span>이전 완료 ${oldDone.length}건 더 보기</span>
+        </div>
+        <div id="old-done-list" style="display:none;">${oldDone.map(a=>ri(a,true)).join('')}</div>`:''}
+    `:'<div class="empty" style="padding:1rem 0;">완료된 액션 없음</div>';
   }
+}
+function toggleOldDone(){
+  const list=document.getElementById('old-done-list');
+  const icon=document.getElementById('old-done-icon');
+  const toggle=document.getElementById('old-done-toggle');
+  if(!list)return;
+  const isOpen=list.style.display!=='none';
+  list.style.display=isOpen?'none':'block';
+  if(icon)icon.style.transform=isOpen?'':'rotate(180deg)';
+  if(toggle){const span=toggle.querySelector('span');if(span)span.textContent=isOpen?`이전 완료 더 보기`:`이전 완료 접기`;}
 }
 async function toggleAction(id,done){
   const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
