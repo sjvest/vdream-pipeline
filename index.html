@@ -2882,6 +2882,31 @@ function calcHealthScore(orgId){
   score=Math.min(100,Math.max(0,score));
   return{score,details};
 }
+// 기관 기여 매출 및 성과 지표 계산
+// 반드시 ID 기준으로만 join한다 (기관명 텍스트 매칭 금지):
+//   talents.source_org_id === orgs.id
+//   candidate_applications.talent_id === talents.id
+//   candidate_applications.job_id === jobs.id (unit_price 조회용)
+function calcOrgRevenue(orgId){
+  const orgTalents=(cache.talents||[]).filter(t=>t.source_org_id===orgId);
+  const talentIds=new Set(orgTalents.map(t=>t.id));
+  const orgApps=(cache.applications||[]).filter(a=>talentIds.has(a.talent_id));
+  const now=new Date();
+  const inflowCount=orgTalents.length;
+  const availableCount=orgTalents.filter(t=>t.availability_status==='가용').length;
+  const appliedCount=orgApps.length;
+  const passedCount=orgApps.filter(a=>a.status==='합격').length;
+  const joinedCount=orgApps.filter(a=>a.status==='입사완료').length;
+  const activeCount=orgApps.filter(a=>a.status==='입사완료'&&(!a.contract_end_date||new Date(a.contract_end_date)>=now)).length;
+  const endedCount=orgApps.filter(a=>a.contract_end_date&&new Date(a.contract_end_date)<now).length;
+  const revenueApps=orgApps.filter(a=>a.status==='합격'||a.status==='입사완료');
+  const revenue=revenueApps.reduce((sum,a)=>{
+    const job=(cache.jobs||[]).find(j=>j.id===a.job_id);
+    return sum+(job?.unit_price||0);
+  },0);
+  const avgUnitPrice=revenueApps.length>0?Math.round(revenue/revenueApps.length):0;
+  return{inflowCount,availableCount,appliedCount,passedCount,joinedCount,activeCount,endedCount,revenue,avgUnitPrice};
+}
 function healthBadge(score,clickable=false){
   const emoji=score>=90?'🟢':score>=70?'🔵':score>=50?'🟡':score>=30?'🟠':'🔴';
   const color=score>=90?'#065f46':score>=70?'#1e40af':score>=50?'#b54708':score>=30?'#c2410c':'#dc2626';
@@ -5517,7 +5542,34 @@ function openOrg(id){
         <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:10px;">👥 인재풀 / 지원 현황</div>
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px;">${summaryCards}</div>
         <div id="org-tal-list-${id}">${orgTals.map(t=>renderRow(t,orgApps.find(a=>a.talent_id===t.id))).join('')||'<div style="color:var(--text3);font-size:12px;padding:8px 0;">없음</div>'}</div>
-      </div>`;
+      </div>
+      ${(()=>{
+        const rev=calcOrgRevenue(id);
+        const fmtWon=n=>n.toLocaleString('ko-KR')+'원';
+        const revCards=[
+          {label:'유입 지원자',v:rev.inflowCount,c:'var(--text)'},
+          {label:'가용 지원자',v:rev.availableCount,c:'var(--green)'},
+          {label:'채용 지원',v:rev.appliedCount,c:'var(--accent)'},
+          {label:'합격자',v:rev.passedCount,c:'var(--green)'},
+          {label:'입사완료',v:rev.joinedCount,c:'#059669'},
+          {label:'재직중',v:rev.activeCount,c:'var(--teal)'},
+          {label:'계약종료',v:rev.endedCount,c:'var(--text3)'},
+        ];
+        return`<div style="margin-top:10px;padding:12px 14px;background:#f0fdf4;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+          <div style="font-size:13px;font-weight:800;color:#059669;margin-bottom:10px;">💰 기관 기여 매출</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;">${revCards.map(c=>`<div style="text-align:center;padding:8px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);"><div style="font-size:16px;font-weight:800;color:${c.c};">${c.v}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${c.label}</div></div>`).join('')}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:140px;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+              <div style="font-size:11px;color:var(--text3);">기관 기여 매출</div>
+              <div style="font-size:18px;font-weight:800;color:#059669;margin-top:2px;">${fmtWon(rev.revenue)}</div>
+            </div>
+            <div style="flex:1;min-width:140px;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+              <div style="font-size:11px;color:var(--text3);">합격 1인당 평균 단가</div>
+              <div style="font-size:18px;font-weight:800;color:var(--accent);margin-top:2px;">${fmtWon(rev.avgUnitPrice)}</div>
+            </div>
+          </div>
+        </div>`;
+      })()}`;
     })()}
   </div>
   </div>
