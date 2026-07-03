@@ -1853,25 +1853,130 @@ function scheduleDailyTasksPopup(){
     setInterval(openTodayTasksModal,24*60*60*1000);
   },next-now);
 }
+// ===== 개별 테이블 Loader 함수 (Hybrid Loading 1단계: 함수 분리) =====
+async function loadOrgs(){
+  const {data,error}=await sb.from('orgs').select('*').order('created_at',{ascending:false});
+  if(error){
+    console.error('[Supabase Error] orgs 조회 실패:', error);
+    toast('기관 데이터 로딩 실패: '+error.message);
+  }
+  cache.orgs=data||[];
+  return {data,error};
+}
+async function loadActions(){
+  const {data,error}=await sb.from('actions').select('*').order('due',{ascending:true});
+  if(error) console.error('[Supabase Error] actions 조회 실패:', error);
+  cache.actions=data||[];
+  return {data,error};
+}
+async function loadTalents(){
+  const {data,error}=await sb.from('talents').select('*').order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] talents 조회 실패:', error);
+  cache.talents=data||[];
+  return {data,error};
+}
+async function loadLogs(){
+  const {data,error}=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false});
+  if(error) console.error('[Supabase Error] contact_logs 조회 실패:', error);
+  cache.logs=data||[];
+  return {data,error};
+}
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('id,name,role,status,status_emoji,sort_order').order('sort_order',{ascending:true});
+  if(error) console.error('[Supabase Error] profiles 조회 실패:', error);
+  cache.profiles=data||[];
+  return {data,error};
+}
+async function loadEvents(){
+  const {data,error}=await sb.from('events').select('*').order('date',{ascending:false});
+  if(error) console.error('[Supabase Error] events 조회 실패:', error);
+  cache.events=data||[];
+  return {data,error};
+}
+async function loadJobs(){
+  const {data,error}=await sb.from('jobs').select('*').order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] jobs 조회 실패:', error);
+  cache.jobs=data||[];
+  return {data,error};
+}
+async function loadCold(){
+  const {data,error}=await sb.from('cold_contacts').select('*').order('logged_at',{ascending:false});
+  if(error) console.error('[Supabase Error] cold_contacts 조회 실패:', error);
+  cache.cold=data||[];
+  return {data,error};
+}
+async function loadTeamTasks(){
+  const {data,error}=await sb.from('team_tasks').select('*').order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] team_tasks 조회 실패:', error);
+  cache.team_tasks=data||[];
+  return {data,error};
+}
+async function loadApplications(){
+  const {data,error}=await sb.from('candidate_applications').select('*').order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] candidate_applications 조회 실패:', error);
+  cache.applications=data||[];
+  return {data,error};
+}
+
+// ===== 경량/화면별 Loader 함수 (Hybrid Loading 2단계 대비 — 아직 어디서도 호출하지 않음) =====
+async function loadOrgLite(){
+  const {data,error}=await sb.from('orgs')
+    .select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at')
+    .order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] orgs(lite) 조회 실패:', error);
+  return {data,error};
+}
+async function loadActionSummary(){
+  const {data,error}=await sb.from('actions').select('*').eq('done',false).order('due',{ascending:true});
+  if(error) console.error('[Supabase Error] actions(요약) 조회 실패:', error);
+  return {data,error};
+}
+async function loadTeamTaskSummary(){
+  const {data,error}=await sb.from('team_tasks').select('*').eq('done',false).order('created_at',{ascending:false});
+  if(error) console.error('[Supabase Error] team_tasks(요약) 조회 실패:', error);
+  return {data,error};
+}
+async function loadRecentLogs(){
+  const {data,error}=await sb.from('contact_logs')
+    .select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name')
+    .order('logged_at',{ascending:false})
+    .limit(30);
+  if(error) console.error('[Supabase Error] contact_logs(최근) 조회 실패:', error);
+  return {data,error};
+}
+async function loadOrgDetail(orgId){
+  const [orgRes,logsRes,talentsRes,appsRes]=await Promise.all([
+    sb.from('orgs').select('*').eq('id',orgId).single(),
+    sb.from('contact_logs').select('*').eq('org_id',orgId).order('logged_at',{ascending:false}),
+    sb.from('talents').select('*').eq('source_org_id',orgId).order('created_at',{ascending:false}),
+    sb.from('candidate_applications').select('*').eq('org_id',orgId).order('created_at',{ascending:false}),
+  ]);
+  if(orgRes.error) console.error('[Supabase Error] org 상세 조회 실패:', orgRes.error);
+  if(logsRes.error) console.error('[Supabase Error] org 상세 logs 조회 실패:', logsRes.error);
+  if(talentsRes.error) console.error('[Supabase Error] org 상세 talents 조회 실패:', talentsRes.error);
+  if(appsRes.error) console.error('[Supabase Error] org 상세 applications 조회 실패:', appsRes.error);
+  return {org:orgRes.data,logs:logsRes.data||[],talents:talentsRes.data||[],applications:appsRes.data||[]};
+}
+async function loadAnalyticsData(){
+  const [o,t,a,j]=await Promise.all([
+    sb.from('orgs').select('*'),
+    sb.from('talents').select('*'),
+    sb.from('candidate_applications').select('*'),
+    sb.from('jobs').select('*'),
+  ]);
+  if(o.error) console.error('[Supabase Error] Analytics orgs 조회 실패:', o.error);
+  if(t.error) console.error('[Supabase Error] Analytics talents 조회 실패:', t.error);
+  if(a.error) console.error('[Supabase Error] Analytics applications 조회 실패:', a.error);
+  if(j.error) console.error('[Supabase Error] Analytics jobs 조회 실패:', j.error);
+  return {orgs:o.data||[],talents:t.data||[],applications:a.data||[],jobs:j.data||[]};
+}
+
 async function loadAll(){
   try{
-    const [o,a,t,l,p,ev,jb,cc,tt,ca]=await Promise.all([
-      sb.from('orgs').select('*').order('created_at',{ascending:false}),
-      sb.from('actions').select('*').order('due',{ascending:true}),
-      sb.from('talents').select('*').order('created_at',{ascending:false}),
-      sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}),
-      sb.from('profiles').select('id,name,role,status,status_emoji,sort_order').order('sort_order',{ascending:true}),
-      sb.from('events').select('*').order('date',{ascending:false}),
-      sb.from('jobs').select('*').order('created_at',{ascending:false}),
-      sb.from('cold_contacts').select('*').order('logged_at',{ascending:false}),
-      sb.from('team_tasks').select('*').order('created_at',{ascending:false}),
-      sb.from('candidate_applications').select('*').order('created_at',{ascending:false}),
+    await Promise.all([
+      loadOrgs(), loadActions(), loadTalents(), loadLogs(), loadProfiles(),
+      loadEvents(), loadJobs(), loadCold(), loadTeamTasks(), loadApplications()
     ]);
-    if(o.error) console.error('[Supabase Error] orgs 조회 실패:', o.error);
-    if(t.error) console.error('[Supabase Error] talents 조회 실패:', t.error);
-    if(ca.error) console.error('[Supabase Error] candidate_applications 조회 실패:', ca.error);
-    cache.orgs=o.data||[];cache.actions=a.data||[];cache.talents=t.data||[];cache.logs=l.data||[];cache.profiles=p.data||[];cache.events=ev.data||[];cache.jobs=jb.data||[];cache.cold=cc.data||[];cache.team_tasks=tt.data||[];cache.applications=ca.data||[];
-    if(o.error) toast('기관 데이터 로딩 실패: '+o.error.message);
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
