@@ -3334,6 +3334,7 @@ function renderAnalytics(){
   const inRange=d=>{if(!d)return useAll;const dt=new Date(d);return dt>=start&&dt<=end;};
   const byM=arr=>filterMember?arr.filter(x=>x.member===filterMember||x.created_by_name===filterMember):arr;
   const O=cache.orgs||[];const A=cache.applications||[];const T=cache.talents||[];
+  const allOrgs=cache.orgs||[];const allTals=cache.talents||[];const allApps=cache.applications||[];
   const todayEl=document.getElementById('an-today');
   if(todayEl){const urgents=[];O.filter(o=>o.mou_date&&Math.ceil((new Date(o.mou_date)-now)/864e5)<=3&&Math.ceil((new Date(o.mou_date)-now)/864e5)>=0).forEach(o=>urgents.push({type:'danger',label:'MOU D-'+Math.ceil((new Date(o.mou_date)-now)/864e5),text:o.name,onclick:`openOrg(${o.id})`}));O.filter(o=>o.lastcontact&&(now-new Date(o.lastcontact))/864e5>=30).slice(0,3).forEach(o=>urgents.push({type:'warning',label:'미연락 '+Math.floor((now-new Date(o.lastcontact))/864e5)+'일',text:o.name,onclick:`openOrg(${o.id})`}));A.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=14&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0).forEach(a=>{const t=T.find(x=>x.id===a.talent_id);urgents.push({type:'danger',label:'계약만료 D-'+Math.ceil((new Date(a.contract_end_date)-now)/864e5),text:t?.name||'—',onclick:''});});(cache.actions||[]).filter(a=>!a.done&&a.due&&Math.ceil((new Date(a.due)-now)/864e5)<=1).slice(0,3).forEach(a=>urgents.push({type:'warning',label:'후속액션 마감',text:a.text,onclick:`nav('actions')`}));if(!urgents.length){todayEl.style.display='none';}else{todayEl.style.display='block';todayEl.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;"><div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:8px;">⚡ 오늘 우선 처리</div><div style="display:flex;gap:8px;flex-wrap:wrap;">${urgents.map(u=>`<div onclick="${u.onclick}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:${u.type==='danger'?'#fee2e2':'#fef3c7'};border-radius:var(--radius-sm);cursor:${u.onclick?'pointer':'default'};"><span style="font-size:10px;font-weight:700;color:${u.type==='danger'?'#dc2626':'#b54708'};">${u.label}</span><span style="font-size:12px;font-weight:600;color:var(--text);">${u.text}</span></div>`).join('')}</div></div>`;}}
   const pO=byM(O.filter(o=>inRange(o.created_at)));const pL=byM((cache.logs||[]).filter(l=>inRange(l.logged_at||l.created_at)));const pM=O.filter(o=>o.stage>=4&&inRange(o.mou_date));const pT=byM(T.filter(t=>inRange(t.created_at)));const pA=A.filter(a=>inRange(a.created_at));const pH=A.filter(a=>a.status==='합격'&&inRange(a.created_at));const pJ=A.filter(a=>a.status==='입사완료'&&inRange(a.created_at));
@@ -3342,13 +3343,13 @@ function renderAnalytics(){
   const fEl=document.getElementById('an-funnel');
   if(fEl){
     const stages=[
-      {l:'발굴',icon:'ti-building',v:O.length,c:'#2563eb',bg:'#dbeafe'},
-      {l:'관계형성',icon:'ti-handshake',v:O.filter(o=>o.stage>=1).length,c:'#7c3aed',bg:'#ede9fe'},
-      {l:'미팅',icon:'ti-calendar-event',v:O.filter(o=>o.stage>=2).length,c:'#8b5cf6',bg:'#f3e8ff'},
-      {l:'MOU',icon:'ti-file-check',v:O.filter(o=>o.stage>=4).length,c:'#0d9488',bg:'#ccfbf1'},
-      {l:'지원 접수',icon:'ti-users',v:T.length,c:'#d97706',bg:'#fef3c7'},
-      {l:'합격',icon:'ti-circle-check',v:A.filter(a=>a.status==='합격').length,c:'#059669',bg:'#d1fae5'},
-      {l:'입사완료',icon:'ti-door-enter',v:A.filter(a=>a.status==='입사완료').length,c:'#047857',bg:'#a7f3d0'},
+      {l:'발굴',icon:'ti-building',v:allOrgs.length,c:'#2563eb',bg:'#dbeafe'},
+      {l:'관계형성',icon:'ti-handshake',v:allOrgs.filter(o=>o.stage>=1).length,c:'#7c3aed',bg:'#ede9fe'},
+      {l:'미팅',icon:'ti-calendar-event',v:allOrgs.filter(o=>o.stage>=2).length,c:'#8b5cf6',bg:'#f3e8ff'},
+      {l:'MOU',icon:'ti-file-check',v:allOrgs.filter(o=>o.stage>=4).length,c:'#0d9488',bg:'#ccfbf1'},
+      {l:'지원 접수',icon:'ti-users',v:allTals.length,c:'#d97706',bg:'#fef3c7'},
+      {l:'합격',icon:'ti-circle-check',v:allApps.filter(a=>a.status==='합격').length,c:'#059669',bg:'#d1fae5'},
+      {l:'입사완료',icon:'ti-door-enter',v:allApps.filter(a=>a.status==='입사완료').length,c:'#047857',bg:'#a7f3d0'},
     ];
     fEl.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+stages.map((s,i)=>{
       const prev=i>0?stages[i-1].v:null;
