@@ -5428,7 +5428,7 @@ function openOrg(id){
       <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due-time" type="time" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
-      <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})">💾 저장</button>
+      <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})">저장</button>
     </div>
     ${(()=>{
       const orgTals=cache.talents.filter(t=>(t.source_org_id||t.org_id)===id);
