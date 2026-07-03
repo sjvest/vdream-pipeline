@@ -1973,10 +1973,13 @@ async function loadAnalyticsData(){
 
 async function loadAll(){
   try{
-    await Promise.all([
-      loadOrgs(), loadActions(), loadTalents(), loadLogs(), loadProfiles(),
+    // orgs는 경량 컬럼으로 먼저 로드(빠름), 나머지 9개는 기존과 동일하게 병렬 로드
+    const [liteOrgsRes]=await Promise.all([
+      loadOrgLite(),
+      loadActions(), loadTalents(), loadLogs(), loadProfiles(),
       loadEvents(), loadJobs(), loadCold(), loadTeamTasks(), loadApplications()
     ]);
+    cache.orgs=liteOrgsRes.data||[];
     updateMemberSelects();
     updateUrgentCount();renderCurrent();
     startOrgDraftTimer();
@@ -1985,6 +1988,8 @@ async function loadAll(){
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
     setTimeout(checkContactAlert,800);
+    // 전체 orgs(memo/mou_checklist/contacts 등 무거운 필드 포함)는 백그라운드에서 마저 로드 후 교체
+    loadOrgs().then(()=>{ renderCurrent(); });
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
 function renderCurrent(){
