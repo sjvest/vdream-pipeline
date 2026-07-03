@@ -2003,26 +2003,30 @@ function dueLabel(d,due){return d<0?`D+${Math.abs(d)}`:d===0?'오늘':d<=3?`D-${
 function actionsForOrg(id){return cache.actions.filter(a=>a.org_id===id);}
 function urgentActions(){return cache.actions.filter(a=>!a.done&&dayDiff(a.due)<=3);}
 function updateUrgentCount(){const c=urgentActions().length;const el=document.getElementById('urgent-cnt');el.textContent=c;el.style.display=c?'':'none';}
-function updateNavBadges(){
+async function updateNavBadges(){
   if(!currentUser)return;
   const uid=currentUser.id;
+  // count-only 쿼리 (행 데이터 없이 개수만 조회, head:true)
   const checks={
-    orgs:{data:cache.orgs,tf:'created_at'},
-    talent:{data:cache.talents,tf:'created_at'},
-    jobs:{data:cache.jobs,tf:'created_at'},
-    cold:{data:cache.cold,tf:'logged_at'},
-    events:{data:cache.events,tf:'created_at'},
+    orgs:{table:'orgs',tf:'created_at'},
+    talent:{table:'talents',tf:'created_at'},
+    jobs:{table:'jobs',tf:'created_at'},
+    cold:{table:'cold_contacts',tf:'logged_at'},
+    events:{table:'events',tf:'created_at'},
   };
-  Object.entries(checks).forEach(([page,{data,tf}])=>{
+  await Promise.all(Object.entries(checks).map(async([page,{table,tf}])=>{
     const key=`nav-seen-${uid}-${page}`;
     const el=document.getElementById(`badge-${page}`);
     if(!el)return;
     const lastSeen=localStorage.getItem(key);
-    if(!lastSeen){const cnt=data.length;el.textContent=cnt>99?'99+':cnt;el.style.display=cnt?'':'none';return;}
-    const cnt=data.filter(x=>{const t=x[tf]||x.created_at;return t&&new Date(t)>new Date(lastSeen);}).length;
+    let query=sb.from(table).select('*',{count:'exact',head:true});
+    if(lastSeen) query=query.gt(tf,new Date(lastSeen).toISOString());
+    const {count,error}=await query;
+    if(error){console.error(`[Supabase Error] ${table} 배지 카운트 조회 실패:`,error);return;}
+    const cnt=count||0;
     el.textContent=cnt>99?'99+':cnt;
     el.style.display=cnt?'':'none';
-  });
+  }));
 }
 function markPageSeen(page){
   if(!currentUser)return;
