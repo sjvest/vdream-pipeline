@@ -731,34 +731,19 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-actions" class="page">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">후속 액션</div><div class="page-sub">미팅 후 해야 할 일 · MOU 준비 · 마감일 추적</div></div>
+    <div style="position:relative;">
+      <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i>
+      <input id="action-search" placeholder="기관명 / 내용 검색" oninput="renderActions()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:200px;">
+    </div>
   </div>
-
-  <!-- MOU 준비 섹션 -->
   <div id="mou-section" style="margin-bottom:16px;display:none;">
     <div class="card">
       <div class="card-header" style="color:var(--teal);"><i class="ti ti-writing"></i>MOU 준비 현황 <span id="mou-org-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
       <div class="card-body" id="mou-orgs-list"></div>
     </div>
   </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-    <div>
-      <div class="card" style="margin-bottom:14px;">
-        <div class="card-header" style="color:var(--red)"><i class="ti ti-alert-circle"></i>마감 초과 / D-3 이내</div>
-        <div class="card-body" style="padding:0 16px;" id="actions-urgent"><div class="loading"><div class="spin"></div></div></div>
-      </div>
-      <div class="card">
-        <div class="card-header" style="color:var(--text2)"><i class="ti ti-list-check"></i>전체 미완료</div>
-        <div class="card-body" style="padding:0 16px;" id="actions-all"><div class="loading"><div class="spin"></div></div></div>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="card-header" style="color:var(--green)"><i class="ti ti-circle-check"></i>완료된 액션 <span id="done-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
-        <div class="card-body" style="padding:0 16px;" id="actions-done"><div class="loading"><div class="spin"></div></div></div>
-      </div>
-    </div>
-  </div>
+  <div id="action-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:16px;"></div>
+  <div id="action-inbox"></div>
 </div>
 
 <!-- 인재 영입 -->
@@ -2861,94 +2846,58 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
 
 // ── 후속 액션 ──
 function renderActions(){
-  // MOU 준비 섹션
   const mouOrgs=cache.orgs.filter(o=>o.stage===4);
-  const mouSection=document.getElementById('mou-section');
-  const mouList=document.getElementById('mou-orgs-list');
-  const mouCount=document.getElementById('mou-org-count');
-  if(mouSection&&mouList){
-    if(mouOrgs.length){
-      mouSection.style.display='block';
-      mouCount.textContent=`${mouOrgs.length}개 기관`;
-      mouList.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
-        ${mouOrgs.map(o=>{
-          const checklist=o.mou_checklist||{};
-          const allItems=getMouAllItems(checklist);
-          const done=allItems.filter(i=>checklist[i.id]).length;
-          const total=allItems.length;
-          const pct=Math.round(done/total*100);
-          const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-new Date())/864e5):null;
-          const dDayLabel=mouDays===null?'예정일 미설정':mouDays<0?`D+${Math.abs(mouDays)} 초과`:mouDays===0?'오늘!':mouDays<=7?`🚨 D-${mouDays}`:`D-${mouDays}`;
-          const dDayColor=mouDays===null?'var(--text3)':mouDays<0?'var(--red)':mouDays<=7?'var(--red)':'var(--accent)';
-          return`<div onclick="openMouDetail(${o.id})" style="border:1.5px solid ${pct===100?'var(--green)':'var(--teal)'};border-radius:var(--radius);padding:16px;cursor:pointer;background:${pct===100?'var(--green-bg)':'var(--teal-bg)'};transition:all .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-              <div style="font-size:14px;font-weight:800;">${o.name}</div>
-              <div style="font-size:13px;font-weight:800;color:${dDayColor};">${dDayLabel}</div>
-            </div>
-            ${o.mou_date?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">예정일: ${fDate(o.mou_date)}</div>`:''}
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <div style="flex:1;background:rgba(255,255,255,.6);border-radius:20px;height:8px;overflow:hidden;">
-                <div style="width:${pct}%;height:100%;background:${pct===100?'var(--green)':'var(--teal)'};border-radius:20px;transition:width .3s;"></div>
-              </div>
-              <span style="font-size:12px;font-weight:800;color:${pct===100?'var(--green)':'var(--teal)'};">${done}/${total}</span>
-            </div>
-            <div style="font-size:11px;color:var(--text3);">체크리스트 ${pct}% 완료 · 클릭해서 확인</div>
-          </div>`;
-        }).join('')}
-      </div>`;
-    } else {
-      mouSection.style.display='none';
-    }
-  }
-
-  const all=cache.actions.map(a=>{const o=cache.orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff);
-  const urgent=all.filter(a=>!a.done&&a.diff<=3);
-  const rest=all.filter(a=>!a.done&&a.diff>3);
+  const mouSection=document.getElementById('mou-section');const mouList=document.getElementById('mou-orgs-list');const mouCount=document.getElementById('mou-org-count');
+  if(mouSection&&mouList){if(mouOrgs.length){mouSection.style.display='block';mouCount.textContent=`${mouOrgs.length}개 기관`;mouList.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">${mouOrgs.map(o=>{const checklist=o.mou_checklist||{};const allItems=getMouAllItems(checklist);const dn=allItems.filter(i=>checklist[i.id]).length;const total=allItems.length;const pct=Math.round(dn/total*100);const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-new Date())/864e5):null;const dDayLabel=mouDays===null?'예정일 미설정':mouDays<0?`D+${Math.abs(mouDays)} 초과`:mouDays===0?'오늘!':mouDays<=7?`D-${mouDays}`:`D-${mouDays}`;const dDayColor=mouDays===null?'var(--text3)':mouDays<0?'var(--red)':mouDays<=7?'var(--red)':'var(--accent)';return`<div onclick="openMouDetail(${o.id})" style="border:1.5px solid ${pct===100?'var(--green)':'var(--teal)'};border-radius:var(--radius);padding:16px;cursor:pointer;background:${pct===100?'var(--green-bg)':'var(--teal-bg)'};" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;"><div style="font-size:14px;font-weight:800;">${o.name}</div><div style="font-size:13px;font-weight:800;color:${dDayColor};">${dDayLabel}</div></div>${o.mou_date?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">예정일: ${fDate(o.mou_date)}</div>`:''}<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="flex:1;background:rgba(255,255,255,.6);border-radius:20px;height:8px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${pct===100?'var(--green)':'var(--teal)'};border-radius:20px;"></div></div><span style="font-size:12px;font-weight:800;color:${pct===100?'var(--green)':'var(--teal)'};">${dn}/${total}</span></div><div style="font-size:11px;color:var(--text3);">체크리스트 ${pct}% 완료</div></div>`;}).join('')}</div>`;}else{mouSection.style.display='none';}}
+  const kw=(document.getElementById('action-search')?.value||'').toLowerCase();
+  const now=new Date();
+  const all=cache.actions.map(a=>{const o=cache.orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).filter(a=>{if(!kw)return true;return(a.orgName||'').toLowerCase().includes(kw)||(a.text||'').toLowerCase().includes(kw);}).sort((a,b)=>a.diff-b.diff);
+  const undone=all.filter(a=>!a.done);
   const done=all.filter(a=>a.done).sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
-
-  const ri=(a,isDone=false)=>`
-    <div class="action-item" style="${isDone?'opacity:.7':''}overflow:visible;">
-      <div class="action-cb ${a.done?'done':''}" onclick="toggleAction(${a.id},${a.done})">
-        ${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+  const sumEl=document.getElementById('action-summary');
+  if(sumEl){const kpis=[{label:'전체 미완료',val:undone.length,c:'var(--text)'},{label:'기한 초과',val:undone.filter(a=>a.diff<0).length,c:'var(--red)'},{label:'오늘 마감',val:undone.filter(a=>a.diff===0).length,c:'var(--red)'},{label:'D-3 이내',val:undone.filter(a=>a.diff>0&&a.diff<=3).length,c:'var(--amber)'},{label:'완료',val:done.length,c:'var(--green)'}];sumEl.innerHTML=kpis.map(k=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:800;color:${k.c};">${k.val}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${k.label}</div></div>`).join('');}
+  const ri=(a,isDone=false)=>`<div class="action-item" style="${isDone?'opacity:.65;':''}">
+    <div class="action-cb ${a.done?'done':''}" onclick="event.stopPropagation();toggleAction(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
+    <div style="flex:1;min-width:0;">
+      <div class="action-text ${a.done?'done':''}" style="margin-bottom:3px;">${a.text}</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text3);">
+        <span style="font-weight:600;color:var(--text2);">${a.orgName}</span>
+        ${a.created_by_name?`<span style="color:var(--accent);">${a.created_by_name}</span>`:''}
+        ${isDone&&a.completed_by_name?`<span style="color:var(--green);">완료: ${a.completed_by_name}</span>`:''}
+        ${!isDone&&a.due?`<span class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}${a.due_time?' · '+a.due_time:''}</span>`:''}
+        ${!isDone&&a.due?`<span onclick="event.stopPropagation();openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}','${a.due_time||''}')" style="font-size:11px;color:#4285f4;cursor:pointer;">캘린더</span>`:''}
       </div>
-      <div style="flex:1;">
-        <div class="action-text ${a.done?'done':''}">${a.text}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.orgName}${isDone&&a.due?` · <span style="color:var(--green);font-weight:600;">${fDate(a.due)}</span>`:''}${isDone?(a.created_by_name?` · <span style="color:var(--accent);font-weight:600;">${a.created_by_name}</span>`:'')+(a.completed_by_name?` · <span style="color:var(--green);font-weight:600;">✓ ${a.completed_by_name}</span>`:''):(a.created_by_name||a.member)?` · <span style="color:var(--accent);font-weight:600;">등록: ${a.created_by_name||a.member}</span>`:''}${!isDone&&a.due?` <span onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}','${a.due_time||''}') " style="font-size:11px;color:#4285f4;cursor:pointer;margin-left:6px;" title="구글 캘린더에 추가">📅 캘린더</span>`:''}</div>
-      </div>
-      ${!isDone?`<div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}${a.due_time?' · '+a.due_time:''}</div>`:''}
-    </div>`;
-
-  document.getElementById('actions-urgent').innerHTML=urgent.length?urgent.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">마감 임박 없음 ✓</div>';
-  document.getElementById('actions-all').innerHTML=rest.length?rest.map(a=>ri(a)).join(''):'<div class="empty" style="padding:1rem 0;">없음</div>';
-
-  // 완료된 액션
-  const doneEl=document.getElementById('actions-done');
-  const doneCount=document.getElementById('done-count');
-  if(doneEl){
-    const now=new Date();
-    const recentDone=done.filter(a=>{if(!a.due&&!a.completed_at)return true;const d=new Date(a.completed_at||a.due);return(now-d)/864e5<=7;});
-    const oldDone=done.filter(a=>{if(!a.due&&!a.completed_at)return false;const d=new Date(a.completed_at||a.due);return(now-d)/864e5>7;});
-    doneCount.textContent=`총 ${done.length}건`;
-    doneEl.innerHTML=done.length?`
-      ${recentDone.map(a=>ri(a,true)).join('')}
-      ${oldDone.length?`
-        <div id="old-done-toggle" onclick="toggleOldDone()" style="display:flex;align-items:center;gap:6px;padding:10px 0;cursor:pointer;color:var(--text3);font-size:12px;border-top:1px solid var(--border);margin-top:4px;">
-          <i class="ti ti-chevron-down" id="old-done-icon"></i>
-          <span>이전 완료 ${oldDone.length}건 더 보기</span>
-        </div>
-        <div id="old-done-list" style="display:none;">${oldDone.map(a=>ri(a,true)).join('')}</div>`:''}
-    `:'<div class="empty" style="padding:1rem 0;">완료된 액션 없음</div>';
-  }
+    </div>
+  </div>`;
+  const groups=[
+    {key:'overdue',label:'기한 초과',color:'var(--red)',items:undone.filter(a=>a.diff<0),open:true},
+    {key:'today',label:'오늘',color:'var(--accent)',items:undone.filter(a=>a.diff===0),open:true},
+    {key:'d3',label:'D-3 이내',color:'var(--amber)',items:undone.filter(a=>a.diff>0&&a.diff<=3),open:true},
+    {key:'upcoming',label:'예정',color:'var(--text3)',items:undone.filter(a=>a.diff>3),open:false},
+    {key:'done',label:'완료',color:'var(--green)',items:done,open:false,isDone:true},
+  ].filter(g=>g.items.length>0);
+  const inboxEl=document.getElementById('action-inbox');
+  if(!groups.length){inboxEl.innerHTML='<div class="empty" style="padding:3rem 0;">모든 액션 완료</div>';return;}
+  inboxEl.innerHTML=groups.map(g=>`<div style="margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+    <div onclick="toggleActionGroup('${g.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);cursor:pointer;user-select:none;">
+      <span style="font-size:13px;font-weight:700;color:${g.color};">${g.label} <span style="font-size:12px;font-weight:400;color:var(--text3);">(${g.items.length}건)</span></span>
+      <i class="ti ti-chevron-${g.open?'down':'right'}" id="action-icon-${g.key}" style="color:var(--text3);font-size:14px;"></i>
+    </div>
+    <div id="action-group-${g.key}" style="display:${g.open?'block':'none'};padding:0 4px;">${g.items.map(a=>ri(a,g.isDone||false)).join('')}</div>
+  </div>`).join('');
+}
+function toggleActionGroup(key){
+  const el=document.getElementById('action-group-'+key);const ic=document.getElementById('action-icon-'+key);
+  if(!el)return;const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  if(ic)ic.className=`ti ti-chevron-${open?'right':'down'}`;
 }
 function toggleOldDone(){
-  const list=document.getElementById('old-done-list');
-  const icon=document.getElementById('old-done-icon');
-  const toggle=document.getElementById('old-done-toggle');
-  if(!list)return;
-  const isOpen=list.style.display!=='none';
+  const list=document.getElementById('old-done-list');const icon=document.getElementById('old-done-icon');const toggle=document.getElementById('old-done-toggle');
+  if(!list)return;const isOpen=list.style.display!=='none';
   list.style.display=isOpen?'none':'block';
   if(icon)icon.style.transform=isOpen?'':'rotate(180deg)';
-  if(toggle){const span=toggle.querySelector('span');if(span)span.textContent=isOpen?`이전 완료 더 보기`:`이전 완료 접기`;}
+  if(toggle){const span=toggle.querySelector('span');if(span)span.textContent=isOpen?'이전 완료 더 보기':'이전 완료 접기';}
 }
 async function toggleAction(id,done){
   const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
