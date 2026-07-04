@@ -5351,9 +5351,21 @@ function clearOrgForm(){
 }
 
 // ── 기관 상세 모달 ──
-function openOrg(id){
-  const o=cache.orgs.find(x=>x.id===id);if(!o)return;
+async function openOrg(id){
   currentOrgId=id;
+  // 모달을 먼저 열고 로딩 스켈레톤 표시 (체감 지연 최소화)
+  const cachedOrg=cache.orgs.find(x=>x.id===id);
+  document.getElementById('m-title').textContent=cachedOrg?.name||'로딩 중...';
+  document.getElementById('m-body').innerHTML='<div style="padding:60px 20px;text-align:center;color:var(--text3);font-size:13px;">불러오는 중...</div>';
+  document.getElementById('modal').querySelector('.modal').classList.add('modal-org');
+  document.getElementById('modal').style.display='flex';
+  // 해당 기관의 최신 전체 데이터 조회 (Hybrid Loading으로 인한 경량 캐시 필드 누락 방지)
+  const detail=await loadOrgDetail(id);
+  const o=detail.org||cachedOrg;
+  if(!o){toast('기관 정보를 불러오지 못했습니다.');closeModal();return;}
+  // 전역 캐시도 최신 값으로 갱신 (다른 화면에서도 정확한 값 사용하도록)
+  const idx=cache.orgs.findIndex(x=>x.id===id);
+  if(idx>=0)cache.orgs[idx]=o;else cache.orgs.push(o);
   const now=new Date();
   const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
   const oa=actionsForOrg(id);
