@@ -773,7 +773,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div style="padding:16px 20px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-sm);">
       <span style="font-size:12px;font-weight:700;color:var(--text3);">현재 단계</span>
-      <select id="drawer-status" onchange="updateDrawerStatus()" style="flex:1;font-size:13px;font-weight:700;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option>인재풀</option><option>지원접수</option><option>서류검토</option><option>면접예정</option><option>대기</option><option>합격</option><option>불합격</option><option>입사완료</option><option>재직</option><option>계약만료예정</option><option>계약종료</option><option>재계약완료</option></select>
+      <select id="drawer-status" onchange="updateDrawerStatus()" style="flex:1;font-size:13px;font-weight:700;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option>인재등록</option><option>채용지원</option><option>서류검토</option><option>면접예정</option><option>대기</option><option>합격</option><option>불합격</option><option>입사완료</option><option>재직</option><option>계약만료예정</option><option>계약종료</option><option>재계약완료</option></select>
     </div>
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px;">
       <button onclick="switchDrawerTab('info')" id="dtab-info" style="font-size:12px;font-weight:700;padding:7px 14px;border:none;background:none;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">기본정보</button>
@@ -1620,10 +1620,10 @@ const STAGE_BGS=['#f1efe8','#eef2fd','#f3effe','#fdf3e3','#e6f5f4','#e8f5ef','#d
 const MEMBERS=['김지현','박서준','이수민','최예진','정현우'];
 // ── 지원자 상태값 공식 목록 (2026-07-04 결정) ──
 // 신규 저장은 반드시 이 12개 값 중 하나만 사용한다. "입사"/"인재풀 등록" 등은 UI 문구로만 쓰고 DB엔 저장하지 않는다.
-const OFFICIAL_STATUSES=['인재풀','지원접수','서류검토','면접예정','대기','합격','불합격','입사완료','재직','계약만료예정','계약종료','재계약완료'];
+const OFFICIAL_STATUSES=['인재등록','채용지원','서류검토','면접예정','대기','합격','불합격','입사완료','재직','계약만료예정','계약종료','재계약완료'];
 const STATUS_META={
-  인재풀:{hex:'#7c3aed',bg:'#ede9fe',cls:'b-purple'},
-  지원접수:{hex:'#2563eb',bg:'#dbeafe',cls:'b-blue'},
+  인재등록:{hex:'#7c3aed',bg:'#ede9fe',cls:'b-purple'},
+  채용지원:{hex:'#2563eb',bg:'#dbeafe',cls:'b-blue'},
   서류검토:{hex:'#d97706',bg:'#fef3c7',cls:'b-amber'},
   면접예정:{hex:'#ea580c',bg:'#ffedd5',cls:'b-amber'},
   대기:{hex:'#6b7280',bg:'#f3f4f6',cls:'b-gray'},
@@ -3130,7 +3130,7 @@ function renderTalent(){
   const fStatus=document.getElementById('talent-filter-status')?.value||'';
   const STAGE_COLOR=Object.fromEntries(OFFICIAL_STATUSES.map(s=>[s,STATUS_META[s].hex]));
   const STAGE_BG=Object.fromEntries(OFFICIAL_STATUSES.map(s=>[s,STATUS_META[s].bg]));
-  const stageBadge=s=>`<span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:${STAGE_BG[s]||'#f3f4f6'};color:${STAGE_COLOR[s]||'#6b7280'};">${s||'인재풀'}</span>`;
+  const stageBadge=s=>`<span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:${STAGE_BG[s]||'#f3f4f6'};color:${STAGE_COLOR[s]||'#6b7280'};">${s||'인재등록'}</span>`;
   let filtered=[...tals];
   if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw);});
   if(fOrg)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return org?.name===fOrg;});
@@ -3141,7 +3141,7 @@ function renderTalent(){
   const thead=document.getElementById('talent-thead');const tbody=document.getElementById('talent-tbody');
   if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" class="empty">해당 인재 없음</td></tr>';return;}
-  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재풀';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');
+  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');
 }
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderTalent();}
 let currentDrawerTalentId=null;
@@ -3150,13 +3150,13 @@ function openTalentDrawer(talentId){
   const t=cache.talents.find(x=>x.id===talentId);if(!t)return;
   const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
   const apps=(cache.applications||[]).filter(a=>a.talent_id===talentId);
-  const status=apps[0]?.status||t.status||'인재풀';
+  const status=apps[0]?.status||t.status||'인재등록';
   document.getElementById('drawer-name').textContent=t.name;
   document.getElementById('drawer-sub').textContent=`${org?.name||'—'} · ${t.job||'직무 미입력'} · ${t.member||'담당자 미배정'}`;
   document.getElementById('drawer-status').value=status;
   document.getElementById('talent-drawer').style.display='block';
   document.getElementById('talent-drawer-overlay').style.display='block';
-  switchDrawerTab('info');
+  switchDrawerTab('history');
 }
 function closeTalentDrawer(){document.getElementById('talent-drawer').style.display='none';document.getElementById('talent-drawer-overlay').style.display='none';currentDrawerTalentId=null;}
 function switchDrawerTab(tab){
@@ -3347,7 +3347,7 @@ function renderTalentForms(){
         <div class="fg"><label>장애등급</label><select id="t-disgrade-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>중증</option><option>경증</option></select></div>
         <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>지원일</label><div style="display:flex;gap:6px;align-items:center;"><input type="date" id="t-date-${i}" style="flex:1;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"><label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="t-date-est-${i}"> 추정일</label></div></div>
-        <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재풀</option><option>지원접수</option><option>서류검토</option><option>면접예정</option><option>대기</option><option>합격</option><option>불합격</option><option>입사완료</option><option>재직</option><option>계약만료예정</option><option>계약종료</option><option>재계약완료</option></select></div>
+        <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재등록</option><option>채용지원</option><option>서류검토</option><option>면접예정</option><option>대기</option><option>합격</option><option>불합격</option><option>입사완료</option><option>재직</option><option>계약만료예정</option><option>계약종료</option><option>재계약완료</option></select></div>
         <div class="fg"><label>입사 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="실제 입사 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>입사일</label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>대기자 여부</label><div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><input type="checkbox" id="t-waitlist-${i}" style="width:16px;height:16px;cursor:pointer;"><label for="t-waitlist-${i}" style="font-size:13px;cursor:pointer;color:var(--text2);">대기자로 등록</label></div></div>
@@ -3389,10 +3389,10 @@ async function saveTalent(){
   const {data,error}=await sb.from('talents').insert(rows).select();
   if(error){toast('오류: '+error.message);return;}
   data.forEach(d=>cache.talents.unshift(d));
-  // 상태가 '인재풀'이 아닌 경우에만 candidate_applications 자동 생성 (2026-07-04 결정)
+  // 상태가 '인재등록'이 아닌 경우에만 candidate_applications 자동 생성 (2026-07-04 결정)
   const appRows=[];
   data.forEach((d,i)=>{
-    if(d.status&&d.status!=='인재풀'){
+    if(d.status&&d.status!=='인재등록'){
       appRows.push({
         talent_id:d.id,
         org_id:d.org_id||null,
@@ -5853,10 +5853,14 @@ async function addThread(logId,orgId){
   const log=cache.logs.find(l=>l.id===logId);
   if(!log)return;
   const threads=Array.isArray(log.threads)?[...log.threads]:[];
-  threads.push({content,date:today(),by:currentProfile&&currentProfile.name||''});
+  const threadDate=today();
+  threads.push({content,date:threadDate,by:currentProfile&&currentProfile.name||''});
   const{error}=await sb.from('contact_logs').update({threads}).eq('id',logId);
   if(error){toast('오류: '+error.message);return;}
   log.threads=threads;
+  // 스레드 추가도 "연락"으로 간주 → orgs.lastcontact 갱신 (신규 로그 작성과 동일한 처리)
+  await sb.from('orgs').update({lastcontact:threadDate}).eq('id',orgId);
+  const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=threadDate;
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
   toast('추가 상담 내용 저장됨 ✓');
