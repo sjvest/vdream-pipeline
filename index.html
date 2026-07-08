@@ -2030,6 +2030,13 @@ async function renderCurrent(){
 // 유틸
 function dayDiff(d){if(!d)return 9999;const n=new Date();n.setHours(0,0,0,0);return Math.ceil((new Date(d)-n)/864e5);}
 function fDate(d){if(!d)return'—';return d.slice(0,10).replace(/-/g,'.');}
+// 로컬(KST) 기준으로 YYYY-MM-DD를 뽑는 헬퍼. toISOString()은 UTC 변환 시 자정 근처 날짜가
+// 하루 밀리는 버그가 있어(예: KST 00:00 → UTC 전날 15:00) 이걸 대신 사용한다.
+// (2026-07-06: Analytics 기간버튼에 우선 적용. today()를 포함한 나머지 8곳은 추후 일괄 정리 예정)
+function toLocalDateStr(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function today(){return new Date().toISOString().slice(0,10);}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function dueClass(d){return d<0?'due-over':d<=3?'due-soon':'due-ok';}
@@ -3372,7 +3379,7 @@ async function saveTalent(){
     const name=document.getElementById(`t-name-${i}`).value.trim();
     if(!name){toast(`${i+1}번째 지원자명을 입력하세요`);return;}
     rows.push({
-      name,org_id:orgId||null,channel,referrer:referrer||null,
+      name,org_id:orgId||null,source_org_id:orgId||null,channel,referrer:referrer||null,
       job:document.getElementById(`t-job-${i}`).value.trim(),
       member,
       date:document.getElementById(`t-date-${i}`).value||null,
@@ -3612,8 +3619,8 @@ function setAnalyticsPeriod(type){
   if(type!=='custom'){
     const s=document.getElementById('an-start');
     const e=document.getElementById('an-end');
-    if(s)s.value=start.toISOString().slice(0,10);
-    if(e)e.value=end.toISOString().slice(0,10);
+    if(s)s.value=toLocalDateStr(start);
+    if(e)e.value=toLocalDateStr(end);
   }
   const fmt=d=>d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
   const lbl=document.getElementById('an-period-label');
