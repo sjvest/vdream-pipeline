@@ -779,6 +779,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <button onclick="switchDrawerTab('info')" id="dtab-info" style="font-size:12px;font-weight:700;padding:7px 14px;border:none;background:none;cursor:pointer;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;">기본정보</button>
       <button onclick="switchDrawerTab('history')" id="dtab-history" style="font-size:12px;font-weight:600;padding:7px 14px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">지원이력</button>
       <button onclick="switchDrawerTab('memo')" id="dtab-memo" style="font-size:12px;font-weight:600;padding:7px 14px;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;">메모</button>
+      <button onclick="toggleDrawerInfoEdit()" style="margin-left:auto;background:none;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text2);padding:5px 12px;">수정</button>
     </div>
     <div id="drawer-content"></div>
   </div>
@@ -3152,8 +3153,10 @@ function renderTalent(){
 }
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderTalent();}
 let currentDrawerTalentId=null;
+let drawerInfoEditMode=false;
 function openTalentDrawer(talentId){
   currentDrawerTalentId=talentId;
+  drawerInfoEditMode=false;
   const t=cache.talents.find(x=>x.id===talentId);if(!t)return;
   const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
   const apps=(cache.applications||[]).filter(a=>a.talent_id===talentId);
@@ -3172,7 +3175,36 @@ function switchDrawerTab(tab){
   const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
   const apps=(cache.applications||[]).filter(a=>a.talent_id===t.id);
   const el=document.getElementById('drawer-content');
-  if(tab==='info'){el.innerHTML=`<div style="display:grid;gap:0;">${[{l:'이름',v:t.name},{l:'전화번호',v:t.phone||'—'},{l:'생년월일',v:t.birth_date?fDate(t.birth_date):'—'},{l:'장애유형',v:t.disability_type||'—'},{l:'장애등급',v:t.disability_grade||'—'},{l:'가용여부',v:t.availability_status||'가용'},{l:'유입기관',v:org?.name||'—'},{l:'채널',v:t.channel||'—'},{l:'직무',v:t.job||'—'},{l:'담당자',v:t.member||'—'},{l:'등록일',v:t.created_at?fDate(t.created_at.slice(0,10)):'—'}].map(r=>`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);min-width:80px;flex-shrink:0;">${r.l}</span><span style="font-size:12px;color:var(--text);font-weight:500;">${r.v}</span></div>`).join('')}</div>`;}
+  if(tab==='info'){
+    if(!drawerInfoEditMode){
+      el.innerHTML=`<div style="display:grid;gap:0;">${[{l:'이름',v:t.name},{l:'전화번호',v:t.phone||'—'},{l:'생년월일',v:t.birth_date?fDate(t.birth_date):'—'},{l:'장애유형',v:t.disability_type||'—'},{l:'장애등급',v:t.disability_grade||'—'},{l:'가용여부',v:t.availability_status||'가용'},{l:'유입기관',v:org?.name||'—'},{l:'채널',v:t.channel||'—'},{l:'직무',v:t.job||'—'},{l:'담당자',v:t.member||'—'},{l:'등록일',v:t.created_at?fDate(t.created_at.slice(0,10)):'—'}].map(r=>`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);min-width:80px;flex-shrink:0;">${r.l}</span><span style="font-size:12px;color:var(--text);font-weight:500;">${r.v}</span></div>`).join('')}</div>`;
+    }else{
+      const disTypes=['','지체','뇌병변','시각','청각','언어','지적','자폐성','정신','신장','심장','호흡기','간','안면','장루·요루','뇌전증'];
+      const memberOpts='<option value="">선택</option>'+cache.profiles.map(p=>`<option ${p.name===t.member?'selected':''}>${p.name}</option>`).join('');
+      el.innerHTML=`<div style="display:grid;gap:10px;">
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">이름</label><input type="text" id="di-name" value="${t.name||''}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">전화번호</label><input type="text" id="di-phone" value="${t.phone||''}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg" style="position:relative;">
+          <label style="font-size:11px;color:var(--text3);">유입기관</label>
+          <input type="text" id="di-org-search" value="${org?.name||''}" placeholder="기관명 검색" autocomplete="off"
+            oninput="searchDrawerOrg(this.value)" onfocus="searchDrawerOrg(this.value)"
+            style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+          <input type="hidden" id="di-org-id" value="${org?.id||''}">
+          <div id="di-org-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px;">⚠️ 변경 시 지원이력·기관 기여 지표도 새 기관 기준으로 재계산됩니다</div>
+        </div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">생년월일</label><input type="date" id="di-birthdate" value="${t.birth_date||''}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">장애유형</label><select id="di-distype" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">${disTypes.map(d=>`<option ${d===(t.disability_type||'')?'selected':''}>${d||'선택'}</option>`).join('')}</select></div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">장애등급</label><select id="di-disgrade" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="" ${!t.disability_grade?'selected':''}>선택</option><option ${t.disability_grade==='중증'?'selected':''}>중증</option><option ${t.disability_grade==='경증'?'selected':''}>경증</option></select></div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">직무</label><input type="text" id="di-job" value="${t.job||''}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label style="font-size:11px;color:var(--text3);">담당자</label><select id="di-member" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">${memberOpts}</select></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button onclick="saveTalentBasicInfo()" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;">저장</button>
+          <button onclick="toggleDrawerInfoEdit()" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;">취소</button>
+        </div>
+      </div>`;
+    }
+  }
   else if(tab==='history'){
     const latestApp=apps[0]||null;
     // [실제 진행 이력] — applied_date/pass_date/join_date/rejected_at 기준, 없으면 created_at fallback(등록일 기준 라벨)
@@ -3207,24 +3239,125 @@ function switchDrawerTab(tab){
   }
   else{el.innerHTML=`<textarea id="drawer-memo-text" style="width:100%;min-height:200px;font-size:13px;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);resize:vertical;box-sizing:border-box;">${t.memo||''}</textarea><button onclick="saveDrawerMemo()" class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;justify-content:center;">메모 저장</button>`;}
 }
+function toggleDrawerInfoEdit(){drawerInfoEditMode=!drawerInfoEditMode;switchDrawerTab('info');}
+function searchDrawerOrg(q){
+  const dd=document.getElementById('di-org-dropdown');if(!dd)return;
+  const results=cache.orgs.filter(o=>o.name.includes(q)).slice(0,10);
+  if(!q){dd.style.display='none';return;}
+  dd.style.display='block';
+  dd.innerHTML=results.length?results.map(o=>`
+    <div onclick="selectDrawerOrg(${o.id},'${o.name.replace(/'/g,"\\'")}')"
+      style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      ${o.name} <span style="font-size:11px;color:var(--text3);">${o.cat||''}</span>
+    </div>`).join('')
+    :`<div style="padding:9px 12px;font-size:12px;color:var(--text3);">검색 결과 없음</div>`;
+}
+function selectDrawerOrg(id,name){
+  document.getElementById('di-org-id').value=id;
+  document.getElementById('di-org-search').value=name;
+  document.getElementById('di-org-dropdown').style.display='none';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#di-org-search')&&!e.target.closest('#di-org-dropdown')){
+    const dd=document.getElementById('di-org-dropdown');if(dd)dd.style.display='none';
+  }
+});
+async function saveTalentBasicInfo(){
+  if(!currentDrawerTalentId)return;
+  const t=cache.talents.find(x=>x.id===currentDrawerTalentId);if(!t)return;
+  const payload={
+    name:document.getElementById('di-name')?.value.trim(),
+    phone:document.getElementById('di-phone')?.value.trim()||null,
+    birth_date:document.getElementById('di-birthdate')?.value||null,
+    disability_type:document.getElementById('di-distype')?.value||null,
+    disability_grade:document.getElementById('di-disgrade')?.value||null,
+    job:document.getElementById('di-job')?.value.trim()||null,
+    member:document.getElementById('di-member')?.value||null,
+  };
+  if(!payload.name){toast('이름을 입력해주세요');return;}
+
+  const currentOrgId=t.source_org_id||t.org_id||null;
+  const newOrgIdRaw=document.getElementById('di-org-id')?.value;
+  const newOrgId=newOrgIdRaw?Number(newOrgIdRaw):null;
+  const orgChanged=newOrgId&&newOrgId!==currentOrgId;
+  let orgReconnected=false;
+  if(orgChanged){
+    const ok=confirm('유입기관을 변경하면 해당 인재의 지원이력과 기관 기여 지표도 새 기관 기준으로 재계산됩니다.\n\n계속하시겠습니까?');
+    if(ok){
+      payload.source_org_id=newOrgId;
+      payload.org_id=newOrgId;
+      orgReconnected=true;
+    }
+  }
+
+  const{error}=await sb.from('talents').update(payload).eq('id',currentDrawerTalentId);
+  if(error){toast('오류: '+error.message);return;}
+  Object.assign(t,payload);
+
+  if(orgReconnected){
+    const apps=(cache.applications||[]).filter(a=>a.talent_id===currentDrawerTalentId);
+    if(apps.length){
+      const ids=apps.map(a=>a.id);
+      const{error:appErr}=await sb.from('candidate_applications').update({org_id:newOrgId}).in('id',ids);
+      if(appErr)console.error('[Supabase Error] candidate_applications.org_id 재연결 실패:',appErr);
+      else apps.forEach(a=>a.org_id=newOrgId);
+    }
+  }
+
+  toast(orgChanged&&!orgReconnected?'기본정보 저장됨 (유입기관 변경은 취소됨)':'기본정보 저장됨');
+  drawerInfoEditMode=false;
+  document.getElementById('drawer-name').textContent=payload.name;
+  const org2=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
+  document.getElementById('drawer-sub').textContent=`${org2?.name||'—'} · ${payload.job||'직무 미입력'} · ${payload.member||'담당자 미배정'}`;
+  switchDrawerTab('info');
+  renderTalent();
+}
+// 상태 변경 시 자동으로 채울 날짜 필드 매핑 (2026-07-08 결정)
+const DATE_FIELD_BY_STATUS={채용지원:'applied_date',합격:'pass_date',입사완료:'join_date',재직:'join_date',불합격:'rejected_at'};
 async function updateDrawerStatus(){
   if(!currentDrawerTalentId)return;
   const status=document.getElementById('drawer-status')?.value;if(!status)return;
   const t=cache.talents.find(x=>x.id===currentDrawerTalentId);if(!t)return;
   const apps=(cache.applications||[]).filter(a=>a.talent_id===currentDrawerTalentId);
+  const dateField=DATE_FIELD_BY_STATUS[status];
+  const todayStr=today();
+
   if(apps.length){
-    // 지원이력이 있으면 candidate_applications.status를 갱신 (화면 표시 우선순위 기준과 일치)
+    // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
     const latestApp=apps[0];
-    const{error}=await sb.from('candidate_applications').update({status}).eq('id',latestApp.id);
+    const payload={status};
+    if(dateField&&!latestApp[dateField]){
+      payload[dateField]=todayStr;
+      payload[dateField+'_is_estimated']=false; // 자동입력 날짜는 추정일 아님
+    }
+    const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
     if(error){toast('오류: '+error.message);return;}
-    latestApp.status=status;
+    Object.assign(latestApp,payload);
+    // talents.status도 함께 동기화 (2026-07-08 결정: DB 정합성 목적, 화면 표시 우선순위엔 영향 없음)
+    // ⚠️ 다건 지원 기능 도입 시 이 동기화 정책은 재검토 필요 (V:Scout 데이터 표준 v1.0 참고)
+    const{error:tErr}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
+    if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
+    else t.status=status;
+  }else if(status!=='인재등록'){
+    // 2) 지원이력이 없고 새 상태가 '인재등록'이 아니면 candidate_applications를 새로 생성 (등록폼과 동일 원칙)
+    const insertRow={talent_id:currentDrawerTalentId,org_id:t.source_org_id||t.org_id||null,status};
+    if(dateField){insertRow[dateField]=todayStr;insertRow[dateField+'_is_estimated']=false;}
+    const{data,error}=await sb.from('candidate_applications').insert(insertRow).select().single();
+    if(error){toast('오류: '+error.message);return;}
+    cache.applications.push(data);
+    const{error:tErr}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
+    if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
+    else t.status=status;
   }else{
-    // 지원이력이 없으면 talents.status를 갱신
+    // 3) 지원이력이 없고 새 상태가 '인재등록'이면 talents.status만 갱신 (candidate_applications 생성 안 함)
     const{error}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
     if(error){toast('오류: '+error.message);return;}
     t.status=status;
   }
   toast('상태 변경됨: '+status);
+  // 지원이력 탭을 보고 있었다면 자동입력된 날짜가 바로 보이도록 새로고침
+  if(document.getElementById('dtab-history')?.style.color==='var(--accent)')switchDrawerTab('history');
   renderTalent();
 }
 // 지원일/합격일/입사일/불합격일 + 추정여부 저장. 지원이력(candidate_applications)이 없으면 새로 생성한다(job_id는 비워둠).
@@ -3279,9 +3412,8 @@ function handleOrgSearchKey(e){
     } else if(items.length===1){
       items[0].click();
     } else {
-      // 검색 결과 없으면 직접 입력으로 사용
-      const q=document.getElementById('t-org-search').value.trim();
-      if(q){selectOrgDirect(q);}
+      // 검색 결과 없으면 기관 등록 안내만 표시 (직접 입력 비활성화, 2026-07-08 결정)
+      toast('목록에 없는 기관입니다. 먼저 "기관 등록"에서 등록해주세요');
     }
     e.preventDefault();
   } else if(e.key==='Escape'){
@@ -3301,11 +3433,7 @@ function searchOrg(q){
       ${o.name} <span style="font-size:11px;color:var(--text3);">${o.cat||''}</span>
     </div>`).join('')
     :`<div style="padding:10px 14px;">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">검색 결과 없음</div>
-        <div onclick="selectOrgDirect('${q.replace(/'/g,"\\'")}')"
-          style="font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;padding:6px 10px;background:var(--accent-bg);border-radius:6px;display:inline-block;">
-          ✏️ "${q}" 직접 입력으로 사용
-        </div>
+        <div style="font-size:12px;color:var(--text3);">검색 결과 없음 — 기관 목록에 없는 경우, 먼저 "기관 등록"에서 기관을 등록해주세요.</div>
       </div>`;
 }
 function selectOrgDirect(name){
@@ -3371,7 +3499,7 @@ async function saveTalent(){
   const orgId=needsOrg?parseInt(document.getElementById('t-org').value)||null:null;
   const orgSearch=document.getElementById('t-org-search').value.trim();
   const referrer=channel==='소개'?document.getElementById('t-referrer').value.trim():'';
-  if(needsOrg&&!orgId&&!orgSearch){toast('기관을 검색해서 선택하거나 직접 입력해주세요');return;}
+  if(needsOrg&&!orgId){toast('기관을 목록에서 검색해서 선택해주세요');return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const member=document.getElementById('t-member').value;
   const rows=[];
