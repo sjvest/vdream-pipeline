@@ -3207,30 +3207,43 @@ function switchDrawerTab(tab){
   }
   else if(tab==='history'){
     const latestApp=apps[0]||null;
-    // [실제 진행 이력] — applied_date/pass_date/join_date/rejected_at 기준, 없으면 created_at fallback(등록일 기준 라벨)
-    const actualEvents=[];
-    apps.forEach(ap=>{
-      if(ap.applied_date)actualEvents.push({date:ap.applied_date,label:`${ap.hire_company||''} 지원`,color:'var(--purple)',est:ap.applied_date_is_estimated,fallback:false});
-      else if(t.created_at)actualEvents.push({date:t.created_at,label:'지원',color:'var(--purple)',est:false,fallback:true});
-      if(ap.pass_date)actualEvents.push({date:ap.pass_date,label:'합격',color:'var(--green)',est:ap.pass_date_is_estimated,fallback:false});
-      if(ap.join_date)actualEvents.push({date:ap.join_date,label:`${ap.hire_company||''} 입사`,color:'#059669',est:ap.join_date_is_estimated,fallback:false});
-      if(ap.rejected_at)actualEvents.push({date:ap.rejected_at,label:'불합격',color:'var(--red)',est:ap.rejected_date_is_estimated,fallback:false});
-      if(ap.contract_end_date)actualEvents.push({date:ap.contract_end_date,label:'계약 종료',color:'var(--text3)',est:false,fallback:false});
-    });
-    actualEvents.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    // 지원이력을 회차별로 그룹핑 (apps[0]=최신/진행중, 나머지=이전 지원 건)
+    const buildAppEvents=(ap,isLatest)=>{
+      const evs=[];
+      if(ap.applied_date)evs.push({date:ap.applied_date,label:`${ap.hire_company||''} 지원`,color:'var(--purple)',est:ap.applied_date_is_estimated,fallback:false});
+      else if(isLatest&&t.created_at)evs.push({date:t.created_at,label:'지원',color:'var(--purple)',est:false,fallback:true});
+      if(ap.pass_date)evs.push({date:ap.pass_date,label:'합격',color:'var(--green)',est:ap.pass_date_is_estimated,fallback:false});
+      if(ap.join_date)evs.push({date:ap.join_date,label:`${ap.hire_company||''} 입사`,color:'#059669',est:ap.join_date_is_estimated,fallback:false});
+      if(ap.rejected_at)evs.push({date:ap.rejected_at,label:'불합격',color:'var(--red)',est:ap.rejected_date_is_estimated,fallback:false});
+      if(ap.contract_end_date)evs.push({date:ap.contract_end_date,label:'계약 종료',color:'var(--text3)',est:false,fallback:false});
+      evs.sort((a,b)=>new Date(a.date)-new Date(b.date));
+      return evs;
+    };
     // [시스템 기록] — created_at 기준 (인재 등록)
     const systemEvents=[];
     if(t.created_at)systemEvents.push({date:t.created_at,label:'인재 등록',color:'var(--text3)'});
     const renderTimeline=(evs)=>evs.length?`<div style="position:relative;padding-left:20px;">${evs.map((ev,i)=>`<div style="position:relative;margin-bottom:${i<evs.length-1?'20':'0'}px;"><div style="position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:${ev.color};"></div>${i<evs.length-1?`<div style="position:absolute;left:-15px;top:14px;width:1px;height:calc(100% + 10px);background:var(--border);"></div>`:''}<div style="font-size:11px;color:var(--text3);">${formatEventDate(ev.date,ev.est,ev.fallback)}</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">${ev.label}</div></div>`).join('')}</div>`:'<div class="empty">이력 없음</div>';
+    const appBlocksHtml=apps.length?apps.map((ap,idx)=>{
+      const isLatest=idx===0;
+      const evs=buildAppEvents(ap,isLatest);
+      const roundNo=apps.length-idx;
+      const tag=isLatest?'':`<span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">종료됨${ap.status==='불합격'?': 불합격':''}</span>`;
+      return `<div style="${isLatest?'':'opacity:.5;'}margin-bottom:${idx<apps.length-1?'18':'0'}px;">
+        ${idx>0?'<div style="border-top:1px dashed var(--border);margin-bottom:12px;"></div>':''}
+        ${apps.length>1?`<div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">지원 ${roundNo}회차${tag}</div>`:''}
+        ${renderTimeline(evs)}
+      </div>`;
+    }).join(''):'<div class="empty">이력 없음</div>';
     const dateRow=(label,idPrefix,dateVal,estVal)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">${label}</span><input type="date" id="${idPrefix}-date" value="${dateVal||''}" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="${idPrefix}-est" ${estVal?'checked':''}> 추정일</label></div>`;
     el.innerHTML=`
       <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">📌 실제 진행 이력</div>
-      ${renderTimeline(actualEvents)}
+      ${appBlocksHtml}
       <div style="font-size:12px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--border);">🗂 시스템 기록</div>
       ${renderTimeline(systemEvents)}
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">날짜 입력/수정</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">날짜 입력/수정 (최신 지원 건 기준)</div>
         ${dateRow('지원일','app-applied',latestApp?.applied_date,latestApp?.applied_date_is_estimated)}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">회사명</span><input type="text" id="app-hirecompany" value="${latestApp?.hire_company||''}" placeholder="지원한 회사명" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         ${dateRow('합격일','app-pass',latestApp?.pass_date,latestApp?.pass_date_is_estimated)}
         ${dateRow('입사일','app-join',latestApp?.join_date,latestApp?.join_date_is_estimated)}
         ${dateRow('불합격일','app-rejected',latestApp?.rejected_at,latestApp?.rejected_date_is_estimated)}
@@ -3324,8 +3337,22 @@ async function updateDrawerStatus(){
   const todayStr=today();
 
   if(apps.length){
-    // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
     const latestApp=apps[0];
+    // 재지원 케이스: 최신 지원이력이 '불합격'인데 새로 '채용지원'을 선택하면 → 기존 행 유지, 새 행 생성 (2026-07-08 결정)
+    if(latestApp.status==='불합격'&&status==='채용지원'){
+      const insertRow={talent_id:currentDrawerTalentId,org_id:t.source_org_id||t.org_id||null,status,applied_date:todayStr,applied_date_is_estimated:false};
+      const{data,error}=await sb.from('candidate_applications').insert(insertRow).select().single();
+      if(error){toast('오류: '+error.message);return;}
+      cache.applications.unshift(data); // 최신순 정렬 유지 (apps[0]이 항상 가장 최근이 되도록)
+      const{error:tErr}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
+      if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
+      else t.status=status;
+      toast('새 지원이력이 생성됐어요: '+status);
+      if(document.getElementById('dtab-history')?.style.color==='var(--accent)')switchDrawerTab('history');
+      renderTalent();
+      return;
+    }
+    // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
     const payload={status};
     if(dateField&&!latestApp[dateField]){
       payload[dateField]=todayStr;
@@ -3367,6 +3394,7 @@ async function saveApplicationDates(){
   const chk=id=>document.getElementById(id)?.checked||false;
   const payload={
     applied_date:val('app-applied-date'), applied_date_is_estimated:chk('app-applied-est'),
+    hire_company:document.getElementById('app-hirecompany')?.value.trim()||null,
     pass_date:val('app-pass-date'), pass_date_is_estimated:chk('app-pass-est'),
     join_date:val('app-join-date'), join_date_is_estimated:chk('app-join-est'),
     rejected_at:val('app-rejected-date'), rejected_date_is_estimated:chk('app-rejected-est'),
@@ -3483,7 +3511,7 @@ function renderTalentForms(){
         <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>지원일</label><div style="display:flex;gap:6px;align-items:center;"><input type="date" id="t-date-${i}" style="flex:1;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"><label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="t-date-est-${i}"> 추정일</label></div></div>
         <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재등록</option><option>채용지원</option><option>서류검토</option><option>면접예정</option><option>대기</option><option>합격</option><option>불합격</option><option>입사완료</option><option>재직</option><option>계약만료예정</option><option>계약종료</option><option>재계약완료</option></select></div>
-        <div class="fg"><label>입사 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="실제 입사 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>지원 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="지원한 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>입사일</label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>대기자 여부</label><div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><input type="checkbox" id="t-waitlist-${i}" style="width:16px;height:16px;cursor:pointer;"><label for="t-waitlist-${i}" style="font-size:13px;cursor:pointer;color:var(--text2);">대기자로 등록</label></div></div>
         <div class="fg" style="grid-column:1/-1;"><label>메모</label><input type="text" id="t-memo-${i}" placeholder="메모" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
