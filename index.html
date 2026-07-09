@@ -3327,7 +3327,14 @@ async function saveTalentBasicInfo(){
   renderTalent();
 }
 // 상태 변경 시 자동으로 채울 날짜 필드 매핑 (2026-07-08 결정)
-const DATE_FIELD_BY_STATUS={채용지원:'applied_date',합격:'pass_date',입사완료:'join_date',재직:'join_date',불합격:'rejected_at'};
+// 상태 → {날짜컬럼, 추정일컬럼} 명시적 매핑 (rejected_at의 추정일 컬럼명이 rejected_date_is_estimated라 자동조합 불가하므로 명시)
+const DATE_FIELD_BY_STATUS={
+  채용지원:{date:'applied_date',est:'applied_date_is_estimated'},
+  합격:{date:'pass_date',est:'pass_date_is_estimated'},
+  입사완료:{date:'join_date',est:'join_date_is_estimated'},
+  재직:{date:'join_date',est:'join_date_is_estimated'},
+  불합격:{date:'rejected_at',est:'rejected_date_is_estimated'},
+};
 async function updateDrawerStatus(){
   if(!currentDrawerTalentId)return;
   const status=document.getElementById('drawer-status')?.value;if(!status)return;
@@ -3354,9 +3361,9 @@ async function updateDrawerStatus(){
     }
     // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
     const payload={status};
-    if(dateField&&!latestApp[dateField]){
-      payload[dateField]=todayStr;
-      payload[dateField+'_is_estimated']=false; // 자동입력 날짜는 추정일 아님
+    if(dateField&&!latestApp[dateField.date]){
+      payload[dateField.date]=todayStr;
+      payload[dateField.est]=false; // 자동입력 날짜는 추정일 아님
     }
     const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
     if(error){toast('오류: '+error.message);return;}
@@ -3369,7 +3376,7 @@ async function updateDrawerStatus(){
   }else if(status!=='인재등록'){
     // 2) 지원이력이 없고 새 상태가 '인재등록'이 아니면 candidate_applications를 새로 생성 (등록폼과 동일 원칙)
     const insertRow={talent_id:currentDrawerTalentId,org_id:t.source_org_id||t.org_id||null,status};
-    if(dateField){insertRow[dateField]=todayStr;insertRow[dateField+'_is_estimated']=false;}
+    if(dateField){insertRow[dateField.date]=todayStr;insertRow[dateField.est]=false;}
     const{data,error}=await sb.from('candidate_applications').insert(insertRow).select().single();
     if(error){toast('오류: '+error.message);return;}
     cache.applications.push(data);
