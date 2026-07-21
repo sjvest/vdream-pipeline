@@ -1899,7 +1899,7 @@ function scheduleDailyTasksPopup(){
 async function loadOrgs(){
   let data,error;
   for(let attempt=0;attempt<3;attempt++){
-    ({data,error}=await sb.from('orgs').select('id,name,cat,source,contact,contact_title,phone,mobile,fax,stage,member,accompany,premeil,school,date,mou_date,memo,website,region,address,event_id,email,member_history,contacts,lastcontact,is_starred,is_test,card_image,created_at,mou_checklist,created_by_name').order('created_at',{ascending:false}).limit(5000));
+    ({data,error}=await sb.from('orgs').select('*').order('created_at',{ascending:false}).limit(5000));
     if(!error)break;
     console.error(`[Supabase Error] orgs 조회 실패 (시도 ${attempt+1}/3):`, error);
     if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));
