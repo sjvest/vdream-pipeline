@@ -1264,9 +1264,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-header"><i class="ti ti-presentation-analytics" style="color:var(--accent)"></i>발굴팀 경영진 대시보드</div>
     <div class="card-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+        <button class="chart-tab active" id="scout-btn-lastweek" onclick="setScoutPeriod('lastweek')">지난 주</button>
         <button class="chart-tab" id="scout-btn-thisweek" onclick="setScoutPeriod('thisweek')">이번 주</button>
-        <button class="chart-tab active" id="scout-btn-thismonth" onclick="setScoutPeriod('thismonth')">이번 달</button>
+        <button class="chart-tab" id="scout-btn-thismonth" onclick="setScoutPeriod('thismonth')">이번 달</button>
         <button class="chart-tab" id="scout-btn-lastmonth" onclick="setScoutPeriod('lastmonth')">지난 달</button>
+        <button class="chart-tab" id="scout-btn-thisyear" onclick="setScoutPeriod('thisyear')">올해</button>
         <input type="date" id="scout-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
         <span style="font-size:12px;color:var(--text3);">~</span>
         <input type="date" id="scout-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
@@ -3867,18 +3869,33 @@ function calcScoutExecutiveMetrics(startDate,endDate){
   const expectedEventLeadCount=null;
   return{contactedOrgCount,contactActivityCount,completedMeetingCount,mouOrgCount,registeredTalentCount,applicationCount,applicationFallbackUsed,passedApplicationCount,upcomingMeetingCount,upcomingEventCount,expectedEventLeadCount};
 }
-let scoutPeriod='thismonth';
+let scoutPeriod='lastweek';
+// 기간 계산: {start,end}와 함께 동일 길이의 직전 기간 {prevStart,prevEnd}도 항상 반환한다.
+// 지금은 화면에서 prev를 쓰지 않지만(증감 UI 미구현), 나중에 "전기간 대비 ▲▼"를 추가할 때
+// 이 함수만 그대로 재사용하면 되도록 미리 계산해둔다.
 function getScoutPeriodRange(type){
   const now=new Date();let start,end;
-  if(type==='thisweek'){const day=now.getDay()||7;start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);end=new Date(now);end.setHours(23,59,59,999);}
+  if(type==='lastweek'){
+    const dow=now.getDay();
+    const lastMonday=new Date(now);lastMonday.setDate(now.getDate()-(dow===0?13:dow+6));lastMonday.setHours(0,0,0,0);
+    const lastFriday=new Date(lastMonday);lastFriday.setDate(lastMonday.getDate()+4);lastFriday.setHours(23,59,59,999);
+    start=lastMonday;end=lastFriday;
+  }
+  else if(type==='thisweek'){const day=now.getDay()||7;start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);end=new Date(now);end.setHours(23,59,59,999);}
   else if(type==='thismonth'){start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now);end.setHours(23,59,59,999);}
   else if(type==='lastmonth'){start=new Date(now.getFullYear(),now.getMonth()-1,1);end=new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999);}
+  else if(type==='thisyear'){start=new Date(now.getFullYear(),0,1);end=new Date(now);end.setHours(23,59,59,999);}
   else if(type==='custom'){const s=document.getElementById('scout-start')?.value;const e=document.getElementById('scout-end')?.value;if(!s||!e){toast('날짜를 선택해주세요');return null;}start=new Date(s);start.setHours(0,0,0,0);end=new Date(e);end.setHours(23,59,59,999);}
-  return{start,end};
+  else return null;
+  // 직전 동일 길이 기간 (전기간 대비 증감 계산용 — 현재 미사용, 추후 확장 대비)
+  const durationMs=end.getTime()-start.getTime();
+  const prevEnd=new Date(start.getTime()-1);
+  const prevStart=new Date(prevEnd.getTime()-durationMs);
+  return{start,end,prevStart,prevEnd};
 }
 function setScoutPeriod(type){
   scoutPeriod=type;
-  ['thisweek','thismonth','lastmonth'].forEach(t=>{const btn=document.getElementById('scout-btn-'+t);if(btn)btn.className='chart-tab'+(t===type?' active':'');});
+  ['lastweek','thisweek','thismonth','lastmonth','thisyear'].forEach(t=>{const btn=document.getElementById('scout-btn-'+t);if(btn)btn.className='chart-tab'+(t===type?' active':'');});
   const range=getScoutPeriodRange(type);
   if(!range)return;
   const{start,end}=range;
@@ -3888,7 +3905,7 @@ function setScoutPeriod(type){
 function renderScoutExecutiveDashboard(){
   const kpiEl=document.getElementById('scout-exec-kpi');
   if(!kpiEl)return;
-  if(!document.getElementById('scout-start')?.value){setScoutPeriod('thismonth');return;}
+  if(!document.getElementById('scout-start')?.value){setScoutPeriod('lastweek');return;}
   const range=getScoutPeriodRange(scoutPeriod);
   if(!range)return;
   const{start,end}=range;
