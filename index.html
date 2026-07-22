@@ -1652,6 +1652,7 @@ const STATUS_CLS={합격:'b-green',지원서등록:'b-purple',지원중:'b-blue'
 
 let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[],applications:[],team_tasks:[],sourcingAssignments:[],sourcingCandidates:[]};
+let _pendingInitialHash=null; // 새로고침 시 URL 해시로 즉시 진입한 페이지가 loadAll() 완료 전에 렌더되는 걸 막기 위한 대기값
 let jobScopedRegistration=null; // "+지원자 등록"으로 채용건 컨텍스트에서 인재 등록 폼을 열었을 때의 job id (사람이 다시 고르지 않고 자동 연결하기 위함)
 function isTestOrg(orgId){
   if(!orgId)return false;
@@ -2045,7 +2046,13 @@ async function loadAll(){
     ]);
     cache.orgs=liteOrgsRes.data||[];
     updateMemberSelects();
-    updateUrgentCount();renderCurrent();
+    updateUrgentCount();
+    if(_pendingInitialHash){
+      const h=_pendingInitialHash; _pendingInitialHash=null;
+      await nav(h, false);
+    } else {
+      await renderCurrent();
+    }
     startOrgDraftTimer();
     updateNavBadges();
     showTodayTasksOnLogin();
@@ -2257,7 +2264,9 @@ window.addEventListener('load', function(){
   const hash = location.hash.replace('#','');
   const validPages = ['dashboard','pipeline','orgs','actions','talent','team','events','jobs','cold','analytics','add-org','team-tasks'];
   if(hash && validPages.includes(hash)){
-    nav(hash, false);
+    // loadAll()이 끝나기 전에 바로 nav()하면 cache가 비어있는 상태로 렌더돼서
+    // "기관 목록"등이 빈 화면으로 뜨는 레이스가 있었음 — loadAll() 완료 후 진입하도록 대기시킴
+    _pendingInitialHash = hash;
   }
 });
 
