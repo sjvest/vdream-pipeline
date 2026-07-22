@@ -2041,10 +2041,14 @@ async function loadAll(){
   try{
     // orgs는 경량 컬럼으로 먼저 로드(빠름). talents/applications는 인재영입·Analytics 진입 시에만 로드(지연로딩)
     // jobs는 테이블이 작고(약 10건) 매출계산(unit_price)에 항상 정확히 필요해 계속 전량 로드 유지
+    // Supabase 프로젝트 커넥션 풀이 작아(Nano 티어, pool size 15) 한 번에 너무 많은 동시 쿼리가
+    // 몰리면 57014(statement timeout)가 나는 걸 확인해서, 10개 동시 요청을 2배치로 나눠 순차 실행한다.
     const [liteOrgsRes]=await Promise.all([
       loadOrgLite(),
-      loadActions(), loadLogs(), loadProfiles(),
-      loadEvents(), loadJobs(), loadCold(), loadTeamTasks(),
+      loadActions(), loadLogs(), loadProfiles(), loadEvents()
+    ]);
+    await Promise.all([
+      loadJobs(), loadCold(), loadTeamTasks(),
       loadSourcingAssignments(), loadSourcingCandidates()
     ]);
     cache.orgs=liteOrgsRes.data||[];
