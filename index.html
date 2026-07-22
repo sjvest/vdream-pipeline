@@ -1263,25 +1263,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="page-header-left"><div class="page-title">V:Scout Analytics</div><div class="page-sub">운영 인사이트 · 의사결정 대시보드</div></div>
     <select id="an-member" onchange="renderAnalytics()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 팀원</option></select>
   </div>
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-header"><i class="ti ti-presentation-analytics" style="color:var(--accent)"></i>발굴팀 경영진 대시보드</div>
-    <div class="card-body">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
-        <button class="chart-tab active" id="scout-btn-lastweek" onclick="setScoutPeriod('lastweek')">지난 주</button>
-        <button class="chart-tab" id="scout-btn-thisweek" onclick="setScoutPeriod('thisweek')">이번 주</button>
-        <button class="chart-tab" id="scout-btn-thismonth" onclick="setScoutPeriod('thismonth')">이번 달</button>
-        <button class="chart-tab" id="scout-btn-lastmonth" onclick="setScoutPeriod('lastmonth')">지난 달</button>
-        <button class="chart-tab" id="scout-btn-thisyear" onclick="setScoutPeriod('thisyear')">올해</button>
-        <input type="date" id="scout-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-        <span style="font-size:12px;color:var(--text3);">~</span>
-        <input type="date" id="scout-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-        <button class="btn btn-primary btn-sm" onclick="setScoutPeriod('custom')"><i class="ti ti-search"></i> 조회</button>
-      </div>
-      <div id="scout-exec-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px;"></div>
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">발굴 → 채용 전환 현황</div>
-      <div id="scout-exec-funnel"></div>
-    </div>
-  </div>
   <div id="an-today" style="margin-bottom:16px;"></div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <button class="chart-tab active" id="an-btn-thisweek" onclick="setAnalyticsPeriod('thisweek')">이번 주</button>
@@ -3908,97 +3889,7 @@ function setAnalyticsPeriod(type){
 }
 // ===== 발굴팀 경영진 대시보드 (2026-07-21 1차 구현) =====
 // 각 KPI는 자기 기준 날짜로 독립 계산한다 (단일 created_at 기준 아님). 테스트 기관 연결 데이터는 전부 제외.
-function calcScoutExecutiveMetrics(startDate,endDate){
-  const inRange=d=>{if(!d)return false;const dt=new Date(d);return dt>=startDate&&dt<=endDate;};
-  const now=new Date();
-  // ① 컨택 기관 수 + 총 컨택 활동 건수 — contact_logs 기준, 실제 컨택일(date) 우선
-  const logsInRange=(cache.logs||[]).filter(l=>!isTestOrg(l.org_id)&&inRange(l.date||l.logged_at||l.created_at));
-  const contactedOrgCount=new Set(logsInRange.map(l=>l.org_id)).size;
-  const contactActivityCount=logsInRange.length;
-  // ② 미팅 완료 수 — contact_logs 중 contact_type==='미팅', row(이벤트) 수 기준 (기관 중복 허용)
-  const completedMeetingCount=logsInRange.filter(l=>l.contact_type==='미팅').length;
-  // ③ MOU 수 — orgs.mou_date 기준 고유 기관 수
-  const mouOrgCount=getMetricOrgs().filter(o=>inRange(o.mou_date)).length;
-  // ④ 지원자 유입(등록) 수 — talents.created_at 기준 (실제 지원일 아님, 시스템 등록량)
-  const registeredTalentCount=getMetricTalents().filter(t=>inRange(t.created_at)).length;
-  // ⑤ 채용지원 수 — candidate_applications.applied_date 기준, 없으면 created_at fallback(등록일 기준으로 집계됐음을 표시)
-  let applicationFallbackUsed=false;
-  const applicationCount=getMetricApplications().filter(a=>{
-    if(a.applied_date)return inRange(a.applied_date);
-    if(inRange(a.created_at)){applicationFallbackUsed=true;return true;}
-    return false;
-  }).length;
-  // ⑥ 합격자 수 — candidate_applications.pass_date 기준 (status 아님)
-  const passedApplicationCount=getMetricApplications().filter(a=>inRange(a.pass_date)).length;
-  // ⑦ 미팅 예정 수 — 현재 DB에 "예정된 미팅" 여부/일자 필드 없음
-  // (contact_logs.status는 완료/진행중/재연락필요뿐이며 미래 일정을 나타내지 않음, actions는 범용 후속액션이라 미팅 여부 특정 불가) → 데이터 구조 필요
-  const upcomingMeetingCount=null;
-  // ⑧ 참여 예정 행사 수 — events.date가 오늘 이후 & 선택 기간 내
-  const upcomingEventCount=(cache.events||[]).filter(e=>{if(!e.date)return false;const d=new Date(e.date);return d>=now&&d>=startDate&&d<=endDate;}).length;
-  // 행사 예상 유입 수 — events 테이블에 예상 유입/방문 인원 필드 없음(goal_cards/goal_meetings는 목표 명함·미팅 수일 뿐 유입 예상치 아님) → 데이터 구조 필요
-  const expectedEventLeadCount=null;
-  return{contactedOrgCount,contactActivityCount,completedMeetingCount,mouOrgCount,registeredTalentCount,applicationCount,applicationFallbackUsed,passedApplicationCount,upcomingMeetingCount,upcomingEventCount,expectedEventLeadCount};
-}
-let scoutPeriod='lastweek';
-// 기간 계산: {start,end}와 함께 동일 길이의 직전 기간 {prevStart,prevEnd}도 항상 반환한다.
-// 지금은 화면에서 prev를 쓰지 않지만(증감 UI 미구현), 나중에 "전기간 대비 ▲▼"를 추가할 때
-// 이 함수만 그대로 재사용하면 되도록 미리 계산해둔다.
-function getScoutPeriodRange(type){
-  const now=new Date();let start,end;
-  if(type==='lastweek'){
-    const dow=now.getDay();
-    const lastMonday=new Date(now);lastMonday.setDate(now.getDate()-(dow===0?13:dow+6));lastMonday.setHours(0,0,0,0);
-    const lastFriday=new Date(lastMonday);lastFriday.setDate(lastMonday.getDate()+4);lastFriday.setHours(23,59,59,999);
-    start=lastMonday;end=lastFriday;
-  }
-  else if(type==='thisweek'){const day=now.getDay()||7;start=new Date(now);start.setDate(now.getDate()-day+1);start.setHours(0,0,0,0);end=new Date(now);end.setHours(23,59,59,999);}
-  else if(type==='thismonth'){start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now);end.setHours(23,59,59,999);}
-  else if(type==='lastmonth'){start=new Date(now.getFullYear(),now.getMonth()-1,1);end=new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999);}
-  else if(type==='thisyear'){start=new Date(now.getFullYear(),0,1);end=new Date(now);end.setHours(23,59,59,999);}
-  else if(type==='custom'){const s=document.getElementById('scout-start')?.value;const e=document.getElementById('scout-end')?.value;if(!s||!e){toast('날짜를 선택해주세요');return null;}start=new Date(s);start.setHours(0,0,0,0);end=new Date(e);end.setHours(23,59,59,999);}
-  else return null;
-  // 직전 동일 길이 기간 (전기간 대비 증감 계산용 — 현재 미사용, 추후 확장 대비)
-  const durationMs=end.getTime()-start.getTime();
-  const prevEnd=new Date(start.getTime()-1);
-  const prevStart=new Date(prevEnd.getTime()-durationMs);
-  return{start,end,prevStart,prevEnd};
-}
-function setScoutPeriod(type){
-  scoutPeriod=type;
-  ['lastweek','thisweek','thismonth','lastmonth','thisyear'].forEach(t=>{const btn=document.getElementById('scout-btn-'+t);if(btn)btn.className='chart-tab'+(t===type?' active':'');});
-  const range=getScoutPeriodRange(type);
-  if(!range)return;
-  const{start,end}=range;
-  if(type!=='custom'){const s=document.getElementById('scout-start');const e=document.getElementById('scout-end');if(s)s.value=toLocalDateStr(start);if(e)e.value=toLocalDateStr(end);}
-  renderScoutExecutiveDashboard();
-}
-function renderScoutExecutiveDashboard(){
-  const kpiEl=document.getElementById('scout-exec-kpi');
-  if(!kpiEl)return;
-  if(!document.getElementById('scout-start')?.value){setScoutPeriod('lastweek');return;}
-  const range=getScoutPeriodRange(scoutPeriod);
-  if(!range)return;
-  const{start,end}=range;
-  const m=calcScoutExecutiveMetrics(start,end);
-  const cards=[
-    {label:'컨택 기관',val:m.contactedOrgCount,sub:`컨택 활동 ${m.contactActivityCount}건`,icon:'ti-building',c:'#2563eb',onclick:"nav('orgs')"},
-    {label:'미팅 완료',val:m.completedMeetingCount,sub:'건 (이벤트 기준)',icon:'ti-handshake',c:'#7c3aed',onclick:null},
-    {label:'MOU',val:m.mouOrgCount,sub:'개 기관',icon:'ti-file-check',c:'#0d9488',onclick:"const fs=document.getElementById('filter-stage-orgs');if(fs)fs.value='5';nav('orgs');renderOrgs();"},
-    {label:'지원자 유입(등록)',val:m.registeredTalentCount,sub:'명',icon:'ti-users',c:'#d97706',onclick:"nav('talent')"},
-    {label:'채용지원',val:m.applicationCount,sub:m.applicationFallbackUsed?'건 (일부 등록일 기준)':'건',icon:'ti-clipboard-list',c:'#2563eb',onclick:null},
-    {label:'합격',val:m.passedApplicationCount,sub:'건',icon:'ti-circle-check',c:'#059669',onclick:"const fst=document.getElementById('talent-filter-status');if(fst)fst.value='합격';nav('talent');renderTalent();"},
-    {label:'미팅 예정',val:m.upcomingMeetingCount===null?'—':m.upcomingMeetingCount,sub:'데이터 구조 필요',icon:'ti-calendar-event',c:'#94a3b8',onclick:null},
-    {label:'참여 예정 행사',val:m.upcomingEventCount,sub:'행사 예상 유입: 데이터 구조 필요',icon:'ti-calendar-stats',c:'#f59e0b',onclick:null}
-  ];
-  kpiEl.innerHTML=cards.map(k=>`<div ${k.onclick?`onclick="${k.onclick}" style="cursor:pointer;"`:''} style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:26px;height:26px;border-radius:6px;background:${k.c}18;display:flex;align-items:center;justify-content:center;"><i class="ti ${k.icon}" style="font-size:14px;color:${k.c};"></i></div><span style="font-size:11px;color:var(--text3);font-weight:600;">${k.label}</span></div><div style="font-size:24px;font-weight:800;color:${k.c};">${k.val}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${k.sub}</div></div>`).join('');
-  const funnelEl=document.getElementById('scout-exec-funnel');
-  if(funnelEl){
-    const steps=[{l:'컨택 기관',v:m.contactedOrgCount},{l:'미팅 완료',v:m.completedMeetingCount},{l:'MOU',v:m.mouOrgCount},{l:'지원자 유입',v:m.registeredTalentCount},{l:'채용지원',v:m.applicationCount},{l:'합격',v:m.passedApplicationCount}];
-    funnelEl.innerHTML='<div style="font-size:10px;color:var(--text3);margin-bottom:8px;">※ 동일 모집단 기준 퍼널이 아니므로 전환율은 표시하지 않습니다 (단계별 실적 숫자 비교만)</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;">'+steps.map((s,i)=>(i>0?'<div style="display:flex;align-items:center;color:var(--text3);font-size:14px;">→</div>':'')+`<div style="flex:1;min-width:96px;text-align:center;padding:10px 8px;background:var(--bg);border-radius:var(--radius-sm);"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${s.l}</div><div style="font-size:20px;font-weight:800;color:var(--text);">${s.v}</div></div>`).join('')+'</div>';
-  }
-}
 function renderAnalytics(){
-  renderScoutExecutiveDashboard();
   console.log('[Analytics Debug]', {
     orgs: cache.orgs?.length || 0,
     talents: cache.talents?.length || 0,
