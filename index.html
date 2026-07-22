@@ -469,12 +469,17 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <button class="chart-tab" onclick="switchChart('month',this)">월별</button>
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
-      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
+      <div id="trend-legend-week" style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block;"></span>신규발굴</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#f97316;display:inline-block;"></span>미팅예정</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eab308;display:inline-block;"></span>미팅완료</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block;"></span>인재영입</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block;"></span>MOU완료</span>
+      </div>
+      <div id="trend-legend-month" style="display:none;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(45,91,227,0.7);display:inline-block;"></span>미팅 기관수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(42,140,94,0.7);display:inline-block;"></span>인재영입수</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(15,124,117,0.7);display:inline-block;"></span>MOU 체결</span>
       </div>
     </div>
   </div>
@@ -2650,6 +2655,9 @@ function switchChart(mode, btn){
   currentChartMode=mode;
   document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const wl=document.getElementById('trend-legend-week'), ml=document.getElementById('trend-legend-month');
+  if(wl)wl.style.display=mode==='week'?'flex':'none';
+  if(ml)ml.style.display=mode==='week'?'none':'flex';
   renderTrendChart(mode);
 }
 
@@ -2890,7 +2898,8 @@ function renderTrendChart(mode){
       labels.push(`${y}.${String(m+1).padStart(2,'0')}`);
       meetData.push(orgs.filter(o=>{if(!o.date)return false;const od=new Date(o.date);return od.getFullYear()===y&&od.getMonth()===m;}).length);
       placedData.push(tals.filter(t=>{if(!t.date||t.status!=='합격')return false;const td=new Date(t.date);return td.getFullYear()===y&&td.getMonth()===m;}).length);
-      mouData.push(orgs.filter(o=>{if(o.stage<4||!o.date)return false;const od=new Date(o.date);return od.getFullYear()===y&&od.getMonth()===m;}).length);
+      // MOU 체결 월별 집계는 mou_date를 봐야 하는데 첫 미팅일(date)을 보고 있던 버그 수정 (2026-07-22)
+      mouData.push(orgs.filter(o=>{if(o.stage<4||!o.mou_date)return false;const od=new Date(o.mou_date);return od.getFullYear()===y&&od.getMonth()===m;}).length);
     }
   }
 
