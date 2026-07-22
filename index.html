@@ -3594,8 +3594,12 @@ function renderTalentForms(){
     <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:${i%2===0?'#fafbfc':'#fff'};">
       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">👤 지원자 ${i+1}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="fg"><label>지원자명 *</label><input type="text" id="t-name-${i}" oninput="checkTalentMatch(${i})" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
-        <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" oninput="checkTalentMatch(${i})" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div id="t-name-wrap-${i}" class="fg" style="position:relative;">
+          <label>지원자명 *</label>
+          <input type="text" id="t-name-${i}" autocomplete="off" oninput="searchTalentMatch(${i})" onfocus="searchTalentMatch(${i})" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+          <div id="t-name-dropdown-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:6px;box-shadow:var(--shadow-lg);z-index:200;max-height:220px;overflow-y:auto;margin-top:2px;"></div>
+        </div>
+        <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div id="t-match-${i}" style="grid-column:1/-1;display:none;"></div>
         <div class="fg"><label>생년월일</label><input type="date" id="t-birthdate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>장애유형</label><select id="t-distype-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>지체</option><option>뇌병변</option><option>시각</option><option>청각</option><option>언어</option><option>지적</option><option>자폐성</option><option>정신</option><option>신장</option><option>심장</option><option>호흡기</option><option>간</option><option>안면</option><option>장루·요루</option><option>뇌전증</option></select></div>
@@ -3611,34 +3615,49 @@ function renderTalentForms(){
     </div>
   `).join('');
 }
-// 이름+전화번호가 기존 talents와 일치하면 재지원/동명이인 중복등록을 막기 위해 연결 후보를 보여준다.
-// 전화번호가 없거나 일치하는 기존 인재가 없으면 그냥 새 사람으로 간주한다(오탐 방지를 위해 이름만으로는 매칭 안 함).
-function checkTalentMatch(i){
-  if(talentLinkMap[i])talentLinkMap[i]=null; // 입력이 바뀌면 이전에 연결해둔 상태는 해제
+// 지원자명 입력 시 기존 talents를 검색해서 목록으로 보여주고, 선택하면 새로 등록하지 않고
+// 그 기존 인재에 지원이력만 추가한다 (재지원/동명이인 중복등록 방지). 목록에서 고르지 않으면 그냥 새 사람으로 등록된다.
+function searchTalentMatch(i){
+  if(talentLinkMap[i])talentLinkMap[i]=null; // 이름을 다시 고치면 이전에 연결해둔 상태는 해제
   const box=document.getElementById(`t-match-${i}`);
-  if(!box)return;
-  const name=(document.getElementById(`t-name-${i}`)?.value||'').trim();
-  const phone=(document.getElementById(`t-phone-${i}`)?.value||'').trim();
-  if(!name||!phone){box.style.display='none';box.innerHTML='';return;}
-  const match=(cache.talents||[]).find(t=>(t.name||'').trim()===name&&(t.phone||'').trim()===phone);
-  if(!match){box.style.display='none';box.innerHTML='';return;}
-  box.style.display='block';
-  box.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:6px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <span>⚠️ 동일 이름·전화번호의 기존 인재: <b>${match.name}</b> (${match.phone}, 등록일 ${match.created_at?fDate(match.created_at.slice(0,10)):'—'})</span>
-    <button type="button" onclick="linkExistingTalent(${i},${match.id})" style="font-size:11px;padding:3px 8px;border:1.5px solid var(--accent);color:var(--accent);background:#fff;border-radius:6px;cursor:pointer;">이 사람으로 연결</button>
-    <button type="button" onclick="unlinkExistingTalent(${i})" style="font-size:11px;padding:3px 8px;border:none;color:var(--text3);background:none;cursor:pointer;">새 인물로 등록</button>
-  </div>`;
+  if(box){box.style.display='none';box.innerHTML='';}
+  const dd=document.getElementById(`t-name-dropdown-${i}`);
+  if(!dd)return;
+  const q=(document.getElementById(`t-name-${i}`)?.value||'').trim();
+  if(!q){dd.style.display='none';dd.innerHTML='';return;}
+  const results=(cache.talents||[]).filter(t=>(t.name||'').includes(q)).slice(0,8);
+  if(!results.length){dd.style.display='none';dd.innerHTML='';return;}
+  dd.style.display='block';
+  dd.innerHTML=results.map(t=>`
+    <div onclick="selectExistingTalent(${i},${t.id})" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      <b>${t.name}</b> <span style="color:var(--text3);">${t.phone||'전화번호 없음'} · 등록일 ${t.created_at?fDate(t.created_at.slice(0,10)):'—'}</span>
+    </div>`).join('');
 }
-function linkExistingTalent(i,talentId){
-  talentLinkMap[i]=talentId;
-  const box=document.getElementById(`t-match-${i}`);
+function selectExistingTalent(i,talentId){
   const t=(cache.talents||[]).find(x=>x.id===talentId);
-  if(box)box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;">✅ 기존 인재 <b>${t?.name||''}</b>로 연결됨 — 새 인재 등록 없이 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">취소</button></div>`;
+  if(!t)return;
+  talentLinkMap[i]=talentId;
+  const dd=document.getElementById(`t-name-dropdown-${i}`);if(dd)dd.style.display='none';
+  document.getElementById(`t-name-${i}`).value=t.name;
+  if(t.phone){const ph=document.getElementById(`t-phone-${i}`);if(ph)ph.value=t.phone;}
+  const box=document.getElementById(`t-match-${i}`);
+  if(box){
+    box.style.display='block';
+    box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;">✅ 기존 인재 <b>${t.name}</b>로 연결됨(${t.phone||'전화번호 없음'}) — 새로 등록하지 않고 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">연결 취소</button></div>`;
+  }
 }
 function unlinkExistingTalent(i){
   talentLinkMap[i]=null;
-  checkTalentMatch(i);
+  const box=document.getElementById(`t-match-${i}`);
+  if(box){box.style.display='none';box.innerHTML='';}
 }
+// 이름 검색 드롭다운 바깥 클릭 시 닫기 (여러 행이 동시에 있을 수 있어 wrap id 패턴으로 판별)
+document.addEventListener('click',e=>{
+  document.querySelectorAll('[id^="t-name-dropdown-"]').forEach(dd=>{
+    const idx=dd.id.replace('t-name-dropdown-','');
+    if(!e.target.closest(`#t-name-wrap-${idx}`))dd.style.display='none';
+  });
+});
 async function saveTalent(){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const count=parseInt(document.getElementById('talent-count').value);
