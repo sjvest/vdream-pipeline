@@ -3557,7 +3557,7 @@ function toggleChannelFields(){
   document.getElementById('t-org-wrap').style.display=isOrg?'':'none';
   document.getElementById('t-referrer-wrap').style.display=isRef?'':'none';
 }
-function openAddTalent(){
+async function openAddTalent(){
   renderTalent();
   jobScopedRegistration=null; // 일반 등록 진입 시 이전 채용건 컨텍스트가 남아있지 않도록 초기화
   talentLinkMap={}; // 이전에 연결해둔 기존 인재 매칭도 초기화
@@ -3570,13 +3570,15 @@ function openAddTalent(){
   toggleChannelFields();
   renderTalentForms();
   document.getElementById('talent-modal').style.display='flex';
+  // 채용 건 관리 페이지 등 talents가 아직 지연로딩 안 된 화면에서 열려도 기존 인재 검색이 되도록 보장
+  await ensureTalentDataLoaded();
 }
 // 채용건 상세에서 "+ 지원자 등록"으로 들어올 때: job_id를 사람이 다시 고르지 않도록
 // jobScopedRegistration에 자동으로 실어두고, 지원 회사명/직무/상태를 미리 채워준다.
-function openAddTalentForJob(jobId){
+async function openAddTalentForJob(jobId){
   const job=cache.jobs.find(x=>x.id===jobId);
   if(!job){toast('채용건을 찾을 수 없어요');return;}
-  openAddTalent();
+  await openAddTalent();
   jobScopedRegistration=jobId; // openAddTalent()가 null로 초기화한 다음에 세팅해야 함
   setTimeout(()=>{
     const hc=document.getElementById('t-hirecompany-0');if(hc)hc.value=job.company||'';
