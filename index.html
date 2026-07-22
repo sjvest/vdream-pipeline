@@ -3596,8 +3596,8 @@ function renderTalentForms(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div id="t-name-wrap-${i}" class="fg" style="position:relative;">
           <label>지원자명 *</label>
-          <input type="text" id="t-name-${i}" autocomplete="off" oninput="searchTalentMatch(${i})" onfocus="searchTalentMatch(${i})" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
-          <div id="t-name-dropdown-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:6px;box-shadow:var(--shadow-lg);z-index:200;max-height:220px;overflow-y:auto;margin-top:2px;"></div>
+          <input type="text" id="t-name-${i}" autocomplete="off" oninput="searchTalentMatch(${i})" onfocus="searchTalentMatch(${i})" placeholder="홍길동" style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;">
+          <div id="t-name-dropdown-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:200;max-height:200px;overflow-y:auto;margin-top:2px;"></div>
         </div>
         <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div id="t-match-${i}" style="grid-column:1/-1;display:none;"></div>
@@ -3629,8 +3629,10 @@ function searchTalentMatch(i){
   if(!results.length){dd.style.display='none';dd.innerHTML='';return;}
   dd.style.display='block';
   dd.innerHTML=results.map(t=>`
-    <div onclick="selectExistingTalent(${i},${t.id})" style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
-      <b>${t.name}</b> <span style="color:var(--text3);">${t.phone||'전화번호 없음'} · 등록일 ${t.created_at?fDate(t.created_at.slice(0,10)):'—'}</span>
+    <div onclick="selectExistingTalent(${i},${t.id})"
+      style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
+      onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+      ${t.name} <span style="font-size:11px;color:var(--text3);">${t.phone||'전화번호 없음'} · 등록일 ${t.created_at?fDate(t.created_at.slice(0,10)):'—'}</span>
     </div>`).join('');
 }
 function selectExistingTalent(i,talentId){
