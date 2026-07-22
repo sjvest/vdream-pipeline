@@ -1654,6 +1654,7 @@ let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[],applications:[],team_tasks:[],sourcingAssignments:[],sourcingCandidates:[]};
 let _pendingInitialHash=null; // 새로고침 시 URL 해시로 즉시 진입한 페이지가 loadAll() 완료 전에 렌더되는 걸 막기 위한 대기값
 let jobScopedRegistration=null; // "+지원자 등록"으로 채용건 컨텍스트에서 인재 등록 폼을 열었을 때의 job id (사람이 다시 고르지 않고 자동 연결하기 위함)
+let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일치해 연결하기로 한 기존 talent.id (재지원/동명이인 중복등록 방지)
 function isTestOrg(orgId){
   if(!orgId)return false;
   return !!cache.orgs.find(o=>o.id===orgId)?.is_test;
@@ -3559,6 +3560,7 @@ function toggleChannelFields(){
 function openAddTalent(){
   renderTalent();
   jobScopedRegistration=null; // 일반 등록 진입 시 이전 채용건 컨텍스트가 남아있지 않도록 초기화
+  talentLinkMap={}; // 이전에 연결해둔 기존 인재 매칭도 초기화
   const banner0=document.getElementById('talent-modal-job-banner');if(banner0)banner0.style.display='none';
   document.getElementById('talent-count').value='1';
   document.getElementById('t-channel').value='기관연계';
@@ -3586,13 +3588,15 @@ function openAddTalentForJob(jobId){
 }
 function renderTalentForms(){
   const count=parseInt(document.getElementById('talent-count').value);
+  talentLinkMap={}; // 행 개수가 바뀌면 인덱스가 재배치되므로 기존 연결 상태는 초기화
   const container=document.getElementById('talent-forms-container');
   container.innerHTML=Array.from({length:count},(_,i)=>`
     <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:${i%2===0?'#fafbfc':'#fff'};">
       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">👤 지원자 ${i+1}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="fg"><label>지원자명 *</label><input type="text" id="t-name-${i}" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
-        <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>지원자명 *</label><input type="text" id="t-name-${i}" oninput="checkTalentMatch(${i})" placeholder="홍길동" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>전화번호</label><input type="tel" id="t-phone-${i}" oninput="checkTalentMatch(${i})" placeholder="010-0000-0000" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div id="t-match-${i}" style="grid-column:1/-1;display:none;"></div>
         <div class="fg"><label>생년월일</label><input type="date" id="t-birthdate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>장애유형</label><select id="t-distype-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>지체</option><option>뇌병변</option><option>시각</option><option>청각</option><option>언어</option><option>지적</option><option>자폐성</option><option>정신</option><option>신장</option><option>심장</option><option>호흡기</option><option>간</option><option>안면</option><option>장루·요루</option><option>뇌전증</option></select></div>
         <div class="fg"><label>장애등급</label><select id="t-disgrade-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>중증</option><option>경증</option></select></div>
@@ -3607,6 +3611,34 @@ function renderTalentForms(){
     </div>
   `).join('');
 }
+// 이름+전화번호가 기존 talents와 일치하면 재지원/동명이인 중복등록을 막기 위해 연결 후보를 보여준다.
+// 전화번호가 없거나 일치하는 기존 인재가 없으면 그냥 새 사람으로 간주한다(오탐 방지를 위해 이름만으로는 매칭 안 함).
+function checkTalentMatch(i){
+  if(talentLinkMap[i])talentLinkMap[i]=null; // 입력이 바뀌면 이전에 연결해둔 상태는 해제
+  const box=document.getElementById(`t-match-${i}`);
+  if(!box)return;
+  const name=(document.getElementById(`t-name-${i}`)?.value||'').trim();
+  const phone=(document.getElementById(`t-phone-${i}`)?.value||'').trim();
+  if(!name||!phone){box.style.display='none';box.innerHTML='';return;}
+  const match=(cache.talents||[]).find(t=>(t.name||'').trim()===name&&(t.phone||'').trim()===phone);
+  if(!match){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='block';
+  box.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:6px;padding:8px 10px;font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span>⚠️ 동일 이름·전화번호의 기존 인재: <b>${match.name}</b> (${match.phone}, 등록일 ${match.created_at?fDate(match.created_at.slice(0,10)):'—'})</span>
+    <button type="button" onclick="linkExistingTalent(${i},${match.id})" style="font-size:11px;padding:3px 8px;border:1.5px solid var(--accent);color:var(--accent);background:#fff;border-radius:6px;cursor:pointer;">이 사람으로 연결</button>
+    <button type="button" onclick="unlinkExistingTalent(${i})" style="font-size:11px;padding:3px 8px;border:none;color:var(--text3);background:none;cursor:pointer;">새 인물로 등록</button>
+  </div>`;
+}
+function linkExistingTalent(i,talentId){
+  talentLinkMap[i]=talentId;
+  const box=document.getElementById(`t-match-${i}`);
+  const t=(cache.talents||[]).find(x=>x.id===talentId);
+  if(box)box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;">✅ 기존 인재 <b>${t?.name||''}</b>로 연결됨 — 새 인재 등록 없이 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">취소</button></div>`;
+}
+function unlinkExistingTalent(i){
+  talentLinkMap[i]=null;
+  checkTalentMatch(i);
+}
 async function saveTalent(){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const count=parseInt(document.getElementById('talent-count').value);
@@ -3618,11 +3650,18 @@ async function saveTalent(){
   if(needsOrg&&!orgId){toast('기관을 목록에서 검색해서 선택해주세요');return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const member=document.getElementById('t-member').value;
-  const rows=[];
+  // 이름+전화번호로 연결하기로 한 행(재지원/동명이인)은 새로 만들지 않고 기존 talent를 그대로 쓴다.
+  const newRows=[];
+  const newRowIndexes=[];
+  const linkedTalents={};
   for(let i=0;i<count;i++){
     const name=document.getElementById(`t-name-${i}`).value.trim();
     if(!name){toast(`${i+1}번째 지원자명을 입력하세요`);return;}
-    rows.push({
+    const linkedId=talentLinkMap[i];
+    const existing=linkedId?(cache.talents||[]).find(t=>t.id===linkedId):null;
+    if(existing){linkedTalents[i]=existing;continue;}
+    newRowIndexes.push(i);
+    newRows.push({
       name,org_id:orgId||null,source_org_id:orgId||null,channel,referrer:referrer||null,
       job:document.getElementById(`t-job-${i}`).value.trim(),
       member,
@@ -3637,28 +3676,40 @@ async function saveTalent(){
       created_by:currentUser?.id||null,created_by_name:myName
     });
   }
-  const {data,error}=await sb.from('talents').insert(rows).select();
-  if(error){toast('오류: '+error.message);return;}
-  data.forEach(d=>cache.talents.unshift(d));
+  let insertedData=[];
+  if(newRows.length){
+    const {data,error}=await sb.from('talents').insert(newRows).select();
+    if(error){toast('오류: '+error.message);return;}
+    insertedData=data;
+    insertedData.forEach(d=>cache.talents.unshift(d));
+  }
+  // 행 인덱스별 최종 talent 레코드 매핑 (신규 삽입분 + 기존 연결분 합침)
+  const talentByIndex={};
+  newRowIndexes.forEach((origIdx,k)=>{talentByIndex[origIdx]=insertedData[k];});
+  Object.keys(linkedTalents).forEach(idx=>{talentByIndex[idx]=linkedTalents[idx];});
+  const linkedCount=Object.keys(linkedTalents).length;
   // 상태가 '인재등록'이 아닌 경우에만 candidate_applications 자동 생성 (2026-07-04 결정)
   // job_id는 사람이 다시 고르지 않는다 — "+지원자 등록"으로 특정 채용건 화면에서 들어온 경우에만
   // jobScopedRegistration에 그 채용건 id가 자동으로 실려 있고, 그대로 저장한다 (2026-07-21 결정)
   const scopedJobId=jobScopedRegistration;
   const appRows=[];
-  data.forEach((d,i)=>{
-    if(d.status&&d.status!=='인재등록'){
+  for(let i=0;i<count;i++){
+    const d=talentByIndex[i];
+    if(!d)continue;
+    const status=document.getElementById(`t-status-${i}`).value;
+    if(status&&status!=='인재등록'){
       appRows.push({
         talent_id:d.id,
-        org_id:d.org_id||null,
+        org_id:orgId||null,
         job_id:scopedJobId||null,
-        status:d.status,
+        status,
         applied_date:document.getElementById(`t-date-${i}`)?.value||null, // 미입력 시 오늘 자동입력 안 하고 null
         applied_date_is_estimated:document.getElementById(`t-date-est-${i}`)?.checked||false,
-        hire_company:d.hire_company||null,
+        hire_company:document.getElementById(`t-hirecompany-${i}`)?.value.trim()||null,
         join_date:document.getElementById(`t-joindate-${i}`)?.value||null,
       });
     }
-  });
+  }
   if(appRows.length){
     const{data:apps,error:appErr}=await sb.from('candidate_applications').insert(appRows).select();
     if(appErr){console.error('[Supabase Error] candidate_applications 자동생성 실패:',appErr);toast('일부 지원이력 생성 중 오류가 발생했습니다.');}
@@ -3700,8 +3751,9 @@ async function saveTalent(){
   document.getElementById('talent-modal').style.display='none';
   document.getElementById('t-referrer').value='';
   jobScopedRegistration=null;
+  talentLinkMap={};
   const banner=document.getElementById('talent-modal-job-banner');if(banner)banner.style.display='none';
-  toast(`${count}명 등록 완료!`);renderTalent();
+  toast(linkedCount?`${count}명 처리 완료! (기존 인재 연결 ${linkedCount}명 포함)`:`${count}명 등록 완료!`);renderTalent();
 }
 
 // ── MOU 체크리스트 ──
