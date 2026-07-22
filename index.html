@@ -1687,18 +1687,10 @@ function switchLoginTab(tab){
   document.getElementById('login-err').style.display='none';
 }
 function doGuestLogin(){
-  const pw=document.getElementById('guest-pw').value;
+  // RLS 적용(2026-07-22)으로 anon 접근이 전면 차단됨에 따라 게스트 보기는 보안 재설계 전까지 비활성화.
   const errEl=document.getElementById('login-err');
-  if(pw!=='00000'){errEl.textContent='비밀번호가 올바르지 않습니다.';errEl.style.display='block';return;}
-  isGuest=true;
-  document.getElementById('login-banner').style.display='none';
-  document.getElementById('user-avatar').textContent='👁';
-  document.getElementById('user-name').textContent='게스트';
-  document.getElementById('user-status-label').textContent='읽기 전용';
-  document.getElementById('conn-dot').className='conn-dot connected';
-  document.getElementById('conn-label').textContent='게스트';
-  loadAll();
-  toast('게스트 모드로 접속했습니다 (읽기 전용)');
+  errEl.textContent='게스트 보기는 보안 점검으로 일시 중단되었습니다. 팀원 로그인을 이용해주세요.';
+  errEl.style.display='block';
 }
 let cardImageBase64=null;
 let trendChart=null;
