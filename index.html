@@ -3668,14 +3668,31 @@ async function saveTalent(){
       // 사람이 배정을 다시 고르지 않고 (job_id + 본인 이름)으로만 매칭한다.
       if(scopedJobId){
         const myName2=currentProfile?.name||currentUser?.email||'알 수 없음';
-        const myAssignment=(cache.sourcingAssignments||[]).find(a=>a.job_id===scopedJobId&&a.assigned_to===myName2);
+        let myAssignment=(cache.sourcingAssignments||[]).find(a=>a.job_id===scopedJobId&&a.assigned_to===myName2);
+        if(!myAssignment){
+          // 본인 앞으로 잡힌 서칭 배정이 없는 경우, 실적이 누락되지 않도록 그 자리에서 배정을 자동 생성한다.
+          // 목표 인원은 미설정(null)으로 두고, 담당자가 나중에 채용건 화면에서 목표를 직접 채워넣을 수 있다.
+          const job=cache.jobs.find(x=>x.id===scopedJobId);
+          const newRow={
+            job_id:scopedJobId,org_id:null,category:job?.job_title||null,
+            assigned_to:myName2,target_count:null,
+            start_date:today(),due_date:null,status:'진행중'
+          };
+          const{data:newAssign,error:newAssignErr}=await sb.from('sourcing_assignments').insert(newRow).select().single();
+          if(newAssignErr){
+            console.error('[Supabase Error] 서칭 배정 자동생성 실패:',newAssignErr);
+            toast('⚠️ 서칭 배정 자동생성 실패로 담당자 실적에는 반영되지 않았어요');
+          }else{
+            cache.sourcingAssignments.push(newAssign);
+            myAssignment=newAssign;
+            toast('본인 앞 서칭 배정이 없어 자동으로 생성했어요 (목표 인원은 나중에 설정)');
+          }
+        }
         if(myAssignment){
           const scRows=apps.map(a=>({sourcing_assignment_id:myAssignment.id,talent_id:a.talent_id,sourced_by:myName2,application_id:a.id}));
           const{data:scData,error:scErr}=await sb.from('sourcing_candidates').insert(scRows).select();
           if(scErr)console.error('[Supabase Error] sourcing_candidates 자동생성 실패:',scErr);
           else scData.forEach(sc=>cache.sourcingCandidates.push(sc));
-        }else{
-          toast('⚠️ 이 채용건에 본인 앞 서칭 배정이 없어 담당자 실적에는 반영되지 않았어요 (배정을 먼저 추가해주세요)');
         }
       }
     }
