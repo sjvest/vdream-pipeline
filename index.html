@@ -3624,16 +3624,17 @@ function searchTalentMatch(i){
   const dd=document.getElementById(`t-name-dropdown-${i}`);
   if(!dd)return;
   const q=(document.getElementById(`t-name-${i}`)?.value||'').trim();
-  if(!q){dd.style.display='none';dd.innerHTML='';return;}
-  const results=(cache.talents||[]).filter(t=>(t.name||'').includes(q)).slice(0,8);
-  if(!results.length){dd.style.display='none';dd.innerHTML='';return;}
+  // 기관명 검색과 동일하게, 비어있어도 포커스만 하면 전체 인재 목록을 바로 보여준다(빈 문자열은 모든 이름에 포함되므로)
+  const results=(cache.talents||[]).filter(t=>(t.name||'').includes(q)).slice(0,10);
+  if(!results.length&&!q){dd.style.display='none';dd.innerHTML='';return;}
   dd.style.display='block';
-  dd.innerHTML=results.map(t=>`
+  dd.innerHTML=results.length?results.map(t=>`
     <div onclick="selectExistingTalent(${i},${t.id})"
       style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
       onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       ${t.name} <span style="font-size:11px;color:var(--text3);">${t.phone||'전화번호 없음'} · 등록일 ${t.created_at?fDate(t.created_at.slice(0,10)):'—'}</span>
-    </div>`).join('');
+    </div>`).join('')
+    :`<div style="padding:10px 14px;"><div style="font-size:12px;color:var(--text3);">일치하는 기존 인재 없음 — 새 인물로 등록됩니다.</div></div>`;
 }
 function selectExistingTalent(i,talentId){
   const t=(cache.talents||[]).find(x=>x.id===talentId);
