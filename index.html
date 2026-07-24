@@ -1028,6 +1028,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div class="fg-row fg-2">
       <div class="fg"><label>서칭 목표 인원 <span style="font-weight:400;color:var(--text3);">(발굴팀이 찾아야 할 후보 인원 — 최종 채용 목표와 다름)</span></label><input id="job-sourcing-target" type="number" min="0" placeholder="미설정"></div>
+      <div class="fg"><label>1인당 단가(원) <span style="font-weight:400;color:var(--text3);">(기여 매출 계산용)</span></label><input id="job-unit-price" type="number" min="0" step="10000" placeholder="미설정"></div>
     </div>
     <div class="fg-row fg-2">
       <div class="fg"><label>담당 팀원</label><select id="job-member"><option value="">선택</option></select></div>
@@ -5408,6 +5409,7 @@ function loadExistingJob(id){
   document.getElementById('job-headcount').value=j.headcount||'';
   document.getElementById('job-current').value=j.current_count||0;
   document.getElementById('job-sourcing-target').value=j.sourcing_target_count??'';
+  document.getElementById('job-unit-price').value=j.unit_price??'';
   document.getElementById('job-deadline').value=j.deadline||'';
   document.getElementById('job-status').value=(j.status==='완료'?'완료':'서칭중');
   document.getElementById('job-disability').value=j.disability_type||'';
@@ -5457,6 +5459,7 @@ function openAddJob(){
   document.getElementById('job-headcount').value='';
   document.getElementById('job-current').value='0';
   document.getElementById('job-sourcing-target').value='';
+  document.getElementById('job-unit-price').value='';
   document.getElementById('job-deadline').value='';
   document.getElementById('job-status').value='서칭중';
   document.getElementById('job-severity').value='상관없음';
@@ -5474,6 +5477,7 @@ function openEditJob(id){
   document.getElementById('job-headcount').value=j.headcount||'';
   document.getElementById('job-current').value=j.current_count||0;
   document.getElementById('job-sourcing-target').value=j.sourcing_target_count??'';
+  document.getElementById('job-unit-price').value=j.unit_price??'';
   document.getElementById('job-deadline').value=j.deadline||'';
   document.getElementById('job-status').value=(j.status==='완료'?'완료':'서칭중');
   document.getElementById('job-disability').value=j.disability_type||'';
@@ -5493,10 +5497,12 @@ async function saveJob(){
   if(!company||!jobTitle||!headcount){toast('고객사명, 직무, 목표 인원은 필수예요');return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const sourcingTargetRaw=document.getElementById('job-sourcing-target').value;
+  const unitPriceRaw=document.getElementById('job-unit-price').value;
   const row={
     company,job_title:jobTitle,headcount,
     current_count:parseInt(document.getElementById('job-current').value)||0,
     sourcing_target_count:sourcingTargetRaw===''?null:parseInt(sourcingTargetRaw),
+    unit_price:unitPriceRaw===''?null:parseInt(unitPriceRaw),
     deadline:document.getElementById('job-deadline').value||null,
     member:document.getElementById('job-member').value,
     status:document.getElementById('job-status').value,
