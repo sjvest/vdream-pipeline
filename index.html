@@ -1908,13 +1908,19 @@ function scheduleDailyTasksPopup(){
 async function loadOrgs(){
   let data,error;
   for(let attempt=0;attempt<3;attempt++){
-    ({data,error}=await sb.from('orgs').select('*').order('created_at',{ascending:false}).limit(5000));
+    ({data,error}=await sb.from('orgs')
+      .select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test')
+      .order('created_at',{ascending:false})
+      .limit(5000));
     if(!error)break;
     console.error(`[Supabase Error] orgs 조회 실패 (시도 ${attempt+1}/3):`, error);
     if(attempt<2)await new Promise(r=>setTimeout(r,500*(attempt+1)));
   }
-  if(error)toast('기관 데이터 로딩 실패: '+error.message);
-  cache.orgs=data||[];
+  if(error){
+    toast('기관 데이터 로딩 실패: '+error.message);
+    return {data:null,error};
+  }
+  cache.orgs=data;
   return {data,error};
 }
 async function loadActions(){
@@ -2012,7 +2018,7 @@ async function loadRecentLogs(){
 }
 async function loadOrgDetail(orgId){
   const [orgRes,logsRes,talentsRes,appsRes]=await Promise.all([
-    sb.from('orgs').select('*').eq('id',orgId).single(),
+    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test').eq('id',orgId).single(),
     sb.from('contact_logs').select('*').eq('org_id',orgId).order('logged_at',{ascending:false}),
     sb.from('talents').select('*').eq('source_org_id',orgId).order('created_at',{ascending:false}),
     sb.from('candidate_applications').select('*').eq('org_id',orgId).order('created_at',{ascending:false}),
@@ -2025,7 +2031,7 @@ async function loadOrgDetail(orgId){
 }
 async function loadAnalyticsData(){
   const [o,t,a,j]=await Promise.all([
-    sb.from('orgs').select('*'),
+    sb.from('orgs').select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test'),
     sb.from('talents').select('*'),
     sb.from('candidate_applications').select('*'),
     sb.from('jobs').select('*'),
@@ -2051,7 +2057,7 @@ async function loadAll(){
       loadJobs(), loadCold(), loadTeamTasks(),
       loadSourcingAssignments(), loadSourcingCandidates()
     ]);
-    cache.orgs=liteOrgsRes.data||[];
+    if(!liteOrgsRes.error)cache.orgs=liteOrgsRes.data;
     updateMemberSelects();
     updateUrgentCount();
     if(_pendingInitialHash){
@@ -2066,8 +2072,6 @@ async function loadAll(){
     scheduleDailyTasksPopup();
     scheduleGChatDailySummary();
     setTimeout(checkContactAlert,800);
-    // 전체 orgs(memo/mou_checklist/contacts 등 무거운 필드 포함)는 백그라운드에서 마저 로드 후 교체
-    loadOrgs().then(()=>{ renderCurrent(); });
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
 // talents/applications 지연로딩 상태 추적 (인재영입/Analytics 페이지 및 openOrg에서 사용)
@@ -5239,7 +5243,15 @@ async function saveSourcingAssignment(jobId){
   const{data,error}=await sb.from('sourcing_assignments').insert(row).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.sourcingAssignments.push(data);
-  toast('서칭 배정 추가됨 ✓');
+  // 완료 처리된 채용건에 새 서칭 배정을 추가하면, 다시 서칭이 필요하다는 뜻이므로
+  // 채용건 상태를 서칭중으로 자동 전환해서 완료 아코디언에서 진행중 목록으로 다시 올라오게 한다.
+  let reopened=false;
+  if(job&&job.status==='완료'){
+    const{error:reopenErr}=await sb.from('jobs').update({status:'서칭중'}).eq('id',jobId);
+    if(reopenErr){console.error('[Supabase Error] 채용건 재오픈 실패:',reopenErr);}
+    else{job.status='서칭중';reopened=true;}
+  }
+  toast(reopened?'서칭 배정 추가 + 채용건 서칭중으로 재오픈됨 ✓':'서칭 배정 추가됨 ✓');
   renderJobs();
 }
 async function deleteSourcingAssignment(id){
