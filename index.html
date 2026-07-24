@@ -5229,7 +5229,7 @@ async function saveSourcingAssignment(jobId){
   const assignedTo=document.getElementById('sa-member-'+jobId)?.value;
   if(!assignedTo){toast('담당자를 선택하세요');return;}
   const targetRaw=document.getElementById('sa-target-'+jobId)?.value;
-  const job=cache.jobs.find(x=>x.id===jobId);
+  const job=cache.jobs.find(x=>Number(x.id)===Number(jobId));
   const row={
     job_id:jobId,
     org_id:null, // jobs에 org_id 연결이 없어 이번 단계에서는 비워둠 (추후 jobs-orgs 연결 정리 후 채울 예정)
