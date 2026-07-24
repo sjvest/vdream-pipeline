@@ -5273,16 +5273,11 @@ async function renderJobs(){
     <div class="metric"><div class="metric-label">지원자 추천</div><div class="metric-value" style="color:var(--purple);">${referredApplicants}</div><div class="metric-sub">명</div></div>
   `;
 
-  // 테이블 렌더링
-  const sorted=[...cache.jobs].sort((a,b)=>{
-    const order={서칭중:0,완료:1};
-    const oa=order[a.status]??0,ob=order[b.status]??0;
-    return oa-ob||new Date(a.deadline)-new Date(b.deadline);
-  });
+  // 테이블 렌더링 — 진행중 건은 그대로 표시, 완료 건은 아코디언으로 접어서 하단에 모아둔다
+  const activeJobs=cache.jobs.filter(j=>j.status!=='완료').sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  const doneJobs=cache.jobs.filter(j=>j.status==='완료').sort((a,b)=>new Date(b.deadline)-new Date(a.deadline));
 
-  const STATUS_CLS2={서칭중:'b-blue',완료:'b-green',미완료:'b-red',보류:'b-gray',취소:'b-red'};
-
-  document.getElementById('job-tbody').innerHTML=sorted.length?sorted.map(j=>{
+  const jobRowHtml=(j,rowClass)=>{
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
     const pct=j.headcount?Math.min(100,Math.round((j.current_count||0)/j.headcount*100)):0;
     const remain=Math.max(0,(j.headcount||0)-(j.current_count||0));
@@ -5291,7 +5286,7 @@ async function renderJobs(){
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
-    return`<tr onclick="toggleJobRow(${j.id},event)" style="cursor:pointer;${j.status==='완료'?'opacity:.55':''}">
+    return`<tr class="${rowClass||''}" onclick="toggleJobRow(${j.id},event)" style="cursor:pointer;${j.status==='완료'?'opacity:.55':''}${rowClass?';display:none':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">
@@ -5319,12 +5314,12 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><select onchange="cycleJobStatusSelect(Number(${j.id}),this.value)" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select></td>
+      <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select></td>
       <td style="padding:13px 16px;">
         <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
     </tr>
-    <tr id="job-detail-${j.id}" style="display:none;">
+    <tr class="${rowClass||''}" id="job-detail-${j.id}" style="display:none;">
       <td colspan="10" style="padding:0;">
         <div style="padding:14px 20px 16px 20px;background:var(--bg);border-top:1px solid var(--border);border-bottom:2px solid var(--teal);">
           ${(j.searched_orgs&&j.searched_orgs.length)?`<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:700;color:var(--text3);margin-right:8px;">🏢 서칭 기관</span>${j.searched_orgs.map(o=>`<span style="display:inline-block;padding:2px 8px;background:var(--accent-bg);color:var(--accent);border-radius:20px;font-size:11px;font-weight:600;margin:2px;">${o}</span>`).join('')}</div>`:''}
@@ -5335,7 +5330,32 @@ async function renderJobs(){
         </div>
       </td>
     </tr>`;
-  }).join(''):`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+  };
+
+  const doneHeaderRow=doneJobs.length?`<tr onclick="toggleDoneJobsSection()" style="cursor:pointer;background:var(--bg);">
+    <td colspan="10" style="padding:11px 16px;font-size:12px;font-weight:700;color:var(--text3);">
+      ✅ 완료된 채용 건 (${doneJobs.length}건) — 클릭해서 펼치기/접기
+      <span id="done-jobs-chevron" style="float:right;">${jobDoneSectionOpen?'▲ 접기':'▼ 펼치기'}</span>
+    </td>
+  </tr>`:'';
+
+  const bodyHtml=activeJobs.map(j=>jobRowHtml(j)).join('')+doneHeaderRow+doneJobs.map(j=>jobRowHtml(j,'job-done-row')).join('');
+  document.getElementById('job-tbody').innerHTML=bodyHtml||`<tr><td colspan="9" class="empty">등록된 채용 건 없음</td></tr>`;
+  if(jobDoneSectionOpen)document.querySelectorAll('.job-done-row').forEach(el=>{if(!el.id.startsWith('job-detail-'))el.style.display='table-row';});
+}
+let jobDoneSectionOpen=false; // 완료된 채용 건 아코디언 펼침 상태 (기본 접힘)
+function toggleDoneJobsSection(){
+  jobDoneSectionOpen=!jobDoneSectionOpen;
+  document.querySelectorAll('.job-done-row').forEach(el=>{
+    if(el.id&&el.id.startsWith('job-detail-')){
+      // 완료 섹션을 접을 때는 개별 상세행도 같이 닫아준다
+      if(!jobDoneSectionOpen)el.style.display='none';
+    }else{
+      el.style.display=jobDoneSectionOpen?'table-row':'none';
+    }
+  });
+  const chev=document.getElementById('done-jobs-chevron');
+  if(chev)chev.textContent=jobDoneSectionOpen?'▲ 접기':'▼ 펼치기';
 }
 function toggleJobRow(jobId,event){
   if(event&&event.target&&(event.target.tagName==='SELECT'||event.target.tagName==='BUTTON'||event.target.closest('button')||event.target.closest('select')))return;
