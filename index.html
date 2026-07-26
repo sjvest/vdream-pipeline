@@ -6669,7 +6669,8 @@ async function saveMouDate(orgId){
 async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
   const t=today();
-  await sb.from('orgs').update({stage:newStage,lastcontact:t}).eq('id',currentOrgId);
+  const{error}=await sb.from('orgs').update({stage:newStage,lastcontact:t}).eq('id',currentOrgId);
+  if(error){console.error('[Supabase Error] 단계 변경 실패:',error);toast('오류: 단계 변경이 저장되지 않았습니다 — '+error.message);return;}
   const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;}
   closeModal();renderCurrent();toast('단계 변경 완료');
 }
