@@ -6251,9 +6251,10 @@ async function openOrg(id){
   </div>
   </div>
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:14px;border-top:1.5px solid var(--border);">
-      <select id="m-stage-sel" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
+      <select id="m-stage-sel" onchange="toggleMouStageDateInput()" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
         ${[0,1,2,3,4,5,6,9].map(s=>`<option value="${s}"${o.stage===s?' selected':''}>${STAGES[s]}</option>`).join('')}
       </select>
+      <input type="date" id="m-stage-mou-date" value="${o.mou_date||''}" title="MOU 체결일 (실제 발생일로 지정 가능, 예: 지난주 금요일)" style="display:${o.stage>=5?'inline-block':'none'};font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})"><i class="ti ti-pencil"></i> 정보 수정</button>
@@ -6666,13 +6667,28 @@ async function saveMouDate(orgId){
   if(o)o.mou_date=dateVal||null;
   toast('MOU 예정일 저장됨 ✓');openOrg(orgId);
 }
+function toggleMouStageDateInput(){
+  const sel=document.getElementById('m-stage-sel');
+  const dateEl=document.getElementById('m-stage-mou-date');
+  if(!sel||!dateEl)return;
+  const isMou=parseInt(sel.value)>=5;
+  dateEl.style.display=isMou?'inline-block':'none';
+  if(isMou&&!dateEl.value)dateEl.value=today(); // 실제 체결일을 아직 입력 안했으면 오늘로 기본 세팅 (지난 날짜로 수정 가능)
+}
 async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
   const t=today();
-  const{error}=await sb.from('orgs').update({stage:newStage,lastcontact:t}).eq('id',currentOrgId);
+  const payload={stage:newStage,lastcontact:t};
+  // MOU 완료(5) 이상으로 바뀔 때는 실제 체결일을 mou_date에 함께 저장해서
+  // 주간/월간 MOU 집계가 등록일이 아니라 실제 체결일 기준으로 정확히 잡히도록 한다.
+  if(newStage>=5){
+    const mouDateEl=document.getElementById('m-stage-mou-date');
+    payload.mou_date=mouDateEl?.value||t;
+  }
+  const{error}=await sb.from('orgs').update(payload).eq('id',currentOrgId);
   if(error){console.error('[Supabase Error] 단계 변경 실패:',error);toast('오류: 단계 변경이 저장되지 않았습니다 — '+error.message);return;}
-  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;}
-  closeModal();renderCurrent();toast('단계 변경 완료');
+  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;if(payload.mou_date!==undefined)o.mou_date=payload.mou_date;}
+  closeModal();renderCurrent();toast(newStage>=5?`단계 변경 완료 (MOU 체결일: ${payload.mou_date})`:'단계 변경 완료');
 }
 async function markContacted(id){
   const t=today();
