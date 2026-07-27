@@ -4515,7 +4515,7 @@ function checkContactAlert(){
   if(!overdue.length)return;
   document.getElementById('contact-alert-sub').textContent=`마지막 연락으로부터 7일 이상 지난 기관이 ${overdue.length}개 있어요.`;
   document.getElementById('contact-alert-list').innerHTML=overdue.map(o=>`
-    <div onclick="closeContactAlert();openOrg('${o.id}')" style="padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background=''">
+    <div onclick="closeContactAlert();openOrg(${o.id})" style="padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background=''">
       <span style="font-size:13px;font-weight:600;color:var(--text);">${o.name}</span>
       <span style="font-size:12px;color:var(--red);font-weight:700;white-space:nowrap;margin-left:12px;">마지막 연락 ${o.days}일 전</span>
     </div>
@@ -6007,6 +6007,10 @@ function clearOrgForm(){
 
 // ── 기관 상세 모달 ──
 async function openOrg(id){
+  // 호출부마다 id를 문자열('${o.id}')로 넘기는 곳과 숫자(${o.id})로 넘기는 곳이 섞여 있었다.
+  // currentOrgId가 문자열이 되면 cache.logs/cache.orgs 등 === 비교가 전부 깨져서
+  // (예: 컨택 히스토리가 다 있는데도 "없음"으로 보임) 여기서 항상 숫자로 정규화한다.
+  id=Number(id);
   currentOrgId=id;
   // 모달을 먼저 열고 로딩 스켈레톤 표시 (체감 지연 최소화)
   const cachedOrg=cache.orgs.find(x=>x.id===id);
@@ -6347,7 +6351,7 @@ function renderContactLogItem(l,orgId){
   </div>`;
 }
 function renderContactLogs(orgId){
-  const logs=cache.logs.filter(l=>l.org_id===orgId).sort((a,b)=>new Date(b.logged_at||b.created_at)-new Date(a.logged_at||a.created_at));
+  const logs=cache.logs.filter(l=>Number(l.org_id)===Number(orgId)).sort((a,b)=>new Date(b.logged_at||b.created_at)-new Date(a.logged_at||a.created_at));
   if(!logs.length)return`<div class="empty" style="padding:.5rem 0;font-size:12px;">컨택 기록 없음</div>`;
   const recent=logs.slice(0,3);
   const moreCount=logs.length-3;
