@@ -6600,6 +6600,18 @@ function switchOrgTalentTab(tabKey,orgId){
   else{const statusMap={pass:'합격',wait:'대기',joined:'입사완료'};const st=statusMap[tabKey];const filteredApps=st?orgApps.filter(a=>a.status===st):orgApps;rows=filteredApps.map(ap=>{const t=cache.talents.find(x=>x.id===ap.talent_id)||{};return renderRow(t,ap);});}
   list.innerHTML=rows.length?rows.join(''):'<div style="color:var(--text3);font-size:12px;padding:8px 0;">해당 인재 없음</div>';
 }
+// 명함 사진 클릭 시 크게 보기 — 예전에는 window.open(url,'_blank')로 새 탭을 열었는데,
+// 예전 방식으로 등록된 명함(orgs.card_image)은 http URL이 아니라 base64 data URI라서
+// 크롬이 새 탭에서 data: URL로의 이동을 차단해 빈 about:blank 탭만 뜨는 문제가 있었다.
+// http URL/base64 데이터 URI 모두 안전하게 동작하도록 새 탭 대신 인앱 라이트박스로 표시.
+function showImageLightbox(url){
+  if(!url)return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;';
+  ov.innerHTML=`<img src="${url}" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);">`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
 async function loadBizCards(orgId){
   const wrap=document.getElementById('biz-cards-list');
   if(!wrap)return;
@@ -6611,7 +6623,7 @@ async function loadBizCards(orgId){
   if(!cards.length&&!legacyUrl){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
   const renderCard=(url,cardId,info)=>`
     <div style="position:relative;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
-      <img src="${url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="window.open('${url}','_blank')" title="클릭 시 원본 보기">
+      <img src="${url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="showImageLightbox(this.src)" title="클릭 시 크게 보기">
       ${info?`<div style="padding:6px 10px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);">
         ${info.contact_name?`<span style="font-weight:700;">${info.contact_name}</span> `:''}
         ${info.position?`<span style="color:var(--text3);">${info.position}</span>`:''}
