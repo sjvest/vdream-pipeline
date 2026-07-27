@@ -2769,12 +2769,12 @@ function renderPeriodReport(start,end){
   const mouDone=cache.orgs.filter(o=>o.stage===5);  // MOU완료
   // 6. 온라인 유입 (해당 기간)
   const onlineChannels=['카페','인스타그램','페이스북','기타온라인'];
-  const onlineTalents=cache.talents.filter(t=>inRange(t.created_at)&&onlineChannels.includes(t.channel));
+  const onlineTalents=cache.talents.filter(t=>inRange(t.date||t.created_at)&&onlineChannels.includes(t.channel));
   // 7. 인재영입활동 지원자 (해당 기간)
   const supplyChannels=['기관연계','협단체','특수학교','소개'];
-  const supplyTalents=cache.talents.filter(t=>inRange(t.created_at)&&supplyChannels.includes(t.channel||'기관연계'));
+  const supplyTalents=cache.talents.filter(t=>inRange(t.date||t.created_at)&&supplyChannels.includes(t.channel||'기관연계'));
   // 8. 전체 인재영입
-  const allTalents=cache.talents.filter(t=>inRange(t.created_at));
+  const allTalents=cache.talents.filter(t=>inRange(t.date||t.created_at));
 
   const statCard=(icon,label,value,color)=>`
     <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;box-shadow:var(--shadow-sm);">
@@ -4028,8 +4028,8 @@ function renderAnalytics(){
   const periodLen=useAll?0:end-start;
   const prevStart=useAll?null:new Date(start-periodLen-864e5);const prevEnd=useAll?null:new Date(start-1);
   const inPrev=d=>{if(!d||!prevStart)return false;const dt=new Date(d);return dt>=prevStart&&dt<=prevEnd;};
-  const pO=byM(allOrgs.filter(o=>inRange(o.created_at)));const pL=byM((cache.logs||[]).filter(l=>inRange(l.logged_at||l.created_at)));const pM=allOrgs.filter(o=>o.stage>=4&&inRange(o.mou_date));const pT=byM(allTals.filter(t=>inRange(t.created_at)));const pA=allApps.filter(a=>inRange(a.created_at));const pH=allApps.filter(a=>a.status==='합격'&&inRange(a.created_at));const pJ=allApps.filter(a=>a.status==='입사완료'&&inRange(a.created_at));
-  const prevO=byM(allOrgs.filter(o=>inPrev(o.created_at))).length;const prevL=byM((cache.logs||[]).filter(l=>inPrev(l.logged_at||l.created_at))).length;const prevM=allOrgs.filter(o=>o.stage>=4&&inPrev(o.mou_date)).length;const prevT=byM(allTals.filter(t=>inPrev(t.created_at))).length;const prevH=allApps.filter(a=>a.status==='합격'&&inPrev(a.created_at)).length;const prevJ=allApps.filter(a=>a.status==='입사완료'&&inPrev(a.created_at)).length;
+  const pO=byM(allOrgs.filter(o=>inRange(o.created_at)));const pL=byM((cache.logs||[]).filter(l=>inRange(l.logged_at||l.created_at)));const pM=allOrgs.filter(o=>o.stage>=4&&inRange(o.mou_date));const pT=byM(allTals.filter(t=>inRange(t.date||t.created_at)));const pA=allApps.filter(a=>inRange(a.created_at));const pH=allApps.filter(a=>a.status==='합격'&&inRange(a.created_at));const pJ=allApps.filter(a=>a.status==='입사완료'&&inRange(a.created_at));
+  const prevO=byM(allOrgs.filter(o=>inPrev(o.created_at))).length;const prevL=byM((cache.logs||[]).filter(l=>inPrev(l.logged_at||l.created_at))).length;const prevM=allOrgs.filter(o=>o.stage>=4&&inPrev(o.mou_date)).length;const prevT=byM(allTals.filter(t=>inPrev(t.date||t.created_at))).length;const prevH=allApps.filter(a=>a.status==='합격'&&inPrev(a.created_at)).length;const prevJ=allApps.filter(a=>a.status==='입사완료'&&inPrev(a.created_at)).length;
   const chgBadge=(cur,prev)=>{if(prev===null||prev===undefined)return'';const d=cur-prev;if(d===0)return'<span style="font-size:10px;color:var(--text3);">변동없음</span>';return`<span style="font-size:10px;font-weight:700;color:${d>0?'var(--green)':'var(--red)'};">${d>0?'▲ +':'▼ '}${d}</span>`;};
   const todayEl=document.getElementById('an-today');
   if(todayEl){const urgents=[];allOrgs.filter(o=>o.mou_date&&Math.ceil((new Date(o.mou_date)-now)/864e5)<=3&&Math.ceil((new Date(o.mou_date)-now)/864e5)>=0).forEach(o=>urgents.push({type:'danger',label:'MOU D-'+Math.ceil((new Date(o.mou_date)-now)/864e5),text:o.name}));allOrgs.filter(o=>o.lastcontact&&(now-new Date(o.lastcontact))/864e5>=30).slice(0,3).forEach(o=>urgents.push({type:'warning',label:'미연락 '+Math.floor((now-new Date(o.lastcontact))/864e5)+'일',text:o.name}));allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=14&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0).forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);urgents.push({type:'danger',label:'계약만료 D-'+Math.ceil((new Date(a.contract_end_date)-now)/864e5),text:t?.name||'—'});});(cache.actions||[]).filter(a=>!a.done&&a.due&&Math.ceil((new Date(a.due)-now)/864e5)<=1).slice(0,3).forEach(a=>urgents.push({type:'warning',label:'후속액션 마감',text:a.text}));if(!urgents.length){todayEl.style.display='none';}else{todayEl.style.display='block';todayEl.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:4px;"><div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px;">오늘 우선 처리</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${urgents.map(u=>`<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:${u.type==='danger'?'#fee2e2':'#fef3c7'};border-radius:20px;"><span style="font-size:10px;font-weight:700;color:${u.type==='danger'?'#dc2626':'#b54708'};">${u.label}</span><span style="font-size:11px;font-weight:600;color:var(--text);">${u.text}</span></div>`).join('')}</div></div>`;}}
