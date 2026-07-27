@@ -623,7 +623,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="form-section">
       <div class="fsec-title">기관 기본 정보</div>
       <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
-        <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관"></div>
+        <div class="fg"><label>기관명 *</label><input id="n-name" placeholder="서울시장애인복지관" autocomplete="off" oninput="checkOrgNameDup(this.value)">
+          <div id="n-name-warn" style="display:none;margin-top:6px;padding:8px 10px;background:#fff7ed;border:1.5px solid #f97316;border-radius:6px;font-size:11px;color:#c2410c;font-weight:600;line-height:1.5;"></div>
+        </div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
         <div></div>
@@ -4921,21 +4923,54 @@ function openAddCold(){
   // 임시저장 체크
   setTimeout(()=>loadDraft('cold'),200);
 }
+// 기관명 중복 감지 공통 로직 (2026-07-27) — "한국장애인문화협회"와 "사)한국장애인문화협회"처럼
+// 사단법인/재단법인 축약 표기(사), (사), 사단법인 등)만 다르고 실제로는 같은 기관인 중복 등록을 막기 위한 정규화.
+// 이 체크가 없으면 정확히 같은 문자열일 때만 걸러지고, 이런 표기 차이는 그대로 통과해 중복 기관이 생겼다.
+function normalizeOrgName(name){
+  return(name||'').trim()
+    .replace(/^\(?\s*사\s*\)?\s*/,'')
+    .replace(/^사단법인\s*/,'')
+    .replace(/^\(?\s*재\s*\)?\s*/,'')
+    .replace(/^재단법인\s*/,'')
+    .replace(/^사회복지법인\s*/,'')
+    .replace(/^협동조합\s*/,'')
+    .replace(/\s+/g,'')
+    .toLowerCase();
+}
+function findDuplicateOrg(name,excludeId){
+  const norm=normalizeOrgName(name);
+  if(!norm)return null;
+  return cache.orgs.find(o=>{
+    if(excludeId&&o.id===excludeId)return false;
+    const on=normalizeOrgName(o.name);
+    return on&&(on===norm||on.includes(norm)||norm.includes(on));
+  })||null;
+}
 function checkColdOrgName(val){
   const warn=document.getElementById('cold-org-warn');
   const warnName=document.getElementById('cold-org-warn-name');
   if(!val.trim()){warn.style.display='none';return;}
-  const matched=cache.orgs.find(o=>o.name.includes(val.trim())||val.trim().includes(o.name));
+  const matched=findDuplicateOrg(val);
   if(matched){warnName.textContent=matched.name;warn.style.display='block';}
   else{warn.style.display='none';}
+}
+function checkOrgNameDup(val){
+  const warn=document.getElementById('n-name-warn');
+  if(!warn)return;
+  if(editOrgId){warn.style.display='none';return;} // 수정 모드에서는 자기 자신과 비교할 필요 없음
+  const dup=findDuplicateOrg(val,editOrgId);
+  if(dup){
+    warn.innerHTML=`⚠️ <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();nav('orgs');" style="color:#c2410c;text-decoration:underline;">기관 목록</a>에서 해당 기관에 히스토리를 추가해주세요.`;
+    warn.style.display='block';
+  }else{warn.style.display='none';}
 }
 async function saveCold(){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const orgName=document.getElementById('cold-org').value.trim();
   const summary=document.getElementById('cold-summary').value.trim();
   if(!orgName||!summary){toast('기관명과 한 줄 요약은 필수예요');return;}
-  const matched=cache.orgs.find(o=>o.name.includes(orgName)||orgName.includes(o.name));
-  if(matched){toast('⚠️ 등록된 기관입니다. 기관 목록에서 컨택 히스토리를 추가해주세요!');return;}
+  const matched=findDuplicateOrg(orgName);
+  if(matched){toast(`⚠️ "${matched.name}"은(는) 이미 등록된 기관입니다. 기관 목록에서 컨택 히스토리를 추가해주세요!`);return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const loggedAt=document.getElementById('cold-date').value?new Date(document.getElementById('cold-date').value).toISOString():new Date().toISOString();
   const row={
@@ -5970,10 +6005,12 @@ async function saveOrg(){
   }
 
   // ── 신규 등록 모드 ──
-  const dup=cache.orgs.find(o=>o.name.trim()===name);
+  // 정확히 같은 이름뿐 아니라 "사)한국장애인문화협회" vs "한국장애인문화협회"처럼 사단법인 축약 표기만
+  // 다른 경우도 findDuplicateOrg()로 걸러서 중복 기관 등록을 막는다 (2026-07-27).
+  const dup=findDuplicateOrg(name);
   if(dup){
     const reg=dup.created_by_name||'누군가';
-    if(!confirm(`⚠️ "${name}" 기관이 이미 등록되어 있어요!\n\n등록자: ${reg}\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML='💾 저장';return;}
+    if(!confirm(`⚠️ "${dup.name}" 기관이 이미 등록되어 있어요! (입력한 "${name}"와(과) 유사한 이름)\n\n등록자: ${reg}\n\n정말 별개의 기관이 맞다면 계속 등록하시고, 같은 기관이면 취소 후 기관 목록에서 히스토리를 추가해주세요.\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML='💾 저장';return;}
   }
   orgRow.card_image=cardImageBase64||null;
   orgRow.lastcontact=today();
