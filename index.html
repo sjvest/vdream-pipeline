@@ -2349,8 +2349,8 @@ async function checkAlertsAndSendGChat(){
     }
   });
 
-  // 7일 미연락 기관
-  (cache.orgs||[]).filter(o=>o.stage===1&&o.lastcontact).forEach(o=>{
+  // 7일 미연락 기관 — 2026-07-27 팀 요청으로 잠시 중단 (기관별 연락 빈도 등급 설계 전까지, sendGChatDailySummary와 동일 사유)
+  if(false)(cache.orgs||[]).filter(o=>o.stage===1&&o.lastcontact).forEach(o=>{
     const days=Math.floor((now-new Date(o.lastcontact))/864e5);
     if(days>=7){
       hasAlert=true;
@@ -2400,6 +2400,10 @@ async function sendGChatDailySummary(){
   await sendGChat(jobMsg);
 
   // ── 메시지 2: 미연락 기관 (컨택 시도 후 7일 이상) ──
+  // 2026-07-27 팀 요청으로 잠시 중단: 기관마다 원래 연락 빈도가 달라서(자주 연락할 기관 vs 원래 뜸한 기관)
+  // 일괄 7일 기준 알림이 실제 관리 필요 여부와 안 맞는 경우가 많다는 피드백. 기관별 "연락 빈도 등급" 설계
+  // 끝나기 전까지 이 GChat 메시지만 보내지 않는다 (아래 checkAlertsAndSendGChat의 동일 항목도 함께 중단).
+  if(false){
   const noContact=orgs.filter(o=>{
     if(!o.lastcontact||o.stage===0||o.stage>=4)return false;
     const d=Math.floor((now-new Date(o.lastcontact))/864e5);
@@ -2418,6 +2422,7 @@ async function sendGChatDailySummary(){
     contactMsg+='✅ 미연락 기관 없음';
   }
   await sendGChat(contactMsg);
+  }
 
   // ── 메시지 3: 미팅 예정 + MOU 예정 D데이 ──
   const meetingActions=(cache.actions||[]).filter(a=>{
