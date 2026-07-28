@@ -628,7 +628,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         </div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
-        <div></div>
+        <div class="fg"><label>관계 등급</label><select id="n-contact-tier"><option value="">미분류</option><option value="협조적">🔥 협조적 (수시 연락)</option><option value="중립적">😐 중립적 (월 1회 발송)</option><option value="부정적">❄️ 부정적 (월 1회 발송, 관계 유지)</option></select></div>
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
@@ -1911,7 +1911,7 @@ async function loadOrgs(){
   let data,error;
   for(let attempt=0;attempt<3;attempt++){
     ({data,error}=await sb.from('orgs')
-      .select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test')
+      .select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier')
       .order('created_at',{ascending:false})
       .limit(5000));
     if(!error)break;
@@ -2020,7 +2020,7 @@ async function loadRecentLogs(){
 }
 async function loadOrgDetail(orgId){
   const [orgRes,logsRes,talentsRes,appsRes]=await Promise.all([
-    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test').eq('id',orgId).single(),
+    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier').eq('id',orgId).single(),
     sb.from('contact_logs').select('*').eq('org_id',orgId).order('logged_at',{ascending:false}),
     sb.from('talents').select('*').eq('source_org_id',orgId).order('created_at',{ascending:false}),
     sb.from('candidate_applications').select('*').eq('org_id',orgId).order('created_at',{ascending:false}),
@@ -4747,6 +4747,7 @@ function loadOrgForEdit(orgId){
   document.getElementById('n-name').value=o.name||'';
   document.getElementById('n-cat').value=o.cat||'복지관';
   document.getElementById('n-source').value=o.source||'서칭';
+  const tierSel=document.getElementById('n-contact-tier');if(tierSel)tierSel.value=o.contact_tier||'';
   document.getElementById('n-contact').value=o.contact||'';
   document.getElementById('n-contact-title').value=o.contact_title||'';
   document.getElementById('n-phone').value=o.phone||'';
@@ -5976,6 +5977,7 @@ async function saveOrg(){
     name,cat:document.getElementById('n-cat').value,source:document.getElementById('n-source').value,event_id:document.getElementById('n-event-id')?.value?parseInt(document.getElementById('n-event-id').value):null,
     contact:document.getElementById('n-contact').value.trim(),contact_title:document.getElementById('n-contact-title')?.value||null,phone:document.getElementById('n-phone').value.trim(),mobile:document.getElementById('n-mobile')?.value||null,fax:document.getElementById('n-fax')?.value||null,email:getOrgEmailValue(),
     member:document.getElementById('n-member').value,accompany:document.getElementById('n-accompany').value,
+    contact_tier:document.getElementById('n-contact-tier')?.value||null,
     stage:parseInt(document.getElementById('n-stage').value),premeil:parseInt(document.getElementById('n-premeil').value),school:parseInt(document.getElementById('n-school').value),
     date:document.getElementById('n-date').value||null,mou_date:document.getElementById('n-mou-date').value||null,memo:document.getElementById('n-memo').value.trim(),
     website:document.getElementById('n-website').value.trim()||null,
@@ -6039,6 +6041,7 @@ async function saveOrg(){
 function clearOrgForm(){
   ['n-name','n-contact','n-contact-title','n-phone','n-mobile','n-fax','n-date','n-mou-date','n-memo','n-address'].forEach(id=>document.getElementById(id).value='');
   const regionEl=document.getElementById('n-region');if(regionEl)regionEl.value='';
+  const tierEl=document.getElementById('n-contact-tier');if(tierEl)tierEl.value='';
   const emailEl=document.getElementById('n-email');
   if(emailEl)emailEl.textContent='';
   document.getElementById('n-email-domain').value='naver.com';
@@ -6311,6 +6314,12 @@ async function openOrg(id){
       </select>
       <input type="date" id="m-stage-mou-date" value="${o.mou_date||''}" title="MOU 체결일 (실제 발생일로 지정 가능, 예: 지난주 금요일)" style="display:${o.stage>=5?'inline-block':'none'};font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
+      <select id="m-contact-tier-sel" onchange="updateOrgContactTier(${id},this.value)" title="관계 등급 — 언제든 바꿀 수 있어요" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
+        <option value="" ${!o.contact_tier?'selected':''}>등급 미분류</option>
+        <option value="협조적" ${o.contact_tier==='협조적'?'selected':''}>🔥 협조적</option>
+        <option value="중립적" ${o.contact_tier==='중립적'?'selected':''}>😐 중립적</option>
+        <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}>❄️ 부정적</option>
+      </select>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})"><i class="ti ti-pencil"></i> 정보 수정</button>
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : ''}
@@ -6756,6 +6765,14 @@ async function updateOrgStage(){
   if(error){console.error('[Supabase Error] 단계 변경 실패:',error);toast('오류: 단계 변경이 저장되지 않았습니다 — '+error.message);return;}
   const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;if(payload.mou_date!==undefined)o.mou_date=payload.mou_date;}
   closeModal();renderCurrent();toast(newStage>=5?`단계 변경 완료 (MOU 체결일: ${payload.mou_date})`:'단계 변경 완료');
+}
+// 관계 등급(협조적/중립적/부정적)은 한 번 정해져도 팀 판단에 따라 언제든 바뀔 수 있어서
+// 별도 확인 절차 없이 드롭다운 선택 즉시 저장한다 (2026-07-27).
+async function updateOrgContactTier(id,tier){
+  const{error}=await sb.from('orgs').update({contact_tier:tier||null}).eq('id',id);
+  if(error){console.error('[Supabase Error] 관계 등급 변경 실패:',error);toast('오류: 관계 등급이 저장되지 않았습니다 — '+error.message);return;}
+  const o=cache.orgs.find(x=>x.id===id);if(o)o.contact_tier=tier||null;
+  toast(tier?`관계 등급: ${tier}로 변경됨 ✓`:'관계 등급 미분류로 변경됨 ✓');
 }
 async function markContacted(id){
   const t=today();
