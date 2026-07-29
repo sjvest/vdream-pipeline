@@ -342,11 +342,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
     </div>
     <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">📌 미팅 제목</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;"> 미팅 제목</div>
       <input id="m-meeting-title" placeholder="제목" style="width:100%;font-size:13px;font-weight:500;color:var(--text);padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);">
     </div>
     <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;">📝 미팅 내용</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;"> 미팅 내용</div>
       <textarea id="m-meeting-content" placeholder="미팅 or 상담 내용 상세" style="width:100%;min-height:140px;font-size:13px;font-weight:500;color:var(--text);line-height:1.7;padding:12px;border:1.5px solid var(--border);border-radius:10px;box-sizing:border-box;background:var(--bg);resize:vertical;"></textarea>
     </div>
     <div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);">
@@ -366,7 +366,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 <div id="app-wrap" style="display:flex;flex-direction:column;height:100vh;">
 <div id="mobile-header">
-  <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn">☰</button>
+  <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn"><i class="ti ti-menu-2"></i></button>
   <span class="m-logo">V:Dream 파이프라인</span>
   <button onclick="openMobileMeeting()" style="background:var(--accent);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;">+ 미팅</button>
 </div>
@@ -408,7 +408,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <i class="ti ti-settings" style="font-size:12px;color:var(--sidebar-text);opacity:.4;flex-shrink:0;"></i>
     </div>
-    <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">📋 수정/삭제 로그</button>
+    <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"> 수정/삭제 로그</button>
     <button onclick="doLogout()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">로그아웃</button>
     <div style="margin-top:6px;font-size:10px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
   </div>
@@ -419,7 +419,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-dashboard" class="page active">
   <div class="page-header">
     <div class="page-header-left">
-      <div class="page-title" id="dash-greeting">안녕하세요 👋</div>
+      <div class="page-title" id="dash-greeting">안녕하세요 </div>
       <div class="page-sub" id="today-date"></div>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="checkAlertsAndSendGChat()"><i class="ti ti-bell"></i> 알림 확인</button>
@@ -428,7 +428,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
   <div style="margin-bottom:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:800;color:var(--text);">🔥 오늘 우선 처리할 기관</div>
+      <div style="font-size:13px;font-weight:800;color:var(--text);"> 오늘 우선 처리할 기관</div>
       <button onclick="nav('orgs')" style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;">전체 보기 →</button>
     </div>
     <div id="dash-urgent-orgs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;">
@@ -562,7 +562,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <!-- 기관 검색 (수정 모드) -->
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:16px;box-shadow:var(--shadow-sm);overflow:visible;">
     <div class="card-body" style="overflow:visible;">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">🔍 등록된 기관 불러오기 (수정할 기관 검색)</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;"> 등록된 기관 불러오기 (수정할 기관 검색)</div>
       <div style="position:relative;">
         <input id="org-edit-search" placeholder="기관명 입력해서 검색..." autocomplete="off"
           style="width:100%;font-size:13px;padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"
@@ -575,16 +575,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <div class="card"><div class="card-body">
     <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border:2px dashed #4285f4;border-radius:12px;text-align:center;">
-      <div style="font-size:13px;font-weight:700;color:#4285f4;margin-bottom:8px;">📷 명함으로 자동 입력</div>
+      <div style="font-size:13px;font-weight:700;color:#4285f4;margin-bottom:8px;"> 명함으로 자동 입력</div>
       <input type="file" id="business-card-input" accept="image/*" capture="environment" style="display:none;" onchange="analyzeBusinessCard(this)">
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button type="button" onclick="openCardCamera()"
           style="padding:8px 20px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-          📷 카메라로 찍기
+           카메라로 찍기
         </button>
         <button type="button" onclick="document.getElementById('business-card-input-gallery').click()"
           style="padding:8px 16px;background:#fff;color:#4285f4;border:1.5px solid #4285f4;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-          🖼 갤러리에서 선택
+           갤러리에서 선택
         </button>
       </div>
       <input type="file" id="business-card-input-gallery" accept="image/*" style="display:none;" onchange="analyzeBusinessCard(this)">
@@ -606,13 +606,13 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <canvas id="card-canvas" style="display:none;"></canvas>
         <div style="display:flex;gap:16px;margin-top:24px;align-items:center;">
           <button onclick="closeCardCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">취소</button>
-          <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:24px;">📷</button>
-          <button onclick="switchCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">🔄 전환</button>
+          <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;display:flex;align-items:center;justify-content:center;"><i class="ti ti-camera"></i></button>
+          <button onclick="switchCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;"> 전환</button>
         </div>
       </div>
     </div>
     <div class="form-section">
-      <div class="fsec-title">📇 명함 사진</div>
+      <div class="fsec-title"> 명함 사진</div>
       <div id="card-upload-wrap">
         <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
           <i class="ti ti-camera" style="font-size:16px;color:var(--text3);"></i> 명함 사진 등록 (클릭 또는 끌어다 놓기)
@@ -628,7 +628,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         </div>
         <div class="fg"><label>기관 유형</label><select id="n-cat"><option>복지관</option><option>재활센터</option><option>특수학교</option><option>자립생활센터</option><option>협회·협단체</option><option>기타</option></select></div>
         <div class="fg"><label>발굴 경로</label><select id="n-source"><option>서칭</option><option>행사·전시회</option><option>명함·소개</option><option>인바운드</option></select></div>
-        <div class="fg"><label>관계 등급</label><select id="n-contact-tier"><option value="">미분류</option><option value="협조적">🔥 협조적 (수시 연락)</option><option value="중립적">😐 중립적 (월 1회 발송)</option><option value="부정적">❄️ 부정적 (월 1회 발송, 관계 유지)</option></select></div>
+        <div class="fg"><label>관계 등급</label><select id="n-contact-tier"><option value="">미분류</option><option value="협조적"> 협조적 (수시 연락)</option><option value="중립적"> 중립적 (월 1회 발송)</option><option value="부정적"> 부정적 (월 1회 발송, 관계 유지)</option></select></div>
         <div class="fg"><label>담당자명</label><input id="n-contact" placeholder="홍길동 팀장"></div>
         <div class="fg"><label>직책</label><input type="text" id="n-contact-title" placeholder="팀장, 센터장 등"></div>
         <div class="fg"><label>연락처</label><input id="n-phone" placeholder="02-0000-0000" oninput="fmtPhone(this)"></div>
@@ -681,18 +681,18 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
     <div class="form-section" id="member-history-section" style="display:none;">
-      <div class="fsec-title">👤 담당자 관리</div>
+      <div class="fsec-title"> 담당자 관리</div>
       <!-- 현재 담당자 목록 -->
       <div id="contacts-list" style="margin-bottom:14px;"></div>
       <!-- 변경/추가 선택 -->
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <button id="contact-mode-change" onclick="setContactMode('change')"
           class="btn btn-sm" style="border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-weight:600;">
-          🔄 담당자 변경
+           담당자 변경
         </button>
         <button id="contact-mode-add" onclick="setContactMode('add')"
           class="btn btn-sm" style="border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font-weight:600;">
-          ➕ 담당자 추가
+           담당자 추가
         </button>
       </div>
       <!-- 변경 모드 -->
@@ -728,7 +728,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <button class="btn btn-ghost btn-sm" onclick="addActionField()"><i class="ti ti-plus"></i> 액션 추가</button>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" id="save-btn" onclick="saveOrg()">💾 저장</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveOrg()"> 저장</button>
       <button class="btn btn-ghost" onclick="clearOrgForm()">초기화</button>
     </div>
   </div></div>
@@ -850,11 +850,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="fg-row fg-2">
       <div class="fg"><label>컨택 대상 유형</label>
         <select id="cold-contact-type" onchange="toggleColdType()">
-          <option value="기관">🏢 기관/단체</option>
-          <option value="재직자">👔 재직자</option>
-          <option value="구직자">🔍 구직자</option>
-          <option value="부모님">👨‍👩‍👧 부모님/보호자</option>
-          <option value="기타개인">👤 기타 개인</option>
+          <option value="기관"> 기관/단체</option>
+          <option value="재직자"> 재직자</option>
+          <option value="구직자"> 구직자</option>
+          <option value="부모님"> 부모님/보호자</option>
+          <option value="기타개인"> 기타 개인</option>
         </select>
       </div>
       <div class="fg"><label>상담 주제</label>
@@ -877,7 +877,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div class="fg"><label id="cold-org-label">기관명 *</label><input id="cold-org" placeholder="컨택한 기관명 또는 개인명" autocomplete="off" oninput="checkColdOrgName(this.value)">
         <div id="cold-org-warn" style="display:none;margin-top:6px;padding:10px 12px;background:#fff7ed;border:1.5px solid #f97316;border-radius:6px;font-size:12px;color:#c2410c;font-weight:600;">
-          ⚠️ <span id="cold-org-warn-name"></span>은(는) 등록된 기관입니다.<br>
+           <span id="cold-org-warn-name"></span>은(는) 등록된 기관입니다.<br>
           <span style="font-weight:400;">기관 목록에서 해당 기관을 찾아 <b>컨택 히스토리</b>를 추가해주세요.</span>
           <button onclick="nav('orgs')" style="margin-top:6px;display:block;padding:5px 12px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">기관 목록 바로가기 →</button>
         </div>
@@ -927,25 +927,25 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="fg-row fg-3">
       <div class="fg"><label>컨택 방법</label>
         <select id="cold-method" onchange="updateColdTemplate()">
-          <option value="전화">📞 전화</option>
-          <option value="이메일">📧 이메일</option>
-          <option value="문자">💬 문자</option>
-          <option value="방문">🚶 방문</option>
+          <option value="전화"> 전화</option>
+          <option value="이메일"> 이메일</option>
+          <option value="문자"> 문자</option>
+          <option value="방문"> 방문</option>
         </select>
       </div>
       <div class="fg"><label>결과</label>
         <select id="cold-result">
-          <option value="부재중">📵 부재중</option>
-          <option value="거절">❌ 거절</option>
-          <option value="긍정적">✅ 긍정적</option>
-          <option value="재연락 필요">🔄 재연락 필요</option>
-          <option value="기관 등록 전환">⭐ 기관 등록 전환</option>
+          <option value="부재중"> 부재중</option>
+          <option value="거절"> 거절</option>
+          <option value="긍정적"> 긍정적</option>
+          <option value="재연락 필요"> 재연락 필요</option>
+          <option value="기관 등록 전환"> 기관 등록 전환</option>
         </select>
       </div>
       <div class="fg"><label>상태</label>
         <select id="cold-status">
-          <option value="완료">✅ 완료</option>
-          <option value="진행중">🔄 진행중</option>
+          <option value="완료"> 완료</option>
+          <option value="진행중"> 진행중</option>
         </select>
       </div>
       <div class="fg"><label>담당 팀원</label>
@@ -959,9 +959,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label>상세 내용</label>
         <div style="display:flex;gap:6px;">
-          <button onclick="applyColdTemplate('전화')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">📞 전화 템플릿</button>
-          <button onclick="applyColdTemplate('이메일')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">📧 이메일 템플릿</button>
-          <button onclick="applyColdTemplate('방문')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);">🚶 방문 템플릿</button>
+          <button onclick="applyColdTemplate('전화')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);"> 전화 템플릿</button>
+          <button onclick="applyColdTemplate('이메일')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);"> 이메일 템플릿</button>
+          <button onclick="applyColdTemplate('방문')" style="font-size:11px;padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);"> 방문 템플릿</button>
         </div>
       </div>
       <textarea id="cold-memo" style="min-height:100px;font-family:inherit;" placeholder="상세 내용 입력 또는 위 템플릿 버튼 클릭"></textarea>
@@ -1036,8 +1036,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>담당 팀원</label><select id="job-member"><option value="">선택</option></select></div>
       <div class="fg"><label>진행 상태</label>
         <select id="job-status">
-          <option value="서칭중">🔍 서칭중</option>
-          <option value="완료">✅ 완료</option>
+          <option value="서칭중"> 서칭중</option>
+          <option value="완료"> 완료</option>
         </select>
       </div>
     </div>
@@ -1124,10 +1124,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="modal" style="max-width:540px;width:100%;max-height:88vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1.5px solid var(--border);flex-shrink:0;">
       <div>
-        <div style="font-size:15px;font-weight:800;" id="today-tasks-title">📋 오늘의 할 일</div>
+        <div style="font-size:15px;font-weight:800;" id="today-tasks-title"> 오늘의 할 일</div>
         <div style="font-size:11px;color:var(--text3);margin-top:3px;" id="today-tasks-date"></div>
       </div>
-      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">✕</button>
+      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
     </div>
     <div id="today-tasks-body" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;"></div>
     <div style="padding:14px 20px;border-top:1.5px solid var(--border);flex-shrink:0;display:flex;justify-content:flex-end;">
@@ -1140,7 +1140,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="modal modal-wide" style="max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1.5px solid var(--border);flex-shrink:0;">
       <div><div style="font-size:16px;font-weight:800;" id="history-modal-title">컨택 히스토리</div><div style="font-size:12px;color:var(--text3);margin-top:2px;" id="history-modal-count"></div></div>
-      <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">✕</button>
+      <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap;">
       <input id="history-search" placeholder="제목, 내용, 참석자 검색..." oninput="filterHistory()" style="flex:1;min-width:160px;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
@@ -1192,10 +1192,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg-row fg-2">
         <div class="fg"><label>행사 발굴 방법</label>
           <select id="ev-discovery">
-            <option value="기관 초대">📨 기관 초대</option>
-            <option value="자체 서칭">🔍 자체 서칭</option>
-            <option value="지인 소개">🤝 지인 소개</option>
-            <option value="정기 참여">🔄 정기 참여 (매년)</option>
+            <option value="기관 초대"> 기관 초대</option>
+            <option value="자체 서칭"> 자체 서칭</option>
+            <option value="지인 소개"> 지인 소개</option>
+            <option value="정기 참여"> 정기 참여 (매년)</option>
             <option value="기타">기타</option>
           </select>
         </div>
@@ -1236,9 +1236,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>재참여 권고</label>
           <select id="ev-revisit">
             <option value="">미정</option>
-            <option value="적극 권고">✅ 적극 권고</option>
-            <option value="조건부 권고">🔶 조건부 권고</option>
-            <option value="불필요">❌ 불필요</option>
+            <option value="적극 권고"> 적극 권고</option>
+            <option value="조건부 권고"> 조건부 권고</option>
+            <option value="불필요"> 불필요</option>
           </select>
         </div>
         <div class="fg"><label>내년 적정 참여 인원</label>
@@ -1372,7 +1372,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="fg"><textarea id="td-memo" style="min-height:80px;"></textarea></div>
 
     <!-- 파일 업로드 섹션 -->
-    <div class="modal-sec-title" style="margin-top:16px;">📎 첨부 파일 (지원서 · 포트폴리오)</div>
+    <div class="modal-sec-title" style="margin-top:16px;"> 첨부 파일 (지원서 · 포트폴리오)</div>
     <div id="td-files-list" style="margin-bottom:10px;"></div>
     <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
       <i class="ti ti-upload" style="font-size:14px;"></i> 파일 업로드
@@ -1407,14 +1407,14 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="fg-row fg-2" style="margin-bottom:10px;">
       <div class="fg"><label>영입 채널 *</label>
         <select id="t-channel" onchange="toggleChannelFields()">
-          <option value="기관연계">🏢 기관</option>
-          <option value="협단체">🤲 협단체</option>
-          <option value="특수학교">🏫 특수학교</option>
-          <option value="카페">📋 카페 공고</option>
-          <option value="인스타그램">📱 인스타그램</option>
-          <option value="페이스북">📘 페이스북</option>
-          <option value="소개">🤝 소개</option>
-          <option value="기타온라인">🌐 기타 온라인</option>
+          <option value="기관연계"> 기관</option>
+          <option value="협단체"> 협단체</option>
+          <option value="특수학교"> 특수학교</option>
+          <option value="카페"> 카페 공고</option>
+          <option value="인스타그램"> 인스타그램</option>
+          <option value="페이스북"> 페이스북</option>
+          <option value="소개"> 소개</option>
+          <option value="기타온라인"> 기타 온라인</option>
         </select>
       </div>
       <div class="fg"><label>담당 팀원</label><select id="t-member"><option value="">선택</option></select></div>
@@ -1431,7 +1431,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div id="t-referrer-wrap" class="fg" style="display:none;"><label>소개자 (이름/기관)</label><input id="t-referrer" placeholder="예: 서울복지관 김센터장"></div>
     <div id="talent-forms-container"></div>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()">💾 저장</button></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveTalent()"> 저장</button></div>
   </div>
 </div>
 </div>
@@ -1507,7 +1507,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
 
     <div style="margin-top:20px;padding-top:16px;border-top:1.5px solid var(--border);">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;">🔐 비밀번호 변경</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:12px;"> 비밀번호 변경</div>
       <div class="fg"><label>새 비밀번호</label><input id="new-pw" type="password" placeholder="새 비밀번호 (8자 이상)"></div>
       <div class="fg"><label>새 비밀번호 확인</label><input id="new-pw-confirm" type="password" placeholder="한 번 더 입력"></div>
       <p id="pw-err" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px;"></p>
@@ -1539,7 +1539,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="contact-alert-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;" onclick="if(event.target===this)closeContactAlert()">
 <div style="background:var(--surface);border-radius:var(--radius);padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-    <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#fef3c7;">⚠️</div>
+    <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#fef3c7;color:#b54708;"><i class="ti ti-alert-triangle"></i></div>
     <div>
       <div style="font-size:15px;font-weight:800;margin-bottom:2px;">연락이 필요한 기관</div>
       <div id="contact-alert-sub" style="font-size:12px;color:var(--text3);"></div>
@@ -1557,7 +1557,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="audit-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide" style="max-width:700px;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
-    <div class="modal-title">📋 수정/삭제 로그</div>
+    <div class="modal-title"> 수정/삭제 로그</div>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('audit-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
@@ -1590,7 +1590,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="modal-head"><div class="modal-title" style="color:#dc2626;"><i class="ti ti-alert-triangle"></i> 삭제 확인</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('del-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
   <div class="modal-body">
     <p id="del-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem;"></p>
-    <div style="background:#fee2e2;border-radius:6px;padding:10px 12px;font-size:12px;color:#b91c1c;margin-bottom:1.2rem;">⚠️ 삭제된 데이터는 복구할 수 없습니다.</div>
+    <div style="background:#fee2e2;border-radius:6px;padding:10px 12px;font-size:12px;color:#b91c1c;margin-bottom:1.2rem;"> 삭제된 데이터는 복구할 수 없습니다.</div>
     <div class="btn-row">
       <button class="btn" style="background:#dc2626;color:#fff;" onclick="execDelete()"><i class="ti ti-trash"></i> 삭제</button>
       <button class="btn btn-ghost" onclick="document.getElementById('del-modal').style.display='none'">취소</button>
@@ -1776,7 +1776,7 @@ async function saveProfile(){
   currentProfile={...currentProfile,role,status,status_emoji:selectedEmoji};
   updateStatusDisplay();
   document.getElementById('profile-modal').style.display='none';
-  toast('프로필 저장됨 ✓');
+  toast('프로필 저장됨 ');
 }
 async function changePassword(){
   const pw=document.getElementById('new-pw').value;
@@ -1790,7 +1790,7 @@ async function changePassword(){
   if(error){errEl.textContent='오류: '+error.message;errEl.style.display='block';return;}
   document.getElementById('new-pw').value='';
   document.getElementById('new-pw-confirm').value='';
-  toast('비밀번호가 변경됐어요 ✓');
+  toast('비밀번호가 변경됐어요 ');
 }
 async function clearStatus(){
   if(!currentUser)return;
@@ -1840,11 +1840,11 @@ function openTodayTasksModal(){
     </div>
   </div>`;
   const section=(title,color,items)=>items.length?`<div><div style="font-size:11px;font-weight:800;color:${color};margin-bottom:6px;">${title} (${items.length}건)</div>${items.map(a=>item(a,color)).join('')}</div>`:'';
-  const body=section('🔴 기한 초과','#dc2626',overdue)+section('🟡 오늘 마감','#d97706',dueToday)+section('🔵 3일 이내','#3b82f6',soon)+section('⚪ 기한 미정','#94a3b8',noDue);
+  const body=section(' 기한 초과','#dc2626',overdue)+section(' 오늘 마감','#d97706',dueToday)+section(' 3일 이내','#3b82f6',soon)+section(' 기한 미정','#94a3b8',noDue);
   const today=new Date();
-  document.getElementById('today-tasks-title').textContent=`📋 ${name}님의 할 일`;
+  document.getElementById('today-tasks-title').textContent=` ${name}님의 할 일`;
   document.getElementById('today-tasks-date').textContent=`${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}. (${['일','월','화','수','목','금','토'][today.getDay()]}) · 미완료 ${myActions.length}건`;
-  document.getElementById('today-tasks-body').innerHTML=body||'<div class="empty" style="padding:1rem 0;">미완료 액션이 없습니다 ✓</div>';
+  document.getElementById('today-tasks-body').innerHTML=body||'<div class="empty" style="padding:1rem 0;">미완료 액션이 없습니다 </div>';
   document.getElementById('today-tasks-modal').style.display='flex';
 }
 function showTodayTasksOnLogin(){
@@ -2222,7 +2222,7 @@ async function saveMobileMeeting(){
     if(error)throw error;
     if(nextAction){await sb.from('actions').insert({org_id:mSelectedOrgId,text:nextAction,content:nextAction,due:nextDue||null,status:'pending',done:false,member:mOurSelected[0]||'',created_by:currentUser&&currentUser.id,created_by_name:currentProfile&&currentProfile.name||''});}
     await loadAll();
-    toast('✅ 미팅 기록이 저장됐어요!');
+    toast(' 미팅 기록이 저장됐어요!');
     closeMobileMeeting();
   }catch(e){toast('저장 오류: '+e.message);}
   finally{btn.textContent='미팅 기록 저장';btn.disabled=false;}
@@ -2234,7 +2234,7 @@ function renderMobileTodayActions(){
   if(!actions.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">오늘 마감 액션이 없어요!</div>';return;}
   el.innerHTML=actions.map(a=>{const org=cache.orgs.find(o=>o.id===a.org_id);return '<div style="background:var(--surface);border-radius:12px;padding:14px;border:1.5px solid var(--border);"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;">'+(org&&org.name||'기관 미상')+'</div><div style="font-size:14px;font-weight:600;margin-bottom:8px;">'+a.content+'</div><div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11px;color:'+(a.due<today?'var(--red)':'var(--amber)')+';">'+a.due+'</span><button onclick="completeMobileAction(\''+a.id+'\')" style="padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;">완료</button></div></div>';}).join('');
 }
-async function completeMobileAction(id){await sb.from('actions').update({status:'done'}).eq('id',id);await loadAll();renderMobileTodayActions();toast('✅ 완료 처리됐어요!');}
+async function completeMobileAction(id){await sb.from('actions').update({status:'done'}).eq('id',id);await loadAll();renderMobileTodayActions();toast(' 완료 처리됐어요!');}
 function renderMobileOrgList(q){
   const results=cache.orgs.filter(o=>!q||o.name.includes(q)).slice(0,30);
   const SL=['발굴','콘택시도','미팅완료','관계형성','MOU예정','MOU완료','인재영입완료','','','보류'];
@@ -2244,11 +2244,11 @@ function renderMobileOrgList(q){
 function toggleMobileNav(){
   const sb=document.querySelector('.sidebar');
   sb.classList.toggle('open');
-  document.getElementById('m-menu-btn').textContent=sb.classList.contains('open')?'✕':'☰';
+  document.getElementById('m-menu-btn').innerHTML=sb.classList.contains('open')?'<i class="ti ti-x"></i>':'<i class="ti ti-menu-2"></i>';
 }
 async function nav(page, pushState=true){
   const sb=document.querySelector('.sidebar');
-  if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').textContent='☰';}
+  if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').innerHTML='<i class="ti ti-menu-2"></i>';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('p-'+page).classList.add('active');
@@ -2392,7 +2392,7 @@ async function sendGChatDailySummary(){
       const remain=(j.headcount||0)-(j.current_count||0);
       const e=d===0?'🔴🔴':d<=3?'🔴':'🟡';
       jobMsg+=e+' *'+j.company+' - '+j.job_title+'*\n';
-      jobMsg+='   D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명* | 담당: '+(j.member||'미배정')+'\n\n';
+      jobMsg+=' D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명* | 담당: '+(j.member||'미배정')+'\n\n';
     });
   } else {
     jobMsg+='✅ 마감 임박 채용건 없음';
@@ -2415,7 +2415,7 @@ async function sendGChatDailySummary(){
       const d=Math.floor((now-new Date(o.lastcontact))/864e5);
       const stage={1:'컨택시도',2:'미팅완료',3:'관계형성'}[o.stage]||'진행중';
       contactMsg+='⚠️ *'+o.name+'* ('+stage+')\n';
-      contactMsg+='   마지막 연락: '+d+'일 전 | 담당: '+(o.member||'미배정')+'\n\n';
+      contactMsg+=' 마지막 연락: '+d+'일 전 | 담당: '+(o.member||'미배정')+'\n\n';
     });
     if(noContact.length>10)contactMsg+='외 '+(noContact.length-10)+'개 기관\n';
   } else {
@@ -2445,7 +2445,7 @@ async function sendGChatDailySummary(){
       const org=orgs.find(o=>o.id===a.org_id);
       const e=d===0?'🔴':d<=3?'🟡':'🔵';
       meetMouMsg+=e+' '+(org?.name||'—')+' - '+a.text+'\n';
-      meetMouMsg+='   D-'+d+' ('+a.due+') | 담당: '+(org?.member||a.created_by_name||'미배정')+'\n\n';
+      meetMouMsg+=' D-'+d+' ('+a.due+') | 담당: '+(org?.member||a.created_by_name||'미배정')+'\n\n';
     });
   }
   if(mouOrgs.length){
@@ -2455,7 +2455,7 @@ async function sendGChatDailySummary(){
       const d=Math.floor((new Date(o.mou_date)-now)/864e5);
       const e=d===0?'🔴':d<=3?'🟡':'🟢';
       meetMouMsg+=e+' *'+o.name+'*\n';
-      meetMouMsg+='   D-'+d+' ('+o.mou_date+') | 담당: '+(o.member||'미배정')+'\n\n';
+      meetMouMsg+=' D-'+d+' ('+o.mou_date+') | 담당: '+(o.member||'미배정')+'\n\n';
     });
   }
   if(!hasMeetMou) meetMouMsg+='✅ 예정된 미팅/MOU 없음';
@@ -2550,7 +2550,7 @@ function renderDashboard(){
   const orgs=cache.orgs,acts=cache.actions,tals=cache.talents;
   const metricOrgs=getMetricOrgs(),metricTals=getMetricTalents();
   const greetEl=document.getElementById('dash-greeting');
-  if(greetEl){const name=currentProfile?.name||'팀장님';const h=now.getHours();const greet=h<12?'좋은 아침이에요':h<18?'안녕하세요':'수고하셨어요';greetEl.textContent=`${greet}, ${name} 👋`;}
+  if(greetEl){const name=currentProfile?.name||'팀장님';const h=now.getHours();const greet=h<12?'좋은 아침이에요':h<18?'안녕하세요':'수고하셨어요';greetEl.textContent=`${greet}, ${name} `;}
   const total=metricOrgs.length,mou=metricOrgs.filter(o=>o.stage>=4).length,active=metricOrgs.filter(o=>o.stage>=1&&o.stage<=3).length;
   const placed=metricTals.filter(t=>t.status==='합격').length,failed=metricTals.filter(t=>t.status==='불합격').length,recruiting=metricTals.filter(t=>t.status==='지원중'||t.status==='면접').length;
   const needContact=orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
@@ -2587,13 +2587,13 @@ function renderDashboard(){
         <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;">${o.name}</div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${o.cat||''} ${o.region?'· '+o.region:''} ${o.member?'· '+o.member:''}</div>
         <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px;">
-          ${o.mouDays!==null&&o.mouDays<=14?`<div style="font-size:11px;color:var(--accent);font-weight:700;">📋 MOU ${o.mouDays<0?'D+'+Math.abs(o.mouDays)+' 초과':'D-'+o.mouDays}</div>`:''}
-          ${o.lastDays!==null?`<div style="font-size:11px;color:${o.lastDays>=30?'var(--red)':o.lastDays>=14?'var(--orange)':'var(--text3)'};">📞 마지막 연락 ${o.lastDays}일 전</div>`:'<div style="font-size:11px;color:var(--red);">📞 연락 기록 없음</div>'}
-          ${o.orgActs.length?`<div style="font-size:11px;color:${o.urgentAct?'var(--red)':'var(--text3)'};">✅ 후속액션 ${o.orgActs.length}건${o.urgentAct?` (D-3 이내 ${o.urgentAct}건)`:''}</div>`:''}
+          ${o.mouDays!==null&&o.mouDays<=14?`<div style="font-size:11px;color:var(--accent);font-weight:700;"> MOU ${o.mouDays<0?'D+'+Math.abs(o.mouDays)+' 초과':'D-'+o.mouDays}</div>`:''}
+          ${o.lastDays!==null?`<div style="font-size:11px;color:${o.lastDays>=30?'var(--red)':o.lastDays>=14?'var(--orange)':'var(--text3)'};"> 마지막 연락 ${o.lastDays}일 전</div>`:'<div style="font-size:11px;color:var(--red);"> 연락 기록 없음</div>'}
+          ${o.orgActs.length?`<div style="font-size:11px;color:${o.urgentAct?'var(--red)':'var(--text3)'};"> 후속액션 ${o.orgActs.length}건${o.urgentAct?` (D-3 이내 ${o.urgentAct}건)`:''}</div>`:''}
         </div>
         <button onclick="event.stopPropagation();openOrg(${o.id})" style="width:100%;padding:5px;background:var(--accent-bg);color:var(--accent);border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">기관 열기 →</button>
       </div>`;
-    }).join(''):'<div style="font-size:13px;color:var(--text3);padding:20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);">오늘 처리할 급한 기관이 없어요 ✓</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--text3);padding:20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);">오늘 처리할 급한 기관이 없어요 </div>';
   }
   const urgent=acts.filter(a=>!a.done).map(a=>{const o=orgs.find(x=>x.id===a.org_id);return{...a,orgName:o?.name||'—',diff:dayDiff(a.due)};}).sort((a,b)=>a.diff-b.diff).slice(0,5);
   document.getElementById('dash-actions').innerHTML=urgent.length?urgent.map(a=>`
@@ -2603,7 +2603,7 @@ function renderDashboard(){
       </div>
       <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
       <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
-    </div>`).join(''):'<div class="empty">마감 임박 액션 없음 ✓</div>';
+    </div>`).join(''):'<div class="empty">마감 임박 액션 없음 </div>';
   const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
   document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -2618,10 +2618,10 @@ function renderDashboard(){
       <span style="font-weight:500;font-size:12px;flex:1;">${o.name}</span>
       <span class="member-pill">${o.member||'미배정'}</span>
       <span style="font-size:10px;color:var(--red);">${days!==null?days+'일 전':'미연락'}</span>
-    </div>`;}).join(''):'<div class="empty" style="padding:1rem 0;">연락 필요 기관 없음 👍</div>';
+    </div>`;}).join(''):'<div class="empty" style="padding:1rem 0;">연락 필요 기관 없음 </div>';
 
   // 최근 컨택 활동 피드
-  const TYPE_ICON={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌'};
+  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
   const TYPE_COLOR={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
   const logFeed=cache.logs.map(l=>({type:'log',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
   const coldFeed=(cache.cold||[]).map(c=>({type:'cold',id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
@@ -2633,7 +2633,7 @@ function renderDashboard(){
   document.getElementById('dash-feed').innerHTML=allFeed.length?allFeed.map(f=>{
     const org=cache.orgs.find(o=>o.id===f.org_id);
     const orgName=org?org.name:f.title||'';
-    const icon=TYPE_ICON[f.contact_type]||'📋';
+    const icon=TYPE_ICON[f.contact_type]||'';
     const color=TYPE_COLOR[f.contact_type]||'var(--text3)';
     const isCold=f.type==='cold';
     const isInProgress=f.status==='진행중';
@@ -2650,7 +2650,7 @@ function renderDashboard(){
           <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
           <span style="font-size:13px;font-weight:700;">${orgName}</span>
           ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">신규컨택</span>':''}
-          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;">🔄 진행중</span>':''}
+          ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;"> 진행중</span>':''}
         </div>
         ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
       </div>
@@ -2732,7 +2732,7 @@ function setPeriod(type){
     endEl.value=end.toISOString().slice(0,10);
   }
   const fmt=d=>d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
-  labelEl.textContent=start&&end?`📅 ${fmt(start)} ~ ${fmt(end)}`:'📅 전체 기간';
+  labelEl.textContent=start&&end?` ${fmt(start)} ~ ${fmt(end)}`:' 전체 기간';
   renderPeriodReport(start,end);
   updateDashboardMetrics(start,end);
 }
@@ -2771,7 +2771,7 @@ function renderPeriodReport(start,end){
   // 4. MOU 진행중
   const mouProgress=cache.orgs.filter(o=>o.stage===4);
   // 5. MOU 완료(인재영입완료)
-  const mouDone=cache.orgs.filter(o=>o.stage===5);  // MOU완료
+  const mouDone=cache.orgs.filter(o=>o.stage===5); // MOU완료
   // 6. 온라인 유입 (해당 기간)
   const onlineChannels=['카페','인스타그램','페이스북','기타온라인'];
   const onlineTalents=cache.talents.filter(t=>inRange(t.date||t.created_at)&&onlineChannels.includes(t.channel));
@@ -2783,16 +2783,15 @@ function renderPeriodReport(start,end){
 
   const statCard=(icon,label,value,color)=>`
     <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;box-shadow:var(--shadow-sm);">
-      <div style="font-size:22px;margin-bottom:6px;">${icon}</div>
       <div style="font-size:28px;font-weight:800;color:${color||'var(--text)'};">${value}</div>
       <div style="font-size:11px;color:var(--text3);margin-top:4px;font-weight:500;">${label}</div>
     </div>`;
 
   document.getElementById('report-grid').innerHTML=
-    statCard('📞','신규 컨택 시도',newOrgs.length,'var(--accent)')+
-    statCard('📝','컨택 히스토리',newLogs.length,'var(--purple)')+
-    statCard('🤝','MOU 예정',mouProgress.length,'var(--amber)')+
-    statCard('✅','MOU 완료',mouDone.length,'var(--green)');
+    statCard('','신규 컨택 시도',newOrgs.length,'var(--accent)')+
+    statCard('','컨택 히스토리',newLogs.length,'var(--purple)')+
+    statCard('','MOU 예정',mouProgress.length,'var(--amber)')+
+    statCard('','MOU 완료',mouDone.length,'var(--green)');
 
   // 상세 테이블
   const talentRows=allTalents.length?allTalents.map(t=>{
@@ -2820,7 +2819,7 @@ function renderPeriodReport(start,end){
   document.getElementById('report-detail').innerHTML=`
     <div>
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border);">
-        📋 컨택 히스토리 <span style="color:var(--accent);">${newLogs.length}건</span>
+         컨택 히스토리 <span style="color:var(--accent);">${newLogs.length}건</span>
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f8f9fc;">
@@ -2834,7 +2833,7 @@ function renderPeriodReport(start,end){
     </div>
     <div>
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border);">
-        👤 인재영입 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">인재영입활동 ${supplyTalents.length}건</span>
+         인재영입 현황 <span style="color:var(--green);">온라인 ${onlineTalents.length}건</span> · <span style="color:var(--accent);">인재영입활동 ${supplyTalents.length}건</span>
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#f8f9fc;">
@@ -2939,7 +2938,7 @@ function renderPipeline(){
       if(!items.length)return'';
       return'<div style="background:var(--surface);border-radius:12px;overflow:hidden;border:1.5px solid var(--border);"><div style="background:'+STAGE_BGS[i]+';color:'+STAGE_COLORS[i]+';padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;">'+STAGES[s]+'<span style="background:'+STAGE_COLORS[i]+';color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;">'+items.length+'</span></div>'+items.map(o=>{
         const oa=actionsForOrg(o.id).filter(a=>!a.done&&dayDiff(a.due)<=3);
-        return`<div onclick="openOrg(${o.id})" style="padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">${o.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.cat||''} · ${o.member||'—'}</div>${oa.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px;">⚠ ${oa[0].content||oa[0].text||''}</div>`:''}</div><i class="ti ti-chevron-right" style="color:var(--text3);font-size:14px;"></i></div>`;
+        return`<div onclick="openOrg(${o.id})" style="padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">${o.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.cat||''} · ${o.member||'—'}</div>${oa.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px;"> ${oa[0].content||oa[0].text||''}</div>`:''}</div><i class="ti ti-chevron-right" style="color:var(--text3);font-size:14px;"></i></div>`;
       }).join('')+'</div>';
     }).join('')+'</div>';
     return;
@@ -3018,9 +3017,9 @@ function calcHireDuration(app,talent){
 }
 // 기관 기여 매출 및 성과 지표 계산
 // 반드시 ID 기준으로만 join한다 (기관명 텍스트 매칭 금지):
-//   talents.source_org_id === orgs.id
-//   candidate_applications.talent_id === talents.id
-//   candidate_applications.job_id === jobs.id (unit_price 조회용)
+// talents.source_org_id === orgs.id
+// candidate_applications.talent_id === talents.id
+// candidate_applications.job_id === jobs.id (unit_price 조회용)
 // 매출 집계 대상 상태값 (2026-07-04 결정)
 const REVENUE_STATUSES=['합격','입사완료','재직','계약만료예정','계약종료','재계약완료'];
 function calcOrgRevenue(orgId){
@@ -3068,7 +3067,7 @@ function calcMemberPerformanceKPIs(memberName,startDate,endDate){
   return{assignedJobCount,sourcingTargetTotal,actualSourcedCount,applicationConvertedCount,passedCount,hiredCount,targetAchievementRate,applicationConversionRate,passConversionRate};
 }
 function healthBadge(score,clickable=false){
-  const emoji=score>=90?'🟢':score>=70?'🔵':score>=50?'🟡':score>=30?'🟠':'🔴';
+  const emoji=score>=90?'':score>=70?'':score>=50?'':score>=30?'':'';
   const color=score>=90?'#065f46':score>=70?'#1e40af':score>=50?'#b54708':score>=30?'#c2410c':'#dc2626';
   const bg=score>=90?'#d1fae5':score>=70?'#dbeafe':score>=50?'#fef3c7':score>=30?'#ffedd5':'#fee2e2';
   return`<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:${bg};color:${color};${clickable?'cursor:pointer;':''}white-space:nowrap;">${emoji}${score}</span>`;
@@ -3081,10 +3080,11 @@ function showHealthDetail(orgId,event){
   const rows=details.map(d=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:12px;"><span style="color:#374151;">${d.label}${d.sub?` (${d.sub})`:''}</span><span style="font-weight:800;color:${d.delta>0?'#059669':d.delta<0?'#dc2626':'#6b7280'};">${d.delta>0?'+'+d.delta:d.delta===0?'—':d.delta}</span></div>`).join('');
   const msgHtml=`<div style="margin-bottom:12px;">${healthBadge(score)} <span style="font-size:12px;color:#6b7280;margin-left:6px;">${label}</span></div>${rows}<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:800;"><span>최종 점수</span><span style="color:${score>=70?'#059669':'#dc2626'};">${score}점</span></div>`;
   const msgEl=document.getElementById('confirm-msg');
-  document.getElementById('confirm-title').textContent=`🏥 ${o?.name||''} Health Score`;
+  document.getElementById('confirm-title').textContent=` ${o?.name||''} Health Score`;
   document.getElementById('confirm-sub').textContent='';
-  document.getElementById('confirm-icon').textContent='🏥';
+  document.getElementById('confirm-icon').innerHTML='<i class="ti ti-heartbeat"></i>';
   document.getElementById('confirm-icon').style.background='#dbeafe';
+  document.getElementById('confirm-icon').style.color='#1e40af';
   if(msgEl)msgEl.innerHTML=msgHtml;
   const okBtn=document.getElementById('confirm-ok-btn');
   if(okBtn){okBtn.textContent='닫기';okBtn.style.cssText='background:var(--accent);color:#fff;font-weight:700;';}
@@ -3109,13 +3109,13 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
       return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;${o.is_starred?'background:#fffbeb;':''}">
         <td colspan="8" style="padding:12px 14px;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <button onclick="event.stopPropagation();toggleStar(${o.id},${!!o.is_starred})" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;flex-shrink:0;">${o.is_starred?'⭐':'☆'}</button>
+            <button onclick="event.stopPropagation();toggleStar(${o.id},${!!o.is_starred})" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;flex-shrink:0;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
                 <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
                 <span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
                 ${o.region?`<span style="font-size:11px;color:var(--text3);background:#f1f4f9;padding:1px 6px;border-radius:4px;">${o.region}</span>`:''}
-                ${urgent?`<span style="font-size:11px;color:#dc2626;font-weight:700;">⚠ ${urgent}건</span>`:''}
+                ${urgent?`<span style="font-size:11px;color:#dc2626;font-weight:700;"> ${urgent}건</span>`:''}
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span style="font-size:11px;color:var(--text3);">${o.cat||''}</span>
@@ -3141,7 +3141,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const starredBg=o.is_starred?'#fffbeb':'';
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
-        <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;">${o.is_starred?'⭐':'☆'}</button>
+        <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
         ${o.card_image?`<img src="${o.card_image}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
         <span style="font-weight:700;font-size:13px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}
       </td>
@@ -3153,7 +3153,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
         ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
       </td>
       <td style="padding:14px 16px;"><span style="font-size:12px;font-weight:${daysFw};color:${daysColor};background:${daysBg};padding:${daysBg!=='transparent'?'2px 8px':'0'};border-radius:${daysBg!=='transparent'?'12px':'0'};">${daysLabel}</span></td>
-      <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;">⚠ ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
+      <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
     </tr>`;}).join(''):`<tr><td colspan="8" class="empty">해당 기관 없음</td></tr>`;
 }
 
@@ -3216,7 +3216,7 @@ async function toggleAction(id,done){
   const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
   await sb.from('actions').update({done:!done,completed_by_name:completedBy}).eq('id',id);
   const a=cache.actions.find(x=>x.id===id);if(a){a.done=!done;a.completed_by_name=completedBy;}
-  updateUrgentCount();renderActions();toast(!done?'완료 처리됨 ✓':'완료 취소됨');
+  updateUrgentCount();renderActions();toast(!done?'완료 처리됨 ':'완료 취소됨');
 }
 
 // ── 인재 영입 ──
@@ -3288,7 +3288,7 @@ function switchDrawerTab(tab){
             style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
           <input type="hidden" id="di-org-id" value="${org?.id||''}">
           <div id="di-org-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:3px;">⚠️ 변경 시 지원이력·기관 기여 지표도 새 기관 기준으로 재계산됩니다</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px;"> 변경 시 지원이력·기관 기여 지표도 새 기관 기준으로 재계산됩니다</div>
         </div>
         <div class="fg"><label style="font-size:11px;color:var(--text3);">생년월일</label><input type="date" id="di-birthdate" value="${t.birth_date||''}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label style="font-size:11px;color:var(--text3);">장애유형</label><select id="di-distype" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">${disTypes.map(d=>`<option ${d===(t.disability_type||'')?'selected':''}>${d||'선택'}</option>`).join('')}</select></div>
@@ -3334,9 +3334,9 @@ function switchDrawerTab(tab){
     }).join(''):'<div class="empty">이력 없음</div>';
     const dateRow=(label,idPrefix,dateVal,estVal)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">${label}</span><input type="date" id="${idPrefix}-date" value="${dateVal||''}" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="${idPrefix}-est" ${estVal?'checked':''}> 추정일</label></div>`;
     el.innerHTML=`
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">📌 실제 진행 이력</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;"> 실제 진행 이력</div>
       ${appBlocksHtml}
-      <div style="font-size:12px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--border);">🗂 시스템 기록</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--border);"> 시스템 기록</div>
       ${renderTimeline(systemEvents)}
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">날짜 입력/수정 (최신 지원 건 기준)</div>
@@ -3448,7 +3448,7 @@ async function updateDrawerStatus(){
     // 2026-07-21 변경: 재지원은 이전과 같은 회사에는 할 수 없어(항상 다른 채용건) job_id를 여기서
     // 자동으로 알 방법이 없다. 드로어에서 새 지원이력을 만들지 않고, 채용건 페이지에서 등록하도록 유도한다.
     if(latestApp.status==='불합격'&&status==='채용지원'){
-      toast('⚠️ 재지원은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
+      toast(' 재지원은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
       return;
     }
     // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
@@ -3461,7 +3461,7 @@ async function updateDrawerStatus(){
     if(error){toast('오류: '+error.message);return;}
     Object.assign(latestApp,payload);
     // talents.status도 함께 동기화 (2026-07-08 결정: DB 정합성 목적, 화면 표시 우선순위엔 영향 없음)
-    // ⚠️ 다건 지원 기능 도입 시 이 동기화 정책은 재검토 필요 (V:Scout 데이터 표준 v1.0 참고)
+    // 다건 지원 기능 도입 시 이 동기화 정책은 재검토 필요 (V:Scout 데이터 표준 v1.0 참고)
     const{error:tErr}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
     if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
     else t.status=status;
@@ -3469,7 +3469,7 @@ async function updateDrawerStatus(){
     // 2) 지원이력이 없고 새 상태가 '인재등록'이 아닌 경우: 예전엔 여기서 candidate_applications를 job_id 없이
     // 새로 만들었지만, 2026-07-21부터는 job_id 자동 연결 원칙에 따라 드로어에서 만들지 않고
     // 채용건 페이지의 "+ 지원자 등록"으로 유도한다.
-    toast('⚠️ 최초 지원 등록은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
+    toast(' 최초 지원 등록은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
     return;
   }else{
     // 3) 지원이력이 없고 새 상태가 '인재등록'이면 talents.status만 갱신 (candidate_applications 생성 안 함)
@@ -3608,7 +3608,7 @@ async function openAddTalentForJob(jobId){
     const jb=document.getElementById('t-job-0');if(jb)jb.value=job.job_title||'';
     const st=document.getElementById('t-status-0');if(st)st.value='채용지원';
     const banner=document.getElementById('talent-modal-job-banner');
-    if(banner){banner.style.display='block';banner.textContent=`📌 "${job.company} · ${job.job_title}" 채용건에 등록합니다 (job_id 자동 연결)`;}
+    if(banner){banner.style.display='block';banner.textContent=` "${job.company} · ${job.job_title}" 채용건에 등록합니다 (job_id 자동 연결)`;}
   },50);
 }
 function renderTalentForms(){
@@ -3617,7 +3617,7 @@ function renderTalentForms(){
   const container=document.getElementById('talent-forms-container');
   container.innerHTML=Array.from({length:count},(_,i)=>`
     <div style="border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:${i%2===0?'#fafbfc':'#fff'};">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">👤 지원자 ${i+1}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;"> 지원자 ${i+1}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div id="t-name-wrap-${i}" class="fg" style="position:relative;">
           <label>지원자명 *</label>
@@ -3671,7 +3671,7 @@ function selectExistingTalent(i,talentId){
   const box=document.getElementById(`t-match-${i}`);
   if(box){
     box.style.display='block';
-    box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;">✅ 기존 인재 <b>${t.name}</b>로 연결됨(${t.phone||'전화번호 없음'}) — 새로 등록하지 않고 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">연결 취소</button></div>`;
+    box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;"> 기존 인재 <b>${t.name}</b>로 연결됨(${t.phone||'전화번호 없음'}) — 새로 등록하지 않고 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">연결 취소</button></div>`;
   }
 }
 function unlinkExistingTalent(i){
@@ -3779,7 +3779,7 @@ async function saveTalent(){
           const{data:newAssign,error:newAssignErr}=await sb.from('sourcing_assignments').insert(newRow).select().single();
           if(newAssignErr){
             console.error('[Supabase Error] 서칭 배정 자동생성 실패:',newAssignErr);
-            toast('⚠️ 서칭 배정 자동생성 실패로 담당자 실적에는 반영되지 않았어요');
+            toast(' 서칭 배정 자동생성 실패로 담당자 실적에는 반영되지 않았어요');
           }else{
             cache.sourcingAssignments.push(newAssign);
             myAssignment=newAssign;
@@ -3849,7 +3849,7 @@ function openMouDetail(orgId){
   const total=allItems.length;
   const pct=total?Math.round(done/total*100):0;
   const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-new Date())/864e5):null;
-  document.getElementById('mou-detail-title').textContent=`📋 ${o.name} · MOU 준비`;
+  document.getElementById('mou-detail-title').textContent=` ${o.name} · MOU 준비`;
   document.getElementById('mou-detail-info').innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       ${o.mou_date?`<div style="padding:10px 16px;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);text-align:center;">
@@ -3901,7 +3901,7 @@ function renderMouChecklist(org){
     } else if(location==='their'){
       subItems=MOU_ITEMS_FACE_THEIR.map(checkItem).join('')
         +`<div style="margin-top:8px;">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">📝 브이드림 준비사항 메모</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;"> 브이드림 준비사항 메모</div>
           <textarea id="mou-memo-input" onblur="saveMouMemo()" placeholder="브이드림에서 준비할 사항을 메모하세요..." style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:12px;line-height:1.5;resize:vertical;min-height:72px;box-sizing:border-box;">${cl._memo||''}</textarea>
         </div>`;
     }
@@ -4005,7 +4005,7 @@ function setAnalyticsPeriod(type){
   }
   const fmt=d=>d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
   const lbl=document.getElementById('an-period-label');
-  if(lbl)lbl.textContent=`📅 ${fmt(start)} ~ ${fmt(end)}`;
+  if(lbl)lbl.textContent=` ${fmt(start)} ~ ${fmt(end)}`;
   renderAnalytics();
 }
 // ===== 발굴팀 경영진 대시보드 (2026-07-21 1차 구현) =====
@@ -4045,7 +4045,7 @@ function renderAnalytics(){
   const topEl=document.getElementById('an-top-orgs');
   if(topEl){const os=allOrgs.map(o=>{const ot=allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length;const oa=allApps.filter(a=>a.org_id===o.id).length;const oh=allApps.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length;const hs=calcHealthScore(o.id).score;const rate=ot>0?Math.round(oh/ot*100):0;return{...o,ot,oa,oh,rate,hs};}).filter(o=>o.ot>0||o.oh>0).sort((a,b)=>b.oh-a.oh||b.ot-a.ot).slice(0,10);topEl.innerHTML=os.length?os.map((o,i)=>`<div onclick="openOrg(${o.id})" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><span style="font-size:13px;font-weight:800;color:${i<3?'var(--amber)':'var(--text3)'};">${i+1}</span><span style="font-size:12px;font-weight:700;flex:1;">${o.name}</span>${healthBadge(o.hs,false)}</div><div style="display:flex;gap:8px;font-size:11px;margin-bottom:3px;"><span style="color:var(--text3);">유입 <b style="color:var(--text2);">${o.ot}</b></span><span style="color:var(--text3);">지원 <b style="color:var(--accent);">${o.oa}</b></span><span style="color:var(--text3);">입사 <b style="color:var(--green);font-weight:800;">${o.oh}</b></span><span style="margin-left:auto;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${o.rate>30?'var(--green-bg)':o.rate>10?'var(--amber-bg)':'var(--bg)'};color:${o.rate>30?'var(--green)':o.rate>10?'var(--amber)':'var(--text3)'};">${o.rate}%</span></div><div style="background:var(--bg);border-radius:20px;height:4px;overflow:hidden;"><div style="width:${Math.min(o.rate*2,100)}%;height:100%;background:${o.rate>30?'var(--green)':o.rate>10?'var(--amber)':'var(--border)'};border-radius:20px;"></div></div></div>`).join(''):'<div class="empty">데이터 없음</div>';}
   const mEl=document.getElementById('an-member-kpi');
-  if(mEl){const medals=['🥇','🥈','🥉'];const ms=cache.profiles.filter(p=>p.name).map(p=>{const mo=allOrgs.filter(o=>o.member===p.name);const mt=allTals.filter(t=>t.member===p.name);const ma=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name;});const mh=ma.filter(a=>a.status==='합격'||a.status==='입사완료');const rate=mt.length>0?Math.round(mh.length/mt.length*100):0;return{name:p.name,o:mo.length,m:mo.filter(o=>o.stage>=4).length,t:mt.length,ap:ma.length,h:mh.length,rate};}).sort((a,b)=>b.h-a.h||b.rate-a.rate);mEl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:7px 8px;text-align:left;color:var(--text3);">순위</th><th style="padding:7px 8px;text-align:left;color:var(--text3);">담당자</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">기관</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">MOU</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">유입</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">입사</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">전환율</th></tr></thead><tbody>${ms.map((m,i)=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;font-size:14px;">${medals[i]||i+1}</td><td style="padding:7px 8px;font-weight:700;">${m.name}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${m.o}</td><td style="padding:7px 8px;text-align:center;color:var(--teal);">${m.m}</td><td style="padding:7px 8px;text-align:center;color:var(--amber);">${m.t}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${m.h}</td><td style="padding:7px 8px;text-align:center;"><span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${m.rate>30?'var(--green-bg)':m.rate>10?'var(--amber-bg)':'var(--bg)'};color:${m.rate>30?'var(--green)':m.rate>10?'var(--amber)':'var(--text3)'};">${m.rate}%</span></td></tr>`).join('')}</tbody></table>`;}
+  if(mEl){const medals=['','',''];const ms=cache.profiles.filter(p=>p.name).map(p=>{const mo=allOrgs.filter(o=>o.member===p.name);const mt=allTals.filter(t=>t.member===p.name);const ma=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name;});const mh=ma.filter(a=>a.status==='합격'||a.status==='입사완료');const rate=mt.length>0?Math.round(mh.length/mt.length*100):0;return{name:p.name,o:mo.length,m:mo.filter(o=>o.stage>=4).length,t:mt.length,ap:ma.length,h:mh.length,rate};}).sort((a,b)=>b.h-a.h||b.rate-a.rate);mEl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:7px 8px;text-align:left;color:var(--text3);">순위</th><th style="padding:7px 8px;text-align:left;color:var(--text3);">담당자</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">기관</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">MOU</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">유입</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">입사</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">전환율</th></tr></thead><tbody>${ms.map((m,i)=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;font-size:14px;">${medals[i]||i+1}</td><td style="padding:7px 8px;font-weight:700;">${m.name}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${m.o}</td><td style="padding:7px 8px;text-align:center;color:var(--teal);">${m.m}</td><td style="padding:7px 8px;text-align:center;color:var(--amber);">${m.t}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${m.h}</td><td style="padding:7px 8px;text-align:center;"><span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${m.rate>30?'var(--green-bg)':m.rate>10?'var(--amber-bg)':'var(--bg)'};color:${m.rate>30?'var(--green)':m.rate>10?'var(--amber)':'var(--text3)'};">${m.rate}%</span></td></tr>`).join('')}</tbody></table>`;}
   const mEl2=document.getElementById('an-member-kpi-v2');
   if(mEl2){
     const rangeStart=useAll?null:start,rangeEnd=useAll?null:end;
@@ -4057,7 +4057,7 @@ function renderAnalytics(){
   const rgEl=document.getElementById('an-region');
   if(rgEl){const rm={};allOrgs.forEach(o=>{const r=o.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].o++;});allTals.forEach(t=>{const org=allOrgs.find(o=>o.id===(t.source_org_id||t.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].t++;});allApps.filter(a=>a.status==='합격'||a.status==='입사완료').forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);const org=allOrgs.find(o=>o.id===(t?.source_org_id||t?.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].h++;});rgEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+Object.entries(rm).sort((a,b)=>b[1].h-a[1].h||b[1].t-a[1].t).slice(0,8).map(([r,v])=>{const rate=v.t>0?Math.round(v.h/v.t*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;">${r}</span><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${rate>20?'var(--green-bg)':'var(--bg2)'};color:${rate>20?'var(--green)':'var(--text3)'};">${rate}%</span></div><div style="display:flex;gap:8px;font-size:11px;color:var(--text3);"><span>기관 <b style="color:var(--accent);">${v.o}</b></span><span>유입 <b style="color:var(--amber);">${v.t}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${v.h}</b></span></div></div>`;}).join('')+'</div>';}
   const iEl=document.getElementById('an-insight');
-  if(iEl){const ins=[];const mn=allOrgs.filter(o=>o.stage>=4&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:'')});const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length===0);if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:'')});const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요'});const nc=allOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장'});const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&(a.status==='합격'||a.status==='입사완료');}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`});const thisM=new Date(now.getFullYear(),now.getMonth(),1);const topM=cache.profiles.map(p=>{const h=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name&&(a.status==='합격'||a.status==='입사완료')&&new Date(a.created_at)>=thisM;}).length;return{name:p.name,h};}).sort((a,b)=>b.h-a.h)[0];if(topM?.h>0)ins.push({t:'success',msg:`이번달 TOP 담당자: ${topM.name}`,sub:`입사 ${topM.h}명 달성`});if(!ins.length)ins.push({t:'success',msg:'현재 위험 신호 없음',sub:'모든 지표 정상'});const bg={warning:'#fef3c7',danger:'#fee2e2',success:'#d1fae5'};const tc={warning:'#b54708',danger:'#dc2626',success:'#065f46'};const ic={warning:'⚠',danger:'🚨',success:'✅'};iEl.innerHTML='<div style="display:grid;gap:8px;">'+ins.map(i=>`<div style="padding:10px 14px;background:${bg[i.t]};border-radius:var(--radius-sm);border-left:3px solid ${tc[i.t]};"><div style="font-size:12px;font-weight:700;color:${tc[i.t]};">${ic[i.t]} ${i.msg}</div>${i.sub?`<div style="font-size:11px;color:${tc[i.t]};opacity:.8;margin-top:2px;">${i.sub}</div>`:''}</div>`).join('')+'</div>';}
+  if(iEl){const ins=[];const mn=allOrgs.filter(o=>o.stage>=4&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:'')});const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length===0);if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:'')});const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요'});const nc=allOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장'});const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&(a.status==='합격'||a.status==='입사완료');}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`});const thisM=new Date(now.getFullYear(),now.getMonth(),1);const topM=cache.profiles.map(p=>{const h=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name&&(a.status==='합격'||a.status==='입사완료')&&new Date(a.created_at)>=thisM;}).length;return{name:p.name,h};}).sort((a,b)=>b.h-a.h)[0];if(topM?.h>0)ins.push({t:'success',msg:`이번달 TOP 담당자: ${topM.name}`,sub:`입사 ${topM.h}명 달성`});if(!ins.length)ins.push({t:'success',msg:'현재 위험 신호 없음',sub:'모든 지표 정상'});const bg={warning:'#fef3c7',danger:'#fee2e2',success:'#d1fae5'};const tc={warning:'#b54708',danger:'#dc2626',success:'#065f46'};const ic={warning:'',danger:'',success:''};iEl.innerHTML='<div style="display:grid;gap:8px;">'+ins.map(i=>`<div style="padding:10px 14px;background:${bg[i.t]};border-radius:var(--radius-sm);border-left:3px solid ${tc[i.t]};"><div style="font-size:12px;font-weight:700;color:${tc[i.t]};">${ic[i.t]} ${i.msg}</div>${i.sub?`<div style="font-size:11px;color:${tc[i.t]};opacity:.8;margin-top:2px;">${i.sub}</div>`:''}</div>`).join('')+'</div>';}
 }
 
 // ── 팀원 실적 ──
@@ -4107,7 +4107,7 @@ async function renderCold(){
   `;
 
   // 탭에 따라 전체 피드 구성
-  const TYPE_ICON2={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+  const TYPE_ICON2={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-note"></i>','전화':'<i class="ti ti-phone"></i>','방문':'<i class="ti ti-walk"></i>'};
   const logRows=(coldTab==='cold')?[]:(cache.logs||[]).map(l=>({
     _type:'reg',
     id:'log-'+l.id,
@@ -4163,7 +4163,7 @@ async function renderCold(){
 
   document.getElementById('cold-count').textContent=`총 ${rows.length}건`;
 
-  const METHOD_ICON={전화:'📞',이메일:'📧',문자:'💬',방문:'🚶'};
+  const METHOD_ICON={전화:'<i class="ti ti-phone"></i>',이메일:'<i class="ti ti-mail"></i>',문자:'<i class="ti ti-message"></i>',방문:'<i class="ti ti-walk"></i>'};
   const RESULT_CLS={부재중:'b-gray',거절:'b-red',긍정적:'b-green','재연락 필요':'b-amber','기관 등록 전환':'b-teal'};
 
   // 기관별 최신 컨택 결과 맵
@@ -4196,7 +4196,7 @@ async function renderCold(){
   // 등록기관 탭이면 통합 피드 렌더링
   // 전체(all) 탭: 등록기관 + 콜드 통합, 날짜별 그룹
   if(coldTab==='all'){
-    const TICON3={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌','전화':'📞','방문':'🚶'};
+    const TICON3={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-note"></i>','전화':'<i class="ti ti-phone"></i>','방문':'<i class="ti ti-walk"></i>'};
     const TCOLOR3={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)','전화':'var(--accent)','방문':'var(--teal)'};
     const t3=new Date(),y3=new Date(t3);y3.setDate(t3.getDate()-1);
     const sd3=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
@@ -4211,7 +4211,7 @@ async function renderCold(){
       const ic3=r._type==='cold';
       const fn3=ic3?"nav('cold')":'openOrg('+r.org_id+')';
       let html='<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="'+fn3+'">';
-      html+='<span style="font-size:16px;flex-shrink:0;">'+(TICON3[r.contact_type]||'📋')+'</span>';
+      html+='<span style="font-size:16px;flex-shrink:0;">'+(TICON3[r.contact_type]||'<i class="ti ti-note"></i>')+'</span>';
       html+='<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">';
       if(r.member)html+='<span style="font-size:11px;font-weight:700;color:var(--accent);">'+r.member+'</span>';
       html+='<span style="font-size:11px;font-weight:700;color:'+(TCOLOR3[r.contact_type]||'var(--text3)')+';">'+(r.contact_type||'기타')+'</span>';
@@ -4240,7 +4240,7 @@ async function renderCold(){
       const timeStr2=fDate2.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
       const org2=cache.orgs.find(o=>o.id===r.org_id);
       return`${grp}<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="openOrg(${r.org_id})">
-        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'📋'}</span>
+        <span style="font-size:18px;flex-shrink:0;">${TYPE_ICON2[r.contact_type]||'<i class="ti ti-note"></i>'}</span>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span style="font-size:12px;font-weight:700;color:${TYPE_COLOR2[r.contact_type]||'var(--text3)'};">${r.contact_type}</span>
@@ -4261,7 +4261,7 @@ async function renderCold(){
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${rows.filter(r=>r._type==='cold').map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'📞'}</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'<i class="ti ti-phone"></i>'}</div>
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
               <span style="font-size:13px;font-weight:700;">${c.org_name}</span>
@@ -4270,10 +4270,10 @@ async function renderCold(){
               ${c.contact_purpose?`<span class="badge b-blue" style="font-size:10px;">${c.contact_purpose}</span>`:''}
               ${c.contact_person?`<span style="font-size:11px;color:var(--text3);">${c.contact_person}${c.position?' · '+c.position:''}</span>`:''}
               <span class="badge ${RESULT_CLS[c.result]||'b-gray'}" style="font-size:10px;">${c.result}</span>
-              ${c.converted_org_id?'<span class="badge b-teal" style="font-size:10px;">✓ 기관 등록됨</span>':''}
-              ${latestByOrg[c.org_name]?.id===c.id&&c.result==='재연락 필요'?'<span style="font-size:10px;color:#b54708;font-weight:700;">⚡ 후속 컨택 필요</span>':''}
-              ${c.status==='진행중'?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;">🔄 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;">✅ 완료</span>'}
-              ${latestByOrg[c.org_name]?.id===c.id&&c.result==='긍정적'?'<span style="font-size:10px;color:#027a48;font-weight:700;">🌟 관심 기관</span>':''}
+              ${c.converted_org_id?'<span class="badge b-teal" style="font-size:10px;"> 기관 등록됨</span>':''}
+              ${latestByOrg[c.org_name]?.id===c.id&&c.result==='재연락 필요'?'<span style="font-size:10px;color:#b54708;font-weight:700;"> 후속 컨택 필요</span>':''}
+              ${c.status==='진행중'?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;"> 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;"> 완료</span>'}
+              ${latestByOrg[c.org_name]?.id===c.id&&c.result==='긍정적'?'<span style="font-size:10px;color:#027a48;font-weight:700;"> 관심 기관</span>':''}
             </div>
             <div style="font-size:12px;font-weight:600;color:var(--text);">${c.summary||''}</div>
             ${c.phone||c.email||c.address?`
@@ -4295,10 +4295,10 @@ async function renderCold(){
           </div>
         </div>
         ${(c.result==='재연락 필요'||c.status==='진행중')?`<div id="cold-followup-${c.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
-          <div style="font-size:12px;font-weight:700;color:#b54708;margin-bottom:8px;">📞 추가 컨택 내용</div>
+          <div style="font-size:12px;font-weight:700;color:#b54708;margin-bottom:8px;"> 추가 컨택 내용</div>
           <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-            <select id="cold-fu-method-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="전화">📞 전화</option><option value="이메일">📧 이메일</option><option value="문자">💬 문자</option><option value="방문">🚶 방문</option></select>
-            <select id="cold-fu-result-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="재연락 필요">🔄 재연락 필요</option><option value="긍정적">✅ 긍정적</option><option value="부재중">📵 부재중</option><option value="거절">❌ 거절</option></select>
+            <select id="cold-fu-method-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="전화"> 전화</option><option value="이메일"> 이메일</option><option value="문자"> 문자</option><option value="방문"> 방문</option></select>
+            <select id="cold-fu-result-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="재연락 필요"> 재연락 필요</option><option value="긍정적"> 긍정적</option><option value="부재중"> 부재중</option><option value="거절"> 거절</option></select>
             <input type="date" id="cold-fu-date-${c.id}" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
           </div>
           <textarea id="cold-fu-memo-${c.id}" placeholder="추가 컨택 내용..." style="width:100%;font-size:12px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;min-height:60px;resize:vertical;box-sizing:border-box;background:#fff;line-height:1.6;"></textarea>
@@ -4329,7 +4329,7 @@ async function saveColdFollowup(id){
   const row={org_name:orig.org_name,cat:orig.cat,contact_type:orig.contact_type,method,result,summary:'[추가컨택] '+memo.slice(0,30),memo,logged_at:new Date(date).toISOString(),created_by:currentUser?.id||null,created_by_name:myName,member:orig.member||myName,contact_person:orig.contact_person||'',phone:orig.phone||''};
   const{error}=await sb.from('cold_contacts').insert(row);
   if(error){toast('오류: '+error.message);return;}
-  toast('✅ 추가 컨택 저장됐어요!');
+  toast(' 추가 컨택 저장됐어요!');
   await loadAll();renderCold();
 }
 function clearColdFilter(){
@@ -4421,7 +4421,7 @@ function loadDraft(type){
         setTimeout(()=>{
           applyDraft(type,data);
           clearDraft(type);
-          toast('임시저장 내용 불러옴 ✓');
+          toast('임시저장 내용 불러옴 ');
         },100);
       }
     });
@@ -4488,7 +4488,7 @@ function showDraftStatus(){
   el.style.background='#ecfdf3';
   el.style.color='#027a48';
   el.style.border='1px solid #6ce9a6';
-  el.textContent=`✅ 임시저장됨 ${now}`;
+  el.textContent=` 임시저장됨 ${now}`;
 }
 function hideDraftStatus(){
   const el=document.getElementById('draft-status');
@@ -4501,7 +4501,7 @@ function showDraftSaving(){
   el.style.background='#f8f9fc';
   el.style.color='var(--text3)';
   el.style.border='1px solid var(--border)';
-  el.textContent='⏳ 저장 중...';
+  el.textContent=' 저장 중...';
 }
 function checkContactAlert(){
   const todayStr=new Date().toISOString().slice(0,10);
@@ -4537,11 +4537,11 @@ function dismissContactAlertToday(){
   closeContactAlert();
 }
 function showConfirm({title,sub,msg,type='danger',okLabel='확인',onOk}){
-  const iconMap={danger:{icon:'⚠️',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'🔔',bg:'#fef3c7',color:'#b54708'},info:{icon:'ℹ️',bg:'#eff4ff',color:'#3b6ef8'}};
+  const iconMap={danger:{icon:'<i class="ti ti-alert-triangle"></i>',bg:'#fee2e2',color:'#dc2626'},warning:{icon:'<i class="ti ti-bell"></i>',bg:'#fef3c7',color:'#b54708'},info:{icon:'<i class="ti ti-info-circle"></i>',bg:'#eff4ff',color:'#3b6ef8'}};
   const t=iconMap[type]||iconMap.danger;
   document.getElementById('confirm-icon').style.background=t.bg;
   document.getElementById('confirm-icon').style.color=t.color;
-  document.getElementById('confirm-icon').textContent=t.icon;
+  document.getElementById('confirm-icon').innerHTML=t.icon;
   document.getElementById('confirm-title').textContent=title;
   document.getElementById('confirm-sub').textContent=sub||'';
   document.getElementById('confirm-msg').textContent=msg;
@@ -4577,14 +4577,14 @@ async function openAuditLog(){
   document.getElementById('audit-list').innerHTML='<div class="loading"><div class="spin"></div>불러오는 중...</div>';
   const{data,error}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(100);
   if(error){document.getElementById('audit-list').innerHTML='<div class="empty">오류 발생</div>';return;}
-  const ACTION_ICON={수정:'✏️',삭제:'🗑️',등록:'➕'};
+  const ACTION_ICON={수정:'<i class="ti ti-edit"></i>',삭제:'<i class="ti ti-trash"></i>',등록:'<i class="ti ti-plus"></i>'};
   const ACTION_COLOR={수정:'var(--amber)',삭제:'var(--red)',등록:'var(--green)'};
   document.getElementById('audit-list').innerHTML=data.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
       ${data.map(l=>{
         const detail=l.detail||{};
         return`<div style="display:flex;gap:12px;padding:12px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid ${ACTION_COLOR[l.action]||'var(--border)'};">
-          <div style="font-size:20px;flex-shrink:0;">${ACTION_ICON[l.action]||'📝'}</div>
+          <div style="font-size:20px;flex-shrink:0;">${ACTION_ICON[l.action]||''}</div>
           <div style="flex:1;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <span style="font-size:12px;font-weight:700;color:${ACTION_COLOR[l.action]||'var(--text)'};">${l.action}</span>
@@ -4676,7 +4676,7 @@ function applyContactChange(){
   // 초기화
   ['new-contact-name','new-contact-phone','new-contact-email','new-contact-reason'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('contact-change-wrap').style.display='none';
-  toast('담당자 변경 적용됨 ✓');
+  toast('담당자 변경 적용됨 ');
 }
 function applyContactAdd(){
   const name=document.getElementById('add-contact-name').value.trim();
@@ -4687,7 +4687,7 @@ function applyContactAdd(){
   renderContactsList();
   ['add-contact-name','add-contact-phone','add-contact-email'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('contact-add-wrap').style.display='none';
-  toast('담당자 추가됨 ✓');
+  toast('담당자 추가됨 ');
 }
 function handleOrgEditKey(e){
   const dd=document.getElementById('org-edit-dropdown');
@@ -4796,14 +4796,14 @@ function loadOrgForEdit(orgId){
     </div>`).join(''):'<div style="color:var(--text3);font-size:12px;">변경 이력 없음</div>';
   // 스크롤 상단
   document.getElementById('p-add-org').scrollTop=0;
-  toast(`"${o.name}" 불러옴 ✓`);
+  toast(`"${o.name}" 불러옴 `);
 }
 function clearEditMode(){
   editOrgId=null;
   document.getElementById('add-org-title').textContent='기관 등록';
   document.getElementById('add-org-sub').textContent='새 기관을 등록합니다';
   document.getElementById('edit-mode-clear').style.display='none';
-  document.getElementById('save-btn').innerHTML='💾 저장';
+  document.getElementById('save-btn').innerHTML=' 저장';
   document.getElementById('org-edit-search').value='';
   document.getElementById('member-history-section').style.display='none';
   currentContacts=[];
@@ -4968,7 +4968,7 @@ function checkOrgNameDup(val){
   if(editOrgId){warn.style.display='none';return;} // 수정 모드에서는 자기 자신과 비교할 필요 없음
   const dup=findDuplicateOrg(val,editOrgId);
   if(dup){
-    warn.innerHTML=`⚠️ <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();nav('orgs');" style="color:#c2410c;text-decoration:underline;">기관 목록</a>에서 해당 기관에 히스토리를 추가해주세요.`;
+    warn.innerHTML=` <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();nav('orgs');" style="color:#c2410c;text-decoration:underline;">기관 목록</a>에서 해당 기관에 히스토리를 추가해주세요.`;
     warn.style.display='block';
   }else{warn.style.display='none';}
 }
@@ -4978,7 +4978,7 @@ async function saveCold(){
   const summary=document.getElementById('cold-summary').value.trim();
   if(!orgName||!summary){toast('기관명과 한 줄 요약은 필수예요');return;}
   const matched=findDuplicateOrg(orgName);
-  if(matched){toast(`⚠️ "${matched.name}"은(는) 이미 등록된 기관입니다. 기관 목록에서 컨택 히스토리를 추가해주세요!`);return;}
+  if(matched){toast(` "${matched.name}"은(는) 이미 등록된 기관입니다. 기관 목록에서 컨택 히스토리를 추가해주세요!`);return;}
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
   const loggedAt=document.getElementById('cold-date').value?new Date(document.getElementById('cold-date').value).toISOString():new Date().toISOString();
   const row={
@@ -5005,7 +5005,7 @@ async function saveCold(){
   if(error){toast('오류: '+error.message);return;}
   document.getElementById('cold-modal').style.display='none';
   clearDraft('cold');
-  toast('컨택 기록 추가됨 ✓');
+  toast('컨택 기록 추가됨 ');
   renderCold();
 }
 async function deleteCold(id){
@@ -5042,7 +5042,7 @@ function renderStatusTimeline(t){
   if(!history.length){el.innerHTML='';return;}
   const STATUS_COLOR={지원중:'var(--accent)',면접:'var(--amber)',합격:'var(--green)',불합격:'var(--red)',포기:'var(--text3)'};
   el.innerHTML=`
-    <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">📋 상태 변경 이력</div>
+    <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;"> 상태 변경 이력</div>
     <div style="position:relative;padding-left:16px;border-left:2px solid var(--border);">
       ${history.map((h,i)=>`
         <div style="position:relative;margin-bottom:10px;padding-left:12px;">
@@ -5120,7 +5120,7 @@ async function uploadTalentFiles(event){
   t.files=newFiles;
   renderTalentFiles(t);
   document.getElementById('td-file-input').value='';
-  toast(`${uploaded.length}개 파일 업로드 완료 ✓`);
+  toast(`${uploaded.length}개 파일 업로드 완료 `);
 }
 async function deleteTalentFile(idx){
   const t=cache.talents.find(x=>x.id===currentTalentId);
@@ -5164,14 +5164,14 @@ function openTalentDetail(id){
       contractSection.style.display='block';
       contractSection.innerHTML=`
         <div style="margin-top:12px;padding:12px 14px;background:#f0fdf4;border:1.5px solid var(--green);border-radius:8px;">
-          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;">📋 근로계약 정보</div>
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;"> 근로계약 정보</div>
           <div style="display:flex;align-items:center;gap:10px;">
             <label style="font-size:12px;color:var(--text2);font-weight:600;white-space:nowrap;">계약 만료일</label>
             <input type="date" id="td-contract-end" value="${t.contract_end_date||''}"
               style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;flex:1;">
             <button onclick="saveContractEndDate()"
               style="padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">
-              💾 저장
+               저장
             </button>
           </div>
         </div>`;
@@ -5191,7 +5191,7 @@ async function saveContractEndDate(){
   if(error){toast('오류: '+error.message);return;}
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(t)t.contract_end_date=date;
-  toast('계약 만료일 저장 완료 ✓');
+  toast('계약 만료일 저장 완료 ');
   renderTalent();
 }
 function setTalentStatus(status){
@@ -5224,7 +5224,7 @@ async function saveTalentDetail(){
   if(error){toast('오류: '+error.message);return;}
   t.memo=memo;
   document.getElementById('talent-detail-modal').style.display='none';
-  toast('저장 완료 ✓');renderTalent();
+  toast('저장 완료 ');renderTalent();
   if(document.getElementById('td-status-btns')&&currentTalentId){const t=cache.talents.find(x=>x.id===currentTalentId);if(t&&t.status==='합격'){const org=cache.orgs.find(o=>o.id===t.org_id);sendGChatHireAlert(t.name,org?.name||'');} }
 }
 // ===== 서칭 배정 (sourcing_assignments/sourcing_candidates, 2026-07-21 Phase 2 1차) =====
@@ -5245,7 +5245,7 @@ function sourcingPanelHtml(job){
   }).join('')||'<div style="font-size:12px;color:var(--text3);padding:6px 0;">등록된 서칭 배정 없음</div>';
   return `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
-      <span style="font-size:11px;font-weight:700;color:var(--text3);">🎯 서칭 배정</span>
+      <span style="font-size:11px;font-weight:700;color:var(--text3);"> 서칭 배정</span>
       <div style="display:flex;gap:6px;">
         <button onclick="openAddSourcingAssignment(${job.id})" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--teal);color:var(--teal);background:var(--teal-bg);border-radius:6px;cursor:pointer;">+ 배정 추가</button>
         <button onclick="openAddTalentForJob(${job.id})" style="font-size:11px;padding:4px 10px;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-bg);border-radius:6px;cursor:pointer;">+ 지원자 등록</button>
@@ -5294,7 +5294,7 @@ async function saveSourcingAssignment(jobId){
     if(reopenErr){console.error('[Supabase Error] 채용건 재오픈 실패:',reopenErr);}
     else{job.status='서칭중';reopened=true;}
   }
-  toast(reopened?'서칭 배정 추가 + 채용건 서칭중으로 재오픈됨 ✓':'서칭 배정 추가됨 ✓');
+  toast(reopened?'서칭 배정 추가 + 채용건 서칭중으로 재오픈됨 ':'서칭 배정 추가됨 ');
   renderJobs();
 }
 async function deleteSourcingAssignment(id){
@@ -5326,7 +5326,7 @@ async function renderJobs(){
     <div class="metric"><div class="metric-label">진행중 채용 건</div><div class="metric-value">${openJobs.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">D-7 이내 마감</div><div class="metric-value" style="color:var(--red);">${urgent}</div><div class="metric-sub">건 긴급</div></div>
     <div class="metric"><div class="metric-label">미충원 인원</div><div class="metric-value" style="color:${remaining>0?'var(--amber)':'var(--green)'};">${remaining}</div><div class="metric-sub">명 (목표 ${totalTarget}명 중)</div></div>
-    <div class="metric"><div class="metric-label">➕ 추가서칭 중</div><div class="metric-value" style="color:var(--purple);">${bufferSourcingCount}</div><div class="metric-sub">건 (목표 다 채운 재오픈 건)</div></div>
+    <div class="metric"><div class="metric-label"> 추가서칭 중</div><div class="metric-value" style="color:var(--purple);">${bufferSourcingCount}</div><div class="metric-sub">건 (목표 다 채운 재오픈 건)</div></div>
     <div class="metric"><div class="metric-label">완료 채용 건</div><div class="metric-value" style="color:var(--green);">${done}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">지원자 추천</div><div class="metric-value" style="color:var(--purple);">${referredApplicants}</div><div class="metric-sub">명</div></div>
   `;
@@ -5340,7 +5340,7 @@ async function renderJobs(){
     const pct=j.headcount?Math.min(100,Math.round((j.current_count||0)/j.headcount*100)):0;
     const remain=Math.max(0,(j.headcount||0)-(j.current_count||0));
     const daysColor=days===null?'var(--text3)':days<0?'var(--red)':days<=7?'var(--amber)':'var(--green)';
-    const daysLabel=days===null?'—':days<0?`D+${Math.abs(days)} 초과`:days===0?'오늘 마감!':days<=7?`🚨 D-${days}`:`D-${days}`;
+    const daysLabel=days===null?'—':days<0?`D+${Math.abs(days)} 초과`:days===0?'오늘 마감!':days<=7?` D-${days}`:`D-${days}`;
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
@@ -5353,7 +5353,7 @@ async function renderJobs(){
       const latestAssign=jobAssignments.length?[...jobAssignments].sort((a,b)=>new Date(b.created_at||b.start_date||0)-new Date(a.created_at||a.start_date||0))[0]:null;
       const actualCount=latestAssign?(cache.sourcingCandidates||[]).filter(c=>c.sourcing_assignment_id===latestAssign.id).length:0;
       const targetLabel=latestAssign?(latestAssign.target_count!=null?`${actualCount}/${latestAssign.target_count}명`:`${actualCount}명 (목표 미설정)`):'배정 없음';
-      bufferBadgeHtml=`<div style="margin-top:4px;font-size:10px;font-weight:700;color:var(--purple);background:#faf5ff;padding:2px 7px;border-radius:10px;display:inline-block;white-space:nowrap;">➕ 추가서칭 ${targetLabel}</div>`;
+      bufferBadgeHtml=`<div style="margin-top:4px;font-size:10px;font-weight:700;color:var(--purple);background:#faf5ff;padding:2px 7px;border-radius:10px;display:inline-block;white-space:nowrap;"> 추가서칭 ${targetLabel}</div>`;
     }
     return`<tr class="${rowClass||''}" onclick="toggleJobRow(${j.id},event)" style="cursor:pointer;${j.status==='완료'?'opacity:.55':''}${rowClass?';display:none':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
@@ -5383,7 +5383,7 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select>${bufferBadgeHtml}</td>
+      <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}> 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}> 완료</option></select>${bufferBadgeHtml}</td>
       <td style="padding:13px 16px;">
         <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
@@ -5391,10 +5391,10 @@ async function renderJobs(){
     <tr class="${rowClass||''}" id="job-detail-${j.id}" style="display:none;">
       <td colspan="10" style="padding:0;">
         <div style="padding:14px 20px 16px 20px;background:var(--bg);border-top:1px solid var(--border);border-bottom:2px solid var(--teal);">
-          ${(j.searched_orgs&&j.searched_orgs.length)?`<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:700;color:var(--text3);margin-right:8px;">🏢 서칭 기관</span>${j.searched_orgs.map(o=>`<span style="display:inline-block;padding:2px 8px;background:var(--accent-bg);color:var(--accent);border-radius:20px;font-size:11px;font-weight:600;margin:2px;">${o}</span>`).join('')}</div>`:''}
-          ${j.requirements?`<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);">📋 요구조건</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.requirements}</div></div>`:''}
-          ${j.jd?`<div><span style="font-size:11px;font-weight:700;color:var(--text3);">📄 JD</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;background:var(--surface);padding:10px;border-radius:6px;border:1px solid var(--border);">${j.jd}</div></div>`:''}
-          ${j.notes?`<div style="margin-top:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);">💬 특이사항</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.notes}</div></div>`:''}
+          ${(j.searched_orgs&&j.searched_orgs.length)?`<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:700;color:var(--text3);margin-right:8px;"> 서칭 기관</span>${j.searched_orgs.map(o=>`<span style="display:inline-block;padding:2px 8px;background:var(--accent-bg);color:var(--accent);border-radius:20px;font-size:11px;font-weight:600;margin:2px;">${o}</span>`).join('')}</div>`:''}
+          ${j.requirements?`<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);"> 요구조건</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.requirements}</div></div>`:''}
+          ${j.jd?`<div><span style="font-size:11px;font-weight:700;color:var(--text3);"> JD</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;background:var(--surface);padding:10px;border-radius:6px;border:1px solid var(--border);">${j.jd}</div></div>`:''}
+          ${j.notes?`<div style="margin-top:8px;"><span style="font-size:11px;font-weight:700;color:var(--text3);"> 특이사항</span><div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap;">${j.notes}</div></div>`:''}
           ${sourcingPanelHtml(j)}
         </div>
       </td>
@@ -5403,7 +5403,7 @@ async function renderJobs(){
 
   const doneHeaderRow=doneJobs.length?`<tr onclick="toggleDoneJobsSection()" style="cursor:pointer;background:var(--bg);">
     <td colspan="10" style="padding:11px 16px;font-size:12px;font-weight:700;color:var(--text3);">
-      ✅ 완료된 채용 건 (${doneJobs.length}건) — 클릭해서 펼치기/접기
+       완료된 채용 건 (${doneJobs.length}건) — 클릭해서 펼치기/접기
       <span id="done-jobs-chevron" style="float:right;">${jobDoneSectionOpen?'▲ 접기':'▼ 펼치기'}</span>
     </td>
   </tr>`:'';
@@ -5440,7 +5440,7 @@ async function cycleJobStatusSelect(jobId, newStatus){
   const{error}=await sb.from('jobs').update({status:newStatus}).eq('id',jobId);
   if(error){toast('오류: '+error.message);return;}
   j.status=newStatus;
-  toast(newStatus==='완료'?'✅ 완료!':'🔍 서칭중');
+  toast(newStatus==='완료'?' 완료!':' 서칭중');
   renderJobs();
 }
 async function cycleJobStatus(jobId){
@@ -5451,7 +5451,7 @@ async function cycleJobStatus(jobId){
   const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
   if(error){toast('오류: '+error.message);return;}
   j.status=status;
-  toast(status==='완료'?'✅ 완료 처리됐어요!':'🔍 서칭중으로 변경됐어요!');
+  toast(status==='완료'?' 완료 처리됐어요!':' 서칭중으로 변경됐어요!');
   renderJobs();
 }
 async function toggleJobStatus(jobId, newStatus){
@@ -5463,7 +5463,7 @@ async function toggleJobStatus(jobId, newStatus){
   const{error}=await sb.from('jobs').update({status}).eq('id',jobId);
   if(error){toast('오류: '+error.message);return;}
   j.status=status;
-  toast(status==='완료'?'✅ 완료 처리됐어요!':status==='서칭중'?'🔍 서칭중으로 변경됐어요!':'진행중으로 변경됐어요!');
+  toast(status==='완료'?' 완료 처리됐어요!':status==='서칭중'?' 서칭중으로 변경됐어요!':'진행중으로 변경됐어요!');
   renderJobs();
 }
 
@@ -5472,7 +5472,7 @@ async function updateJobCount(jobId, count){
   if(error){toast('오류: '+error.message);return;}
   const j=cache.jobs.find(x=>x.id===jobId);
   if(j)j.current_count=parseInt(count);
-  toast(`확보 인원 ${count}명으로 업데이트 ✓`);
+  toast(`확보 인원 ${count}명으로 업데이트 `);
   renderJobs();
 }
 function searchExistingJob(kw){
@@ -5509,7 +5509,7 @@ function loadExistingJob(id){
   document.getElementById('job-searched-orgs').value=(j.searched_orgs||[]).join(', ');
   document.getElementById('job-notes').value=j.notes||'■ 특이사항 : ';
   document.getElementById('job-member').innerHTML='<option value="">선택</option>'+cache.profiles.map(p=>`<option${p.name===j.member?' selected':''}>${p.name}</option>`).join('');
-  toast('기존 채용건을 불러왔어요. 수정 후 저장하세요 ✓');
+  toast('기존 채용건을 불러왔어요. 수정 후 저장하세요 ');
 }
 function searchJobOrg(kw){
   const dropdown=document.getElementById('job-org-dropdown');
@@ -5616,7 +5616,7 @@ async function saveJob(){
   }
   document.getElementById('job-modal').style.display='none';
   if(!currentJobId)clearDraft('job');
-  toast(currentJobId?'수정 완료 ✓':'채용 건 등록 완료 ✓');
+  toast(currentJobId?'수정 완료 ':'채용 건 등록 완료 ');
   renderJobs();
 }
 async function deleteJob(){
@@ -5754,7 +5754,7 @@ async function saveEvent(){
     if(error){toast('오류: '+error.message);return;}
   }
   document.getElementById('event-modal').style.display='none';
-  toast(currentEventId?'행사 수정 완료 ✓':'행사 등록 완료 ✓');
+  toast(currentEventId?'행사 수정 완료 ':'행사 등록 완료 ');
   renderEvents();
 }
 async function deleteEvent(){
@@ -5900,11 +5900,11 @@ async function uploadBusinessCard(file, orgName){
 async function analyzeBusinessCard(input){
   const file=input.files[0];if(!file)return;
   const status=document.getElementById('ocr-status');
-  status.textContent='🔍 명함 분석 중...';
+  status.textContent=' 명함 분석 중...';
   status.style.color='var(--accent)';
   const {data:setting}=await sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
   if(!setting?.value){
-    status.textContent='❌ API 키 설정 필요';
+    status.textContent=' API 키 설정 필요';
     status.style.color='var(--red)';
     return;
   }
@@ -5929,7 +5929,7 @@ async function analyzeBusinessCard(input){
     const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
     if(!text){
       const errMsg=data.error?.message||'알 수 없는 오류';
-      status.textContent='❌ API 오류: '+errMsg;
+      status.textContent=' API 오류: '+errMsg;
       status.style.color='var(--red)';
       input.value='';
       return;
@@ -5963,10 +5963,10 @@ async function analyzeBusinessCard(input){
     cardImageBase64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
     const wrap=document.getElementById('card-upload-wrap');
     if(wrap){wrap.innerHTML=`<div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button></div>`;}
-    status.textContent='✅ 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
+    status.textContent=' 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
     status.style.color='var(--green)';
   }catch(e){
-    status.textContent='❌ 분석 실패: '+e.message;
+    status.textContent=' 분석 실패: '+e.message;
     status.style.color='var(--red)';
     console.error('OCR 오류:',e);
   }
@@ -6019,11 +6019,11 @@ async function saveOrg(){
         if(prevOrg)Object.assign(prevOrg,orgRow);
         writeAuditLog('수정','기관',name,{changes:`담당팀원: ${orgRow.member}, 단계: ${STAGES[orgRow.stage]}`,reason});
         clearEditMode();
-        btn.disabled=false;btn.innerHTML='💾 저장';
-        toast(`"${name}" 수정 완료 ✓`);updateUrgentCount();nav('orgs');
+        btn.disabled=false;btn.innerHTML=' 저장';
+        toast(`"${name}" 수정 완료 `);updateUrgentCount();nav('orgs');
       }
     });
-    btn.disabled=false;btn.innerHTML='💾 저장';
+    btn.disabled=false;btn.innerHTML=' 저장';
     return;
   }
 
@@ -6033,14 +6033,14 @@ async function saveOrg(){
   const dup=findDuplicateOrg(name);
   if(dup){
     const reg=dup.created_by_name||'누군가';
-    if(!confirm(`⚠️ "${dup.name}" 기관이 이미 등록되어 있어요! (입력한 "${name}"와(과) 유사한 이름)\n\n등록자: ${reg}\n\n정말 별개의 기관이 맞다면 계속 등록하시고, 같은 기관이면 취소 후 기관 목록에서 히스토리를 추가해주세요.\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML='💾 저장';return;}
+    if(!confirm(` "${dup.name}" 기관이 이미 등록되어 있어요! (입력한 "${name}"와(과) 유사한 이름)\n\n등록자: ${reg}\n\n정말 별개의 기관이 맞다면 계속 등록하시고, 같은 기관이면 취소 후 기관 목록에서 히스토리를 추가해주세요.\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML=' 저장';return;}
   }
   orgRow.card_image=cardImageBase64||null;
   orgRow.lastcontact=today();
   orgRow.created_by=currentUser?.id||null;
   orgRow.created_by_name=myName;
   const {data:org,error}=await sb.from('orgs').insert(orgRow).select().single();
-  if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML='💾 저장';return;}
+  if(error){toast('오류: '+error.message);btn.disabled=false;btn.innerHTML=' 저장';return;}
   cache.orgs.unshift(org);
   const actionRows=[];
   document.querySelectorAll('[data-atext]').forEach(el=>{
@@ -6048,7 +6048,7 @@ async function saveOrg(){
     if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
-  clearOrgForm();window._lastCardUrl=null;clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML='💾 저장';
+  clearOrgForm();window._lastCardUrl=null;clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML=' 저장';
   toast('기관 등록 완료!');updateUrgentCount();updateNavBadges();nav('orgs');
   sendGChatOrgAlert(orgRow.name, orgRow.member);
 }
@@ -6113,13 +6113,13 @@ async function openOrg(id){
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8faff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:12px;cursor:pointer;" onclick="showHealthDetail(${id},event)">
-      <span style="font-size:12px;font-weight:700;color:#6b7280;">🏥 Health Score</span>
+      <span style="font-size:12px;font-weight:700;color:#6b7280;"> Health Score</span>
       ${healthBadge(calcHealthScore(id).score,true)}
       <span style="font-size:11px;color:#9ca3af;margin-left:auto;">클릭해서 상세보기 →</span>
     </div>
     <div id="biz-cards-wrap" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:12px;font-weight:700;color:var(--text3);">📇 명함</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text3);"> 명함</span>
         <label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--teal);background:var(--teal-bg);">
           <i class="ti ti-plus"></i> 명함 추가
           <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
@@ -6136,7 +6136,7 @@ async function openOrg(id){
         onmouseout="this.style.borderColor='#94a3b8';this.style.color=''">
         ${o.source||'발굴경로'} <i class="ti ti-pencil" style="font-size:10px;"></i>
       </span>
-      ${linkedEvent?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> 🎪 ${linkedEvent.name||linkedEvent.title}</span>`:''}
+      ${linkedEvent?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> ${linkedEvent.name||linkedEvent.title}</span>`:''}
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
@@ -6188,18 +6188,18 @@ async function openOrg(id){
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <select id="log-contact-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
-        <option value="통화">📞 통화</option><option value="미팅">🤝 미팅</option>
-        <option value="이메일">✉️ 이메일</option><option value="문자">💬 문자</option><option value="기타">📌 기타</option>
+        <option value="통화"> 통화</option><option value="미팅"> 미팅</option>
+        <option value="이메일"> 이메일</option><option value="문자"> 문자</option><option value="기타"> 기타</option>
       </select>
       <select id="log-status" onchange="toggleRecontactDate()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
-        <option value="완료">✅ 완료</option><option value="진행중">🔄 진행중</option><option value="재연락 필요">🔔 재연락 필요</option>
+        <option value="완료"> 완료</option><option value="진행중"> 진행중</option><option value="재연락 필요"> 재연락 필요</option>
       </select>
       <input id="log-summary" placeholder="제목" style="flex:1;min-width:120px;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
       <input id="log-date" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
     </div>
     <div id="recontact-date-wrap" style="display:none;margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
-        <span style="font-size:12px;font-weight:700;color:#b54708;">🔔 재연락 예정일</span>
+        <span style="font-size:12px;font-weight:700;color:#b54708;"> 재연락 예정일</span>
         <input id="log-recontact-date" type="date" style="font-size:12px;padding:5px 10px;border:1px solid #fcd34d;border-radius:6px;background:#fff;">
         <span style="font-size:11px;color:#b54708;">← 입력 시 후속 액션에 자동 등록돼요</span>
       </div>
@@ -6209,13 +6209,13 @@ async function openOrg(id){
       <input id="log-their-members" placeholder="기관 측 참석자 (예: 박창영 센터장)" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
     </div>
     <textarea id="log-memo" placeholder="미팅 or 상담 내용 상세" style="width:100%;font-size:13px;font-weight:500;color:var(--text);line-height:1.8;letter-spacing:0.2px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-height:72px;resize:vertical;box-sizing:border-box;margin-bottom:6px;"></textarea>
-    <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;">💾 히스토리 저장</button>
+    <button class="btn btn-primary btn-sm" onclick="addContactLog(${id})" style="margin-bottom:14px;"> 히스토리 저장</button>
   </div>
   <div>
     ${o.stage===5?`
     <div style="background:var(--green-bg);border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
       <i class="ti ti-circle-check" style="color:var(--green);font-size:18px;"></i>
-      <span style="font-size:13px;font-weight:700;color:var(--green);">MOU 완료! 🎉</span>
+      <span style="font-size:13px;font-weight:700;color:var(--green);">MOU 완료! </span>
     </div>`:''}
     <div style="font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-bg);padding:6px 12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-checkbox"></i> 후속 액션</div>
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
@@ -6226,9 +6226,9 @@ async function openOrg(id){
           ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
         </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}${a.due_time?' · '+a.due_time:''}</div>
-        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">📅</button>`:''}
+        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가"><i class="ti ti-calendar-plus"></i></button>`:''}
         ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
-      </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 ✓</div>'}
+      </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 </div>'}
     ${oa.filter(a=>a.done).length?`
     <div onclick="toggleDoneActions()" style="font-size:11px;font-weight:700;color:var(--green);margin:12px 0 6px;display:flex;align-items:center;gap:4px;cursor:pointer;">
       <i class="ti ti-circle-check"></i> 완료된 액션 (${oa.filter(a=>a.done).length}건) <i class="ti ti-chevron-down" id="done-actions-icon" style="font-size:10px;margin-left:4px;"></i>
@@ -6240,7 +6240,7 @@ async function openOrg(id){
         <div style="flex:1;">
           <div class="action-text done">${a.content||a.text||''}</div>
           ${a.due?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px;">${fDate(a.due)}</div>`:''}
-          ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:1px;">${a.created_by_name}</div>`:''}${a.completed_by_name?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px;">✓ ${a.completed_by_name}</div>`:''}
+          ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:1px;">${a.created_by_name}</div>`:''}${a.completed_by_name?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px;"> ${a.completed_by_name}</div>`:''}
         </div>
         <div style="font-size:10px;color:var(--green);font-weight:600;flex-shrink:0;">완료</div>
         <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
@@ -6288,7 +6288,7 @@ async function openOrg(id){
         </div>`;
       };
       return`<div style="margin-top:12px;padding:12px 14px;background:#f8faff;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-        <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:10px;">👥 인재풀 / 지원 현황</div>
+        <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:10px;"> 인재풀 / 지원 현황</div>
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px;">${summaryCards}</div>
         <div id="org-tal-list-${id}">${orgTals.map(t=>renderRow(t,orgApps.find(a=>a.talent_id===t.id))).join('')||'<div style="color:var(--text3);font-size:12px;padding:8px 0;">없음</div>'}</div>
       </div>
@@ -6305,7 +6305,7 @@ async function openOrg(id){
           {label:'계약종료',v:rev.endedCount,c:'var(--text3)'},
         ];
         return`<div style="margin-top:10px;padding:12px 14px;background:#f0fdf4;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-          <div style="font-size:13px;font-weight:800;color:#059669;margin-bottom:10px;">💰 기관 기여 매출</div>
+          <div style="font-size:13px;font-weight:800;color:#059669;margin-bottom:10px;"> 기관 기여 매출</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:10px;">${revCards.map(c=>`<div style="text-align:center;padding:8px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);"><div style="font-size:16px;font-weight:800;color:${c.c};">${c.v}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${c.label}</div></div>`).join('')}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <div style="flex:1;min-width:140px;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
@@ -6330,9 +6330,9 @@ async function openOrg(id){
       <button class="btn btn-primary btn-sm" onclick="updateOrgStage()">단계 변경</button>
       <select id="m-contact-tier-sel" onchange="updateOrgContactTier(${id},this.value)" title="관계 등급 — 언제든 바꿀 수 있어요" style="font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);">
         <option value="" ${!o.contact_tier?'selected':''}>등급 미분류</option>
-        <option value="협조적" ${o.contact_tier==='협조적'?'selected':''}>🔥 협조적</option>
-        <option value="중립적" ${o.contact_tier==='중립적'?'selected':''}>😐 중립적</option>
-        <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}>❄️ 부정적</option>
+        <option value="협조적" ${o.contact_tier==='협조적'?'selected':''}> 협조적</option>
+        <option value="중립적" ${o.contact_tier==='중립적'?'selected':''}> 중립적</option>
+        <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}> 부정적</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})"><i class="ti ti-pencil"></i> 정보 수정</button>
@@ -6375,10 +6375,10 @@ function renderContactLogItem(l,orgId){
   const timeStr=fTime(l.logged_at||l.created_at);
   const dateStr=fDate(l.date);
   const hasMemo=!!l.memo;
-  const TYPE_ICON={'통화':'📞','미팅':'🤝','이메일':'✉️','문자':'💬','기타':'📌'};
-  const typeIcon=TYPE_ICON[l.contact_type]||'📋';
+  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
+  const typeIcon=TYPE_ICON[l.contact_type]||'';
   const isInProgress=l.status==='진행중';
-  const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;">🔄 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;">✅ 완료</span>';
+  const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 완료</span>';
   const threads=l.threads||[];
   return`<div class="contact-log-item" id="log-item-${l.id}" style="${isInProgress?'border-left:3px solid #f97316;padding-left:8px;':''}">
     <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleLogDetail(${l.id})">
@@ -6392,7 +6392,7 @@ function renderContactLogItem(l,orgId){
       ${hasMemo||threads.length?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
       <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
     </div>
-    ${(l.our_members||l.their_members)?`<div style="margin:6px 0 2px 22px;font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">${l.our_members?`<span>👥 참여자: <b style="color:var(--text2);">${l.our_members}</b></span>`:''}${l.their_members?`<span>🏢 기관측: <b style="color:var(--text2);">${l.their_members}</b></span>`:''}</div>`:''}
+    ${(l.our_members||l.their_members)?`<div style="margin:6px 0 2px 22px;font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">${l.our_members?`<span> 참여자: <b style="color:var(--text2);">${l.our_members}</b></span>`:''}${l.their_members?`<span> 기관측: <b style="color:var(--text2);">${l.their_members}</b></span>`:''}</div>`:''}
     <div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;">
       ${hasMemo?`<div style="font-size:13px;font-weight:500;color:var(--text);white-space:pre-line;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.7;margin-bottom:6px;">${l.memo}</div>`:''}
       ${threads.map(t=>`<div style="margin-top:6px;padding:8px 12px;background:#f8faff;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;"><div style="font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:600;">${fDate(t.date)} · ${t.by||''}</div><div style="white-space:pre-line;color:var(--text2);">${t.content}</div></div>`).join('')}
@@ -6409,7 +6409,7 @@ function renderContactLogItem(l,orgId){
           <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
             <button onclick="document.getElementById('thread-form-${l.id}').style.display='block'" style="font-size:11px;color:var(--accent);background:var(--accent-bg);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;">+ 추가 상담 내용</button>
             ${hasThreads
-              ? `<button onclick="markLogComplete(${l.id},${orgId})" style="font-size:11px;padding:4px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;">✅ 완료 처리</button>`
+              ? `<button onclick="markLogComplete(${l.id},${orgId})" style="font-size:11px;padding:4px 12px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;"> 완료 처리</button>`
               : `<span style="font-size:11px;color:var(--text3);">추가 상담 내용 작성 후 완료 처리 가능</span>`
             }
           </div>`:'';
@@ -6441,7 +6441,7 @@ async function addThread(logId,orgId){
   const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=threadDate;
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
-  toast('추가 상담 내용 저장됨 ✓');
+  toast('추가 상담 내용 저장됨 ');
 }
 async function markLogComplete(logId,orgId){
   const log=cache.logs.find(l=>l.id===logId);
@@ -6453,7 +6453,7 @@ async function markLogComplete(logId,orgId){
   log.status='완료';
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
-  toast('✅ 완료 처리됐어요!');
+  toast(' 완료 처리됐어요!');
 }
 let historyOrgId=null;
 function openHistoryModal(orgId){
@@ -6528,9 +6528,9 @@ async function addContactLog(orgId){
     const actionText=`${orgName} 재연락`;
     const{data:actionData}=await sb.from('actions').insert({org_id:orgId,text:actionText,due:recontactDate||null,done:false,created_by:currentUser?.id||null,created_by_name:myName,member:myName}).select().single();
     if(actionData){cache.actions=cache.actions||[];cache.actions.unshift(actionData);}
-    toast('히스토리 추가 + 재연락 후속액션 자동 등록 ✓');
+    toast('히스토리 추가 + 재연락 후속액션 자동 등록 ');
   } else {
-    toast('히스토리 추가됨 ✓');
+    toast('히스토리 추가됨 ');
   }
   document.getElementById('log-summary').value='';
   document.getElementById('log-memo').value='';
@@ -6640,14 +6640,14 @@ async function addActionFromModal(orgId){
   const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,due_time:dueTime,done:false,status:'pending',member:myName,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.actions.push(data);
-  toast('액션 추가됨 ✓');updateUrgentCount();openOrg(orgId);
+  toast('액션 추가됨 ');updateUrgentCount();openOrg(orgId);
 }
 
 async function toggleActionModal(id,done){
   const completedBy=!done?(currentProfile?.name||currentUser?.email||''):null;
   await sb.from('actions').update({done:!done,completed_by_name:completedBy}).eq('id',id);
   const a=cache.actions.find(x=>x.id===id);if(a){a.done=!done;a.completed_by_name=completedBy;}
-  updateUrgentCount();openOrg(currentOrgId);toast(!done?'완료 처리됨 ✓':'완료 취소됨');
+  updateUrgentCount();openOrg(currentOrgId);toast(!done?'완료 처리됨 ':'완료 취소됨');
 }
 function switchOrgTalentTab(tabKey,orgId){
   const orgTals=cache.talents.filter(t=>(t.source_org_id||t.org_id)===orgId);
@@ -6718,7 +6718,7 @@ async function handleModalCardImage(event,orgId){
   if(!url){toast('업로드 실패');return;}
   const{error}=await sb.from('business_cards').insert({org_id:orgId,url});
   if(error){toast('오류: '+error.message);return;}
-  toast('명함 등록 완료 ✓');
+  toast('명함 등록 완료 ');
   openOrg(orgId);
 }
 async function removeBusinessCard(cardId,orgId){
@@ -6746,7 +6746,7 @@ async function saveOrgSource(orgId,source){
   if(error){toast('오류: '+error.message);return;}
   const o=cache.orgs.find(x=>x.id===orgId);
   if(o)o.source=source;
-  toast('발굴경로 수정됨 ✓');
+  toast('발굴경로 수정됨 ');
   openOrg(orgId);
 }
 async function saveMouDate(orgId){
@@ -6755,7 +6755,7 @@ async function saveMouDate(orgId){
   if(error){toast('오류: '+error.message);return;}
   const o=cache.orgs.find(x=>x.id===orgId);
   if(o)o.mou_date=dateVal||null;
-  toast('MOU 예정일 저장됨 ✓');openOrg(orgId);
+  toast('MOU 예정일 저장됨 ');openOrg(orgId);
 }
 function toggleMouStageDateInput(){
   const sel=document.getElementById('m-stage-sel');
@@ -6786,13 +6786,13 @@ async function updateOrgContactTier(id,tier){
   const{error}=await sb.from('orgs').update({contact_tier:tier||null}).eq('id',id);
   if(error){console.error('[Supabase Error] 관계 등급 변경 실패:',error);toast('오류: 관계 등급이 저장되지 않았습니다 — '+error.message);return;}
   const o=cache.orgs.find(x=>x.id===id);if(o)o.contact_tier=tier||null;
-  toast(tier?`관계 등급: ${tier}로 변경됨 ✓`:'관계 등급 미분류로 변경됨 ✓');
+  toast(tier?`관계 등급: ${tier}로 변경됨 `:'관계 등급 미분류로 변경됨 ');
 }
 async function markContacted(id){
   const t=today();
   await sb.from('orgs').update({lastcontact:t}).eq('id',id);
   const o=cache.orgs.find(x=>x.id===id);if(o)o.lastcontact=t;
-  openOrg(id);toast('연락 완료 처리됨 ✓');
+  openOrg(id);toast('연락 완료 처리됨 ');
 }
 function closeModal(){
   const modal=document.getElementById('modal').querySelector('.modal');
@@ -7103,7 +7103,7 @@ async function saveInlineTask(el){
   if(error){toast('저장 오류: '+error.message);return;}
   cache.team_tasks.push(data);
   renderTeamTasks();
-  sendGChat('📋 *팀 할일 등록*\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
+  sendGChat(' *팀 할일 등록*\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
   toast('할일이 추가되었습니다.');
 }
 
