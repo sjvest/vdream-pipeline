@@ -2568,7 +2568,9 @@ function renderDashboard(){
   `;
   const urgentOrgs=[...orgs].filter(o=>o.stage>0).map(o=>{
     const lastDays=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
-    const mouDays=o.mou_date?Math.floor((new Date(o.mou_date)-now)/864e5):null;
+    // MOU가 이미 체결완료(stage>=5)된 기관은 mou_date가 더이상 "예정일"이 아니라 실제 체결일이므로
+    // D-day/초과 계산 대상에서 제외한다 (2026-07-27).
+    const mouDays=o.mou_date&&o.stage===4?Math.floor((new Date(o.mou_date)-now)/864e5):null;
     const orgActs=acts.filter(a=>a.org_id===o.id&&!a.done);
     const urgentAct=orgActs.filter(a=>a.due&&Math.floor((new Date(a.due)-now)/864e5)<=3).length;
     let score=0;
@@ -3853,9 +3855,9 @@ function openMouDetail(orgId){
   document.getElementById('mou-detail-info').innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
       ${o.mou_date?`<div style="padding:10px 16px;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius-sm);text-align:center;">
-        <div style="font-size:11px;color:var(--text3);">MOU 예정일</div>
+        <div style="font-size:11px;color:var(--text3);">${o.stage>=5?'MOU 체결일':'MOU 예정일'}</div>
         <div style="font-size:14px;font-weight:800;color:var(--teal);">${fDate(o.mou_date)}</div>
-        <div style="font-size:13px;font-weight:800;color:${mouDays<=7?'var(--red)':'var(--accent)'};">${mouDays<0?'D+'+Math.abs(mouDays)+' 초과':mouDays===0?'오늘!':'D-'+mouDays}</div>
+        ${o.stage>=5?'':`<div style="font-size:13px;font-weight:800;color:${mouDays<=7?'var(--red)':'var(--accent)'};">${mouDays<0?'D+'+Math.abs(mouDays)+' 초과':mouDays===0?'오늘!':'D-'+mouDays}</div>`}
       </div>`:'<div style="padding:10px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text3);">예정일 미설정</div>'}
       <div style="padding:10px 16px;background:${pct===100?'var(--green-bg)':'var(--bg)'};border:1.5px solid ${pct===100?'var(--green)':'var(--border)'};border-radius:var(--radius-sm);text-align:center;flex:1;">
         <div style="font-size:11px;color:var(--text3);">준비 진행률</div>
@@ -6173,11 +6175,11 @@ async function openOrg(id){
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
     ${o.mou_date||o.stage===4?`
     <div class="info-row">
-      <span class="info-key">MOU 예정일</span>
+      <span class="info-key">${o.stage>=5?'MOU 체결일':'MOU 예정일'}</span>
       <div style="display:flex;align-items:center;gap:8px;flex:1;">
         ${o.mou_date?`
           <span style="font-weight:600;">${fDate(o.mou_date)}</span>
-          ${(()=>{const days=Math.floor((new Date(o.mou_date)-new Date())/864e5);return days>=0?`<span style="background:${days<=7?'#fee2e2':'#eff4ff'};color:${days<=7?'#dc2626':'#3b6ef8'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D-${days}</span>`:`<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D+${Math.abs(days)} 초과</span>`;})()}
+          ${o.stage>=5?'':(()=>{const days=Math.floor((new Date(o.mou_date)-new Date())/864e5);return days>=0?`<span style="background:${days<=7?'#fee2e2':'#eff4ff'};color:${days<=7?'#dc2626':'#3b6ef8'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D-${days}</span>`:`<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D+${Math.abs(days)} 초과</span>`;})()}
         `:'<span style="color:var(--text3);font-size:12px;">미설정</span>'}
         <input type="date" id="mou-date-input" value="${o.mou_date||''}" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
         <button onclick="saveMouDate(${id})" class="btn btn-primary btn-sm"><i class="ti ti-check"></i> 저장</button>
