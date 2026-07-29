@@ -1932,10 +1932,22 @@ async function loadActions(){
   return {data,error};
 }
 async function loadTalents(){
-  const {data,error}=await sb.from('talents').select('*').order('created_at',{ascending:false});
+  // files 컬럼(첨부파일 base64)은 여기서 제외한다 — egress 절감.
+  // orgs/인재영입/Analytics 목록에 진입할 때마다 전체 인재의 파일 내용까지 통째로
+  // 다시 다운로드되던 게 Supabase egress 초과(5GB 한도 133% 사용)의 주 원인이었음.
+  // 파일 내용은 openTalentDetail()에서 해당 인재를 열 때만 별도로 불러온다(loadTalentFiles).
+  const {data,error}=await sb.from('talents').select('id,name,org_id,source_org_id,channel,referrer,job,member,date,status,memo,hire_company,phone,birth_date,disability_type,disability_grade,created_by,created_by_name,created_at,event_id,contract_end_date,is_test,status_history').order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] talents 조회 실패:', error);
   cache.talents=data||[];
   return {data,error};
+}
+async function loadTalentFiles(talentId){
+  // 인재 상세(파일 패널)를 열 때만 files(base64)를 개별 로드 — 필요한 사람의 파일만 오간다.
+  const t=cache.talents.find(x=>x.id===talentId);
+  if(t&&t.files!==undefined)return; // 이미 로드됨
+  const {data,error}=await sb.from('talents').select('id,files').eq('id',talentId).single();
+  if(error){console.error('[Supabase Error] talent files 조회 실패:', error);return;}
+  if(t)t.files=data?.files||[];
 }
 async function loadLogs(){
   const {data,error}=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false});
@@ -5082,7 +5094,7 @@ function renderTalentFiles(talent){
 function downloadTalentFile(idx){
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
-  const f=t.files[idx];
+  const f=(t.files||[])[idx];
   if(!f)return;
   const viewTypes=['application/pdf','image/jpeg','image/jpg','image/png','image/gif','image/webp'];
   if(viewTypes.includes(f.type)){
@@ -5100,6 +5112,7 @@ function downloadTalentFile(idx){
 async function uploadTalentFiles(event){
   const files=Array.from(event.target.files);
   if(!files.length)return;
+  await loadTalentFiles(currentTalentId); // t.files가 아직 로드 전이면 여기서 채움(덮어쓰기 방지)
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
   const MAX_SIZE=5*1024*1024; // 5MB
@@ -5125,6 +5138,7 @@ async function uploadTalentFiles(event){
   toast(`${uploaded.length}개 파일 업로드 완료 `);
 }
 async function deleteTalentFile(idx){
+  await loadTalentFiles(currentTalentId);
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
   showConfirm({
@@ -5140,7 +5154,7 @@ async function deleteTalentFile(idx){
     }
   });
 }
-function openTalentDetail(id){
+async function openTalentDetail(id){
   currentTalentId=id;
   const t=cache.talents.find(x=>x.id===id);if(!t)return;
   const org=cache.orgs.find(o=>o.id===t.org_id);
@@ -5183,7 +5197,9 @@ function openTalentDetail(id){
     }
   }
   document.getElementById('talent-detail-modal').style.display='flex';
-  renderTalentFiles(t);
+  renderTalentFiles(t); // 우선 캐시 상태로 즉시 렌더(빈 목록이면 로딩 중 깜빡임 방지)
+  await loadTalentFiles(id);
+  if(currentTalentId===id)renderTalentFiles(cache.talents.find(x=>x.id===id));
   renderStatusTimeline(t);
 }
 async function saveContractEndDate(){
