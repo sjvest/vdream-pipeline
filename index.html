@@ -5320,10 +5320,13 @@ async function renderJobs(){
   // "진행중 채용 건" 카드 전용: 테스트 채용건 제외 + 마감일이 오늘 이후(마감일 미설정 포함)인 건만 집계
   const openJobs=getMetricJobs().filter(j=>j.status!=='완료'&&(!j.deadline||Math.floor((new Date(j.deadline)-now)/864e5)>=0));
   const referredApplicants=getMetricApplications().length;
+  // 목표 인원을 이미 다 채웠는데 상태만 '서칭중'인(=완료건에 추가배정해서 재오픈된) 건 개수 — 목록을 펼쳐보지 않아도 한눈에 보이게
+  const bufferSourcingCount=active.filter(j=>(j.headcount||0)>0&&(j.current_count||0)>=(j.headcount||0)).length;
   document.getElementById('job-metrics').innerHTML=`
     <div class="metric"><div class="metric-label">진행중 채용 건</div><div class="metric-value">${openJobs.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">D-7 이내 마감</div><div class="metric-value" style="color:var(--red);">${urgent}</div><div class="metric-sub">건 긴급</div></div>
     <div class="metric"><div class="metric-label">미충원 인원</div><div class="metric-value" style="color:${remaining>0?'var(--amber)':'var(--green)'};">${remaining}</div><div class="metric-sub">명 (목표 ${totalTarget}명 중)</div></div>
+    <div class="metric"><div class="metric-label">➕ 추가서칭 중</div><div class="metric-value" style="color:var(--purple);">${bufferSourcingCount}</div><div class="metric-sub">건 (목표 다 채운 재오픈 건)</div></div>
     <div class="metric"><div class="metric-label">완료 채용 건</div><div class="metric-value" style="color:var(--green);">${done}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">지원자 추천</div><div class="metric-value" style="color:var(--purple);">${referredApplicants}</div><div class="metric-sub">명</div></div>
   `;
@@ -5341,6 +5344,17 @@ async function renderJobs(){
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
     // 드롭다운 옵션 (0 ~ headcount)
     const opts=Array.from({length:(j.headcount||0)+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
+    // 목표 인원을 이미 다 채웠는데도 상태가 '서칭중'인 건 = 완료 후 추가 배정으로 재오픈된 "추가서칭" 건.
+    // 목록에서 펼쳐보지 않아도 몇 건이 이런 상태이고 진행이 어떤지 바로 보이도록 배지로 표시한다 (2026-07-27).
+    const isBufferSourcing=j.status==='서칭중'&&(j.headcount||0)>0&&(j.current_count||0)>=(j.headcount||0);
+    let bufferBadgeHtml='';
+    if(isBufferSourcing){
+      const jobAssignments=(cache.sourcingAssignments||[]).filter(a=>a.job_id===j.id);
+      const latestAssign=jobAssignments.length?[...jobAssignments].sort((a,b)=>new Date(b.created_at||b.start_date||0)-new Date(a.created_at||a.start_date||0))[0]:null;
+      const actualCount=latestAssign?(cache.sourcingCandidates||[]).filter(c=>c.sourcing_assignment_id===latestAssign.id).length:0;
+      const targetLabel=latestAssign?(latestAssign.target_count!=null?`${actualCount}/${latestAssign.target_count}명`:`${actualCount}명 (목표 미설정)`):'배정 없음';
+      bufferBadgeHtml=`<div style="margin-top:4px;font-size:10px;font-weight:700;color:var(--purple);background:#faf5ff;padding:2px 7px;border-radius:10px;display:inline-block;white-space:nowrap;">➕ 추가서칭 ${targetLabel}</div>`;
+    }
     return`<tr class="${rowClass||''}" onclick="toggleJobRow(${j.id},event)" style="cursor:pointer;${j.status==='완료'?'opacity:.55':''}${rowClass?';display:none':''}">
       <td style="padding:13px 16px;font-weight:800;font-size:13px;">${j.company}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${j.job_title}</td>
@@ -5369,7 +5383,7 @@ async function renderJobs(){
           <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
         </div>`:'—'}
       </td>
-      <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select></td>
+      <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}>🔍 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}>✅ 완료</option></select>${bufferBadgeHtml}</td>
       <td style="padding:13px 16px;">
         <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
       </td>
