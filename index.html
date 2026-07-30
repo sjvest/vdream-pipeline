@@ -1663,6 +1663,34 @@ let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],c
 let _pendingInitialHash=null; // 새로고침 시 URL 해시로 즉시 진입한 페이지가 loadAll() 완료 전에 렌더되는 걸 막기 위한 대기값
 let jobScopedRegistration=null; // "+지원자 등록"으로 채용건 컨텍스트에서 인재 등록 폼을 열었을 때의 job id (사람이 다시 고르지 않고 자동 연결하기 위함)
 let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일치해 연결하기로 한 기존 talent.id (재지원/동명이인 중복등록 방지)
+
+// ── 새 버전 배포 감지 배너 (2026-07-30) ──
+// GitHub Pages는 배포해도 이미 열려있는 탭에 자동으로 반영되지 않는다.
+// 하루에 여러 번 배포가 나가는 날은 "저장/완료했는데 화면에 바로 안 보임, 새로고침해야 보임" 이슈가
+// 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
+// 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
+// (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
+const APP_BUILD_VERSION='20260730-1';
+function showUpdateBanner(){
+  if(document.getElementById('app-update-banner'))return;
+  const b=document.createElement('div');
+  b.id='app-update-banner';
+  b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:999999;background:#111827;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2);flex-wrap:wrap;';
+  b.innerHTML=`<span>새 버전이 배포됐어요. 지금 화면은 최신 상태가 아닐 수 있어요 (입력한 내용은 유지된 채로 새로고침해도 괜찮아요).</span><button onclick="location.reload()" style="background:#fff;color:#111827;border:none;padding:5px 14px;border-radius:6px;font-weight:700;cursor:pointer;">새로고침</button>`;
+  document.body.prepend(b);
+}
+async function checkForAppUpdate(){
+  try{
+    const res=await fetch(location.pathname+'?_v='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const text=await res.text();
+    const m=text.match(/APP_BUILD_VERSION\s*=\s*'([^']+)'/);
+    if(m&&m[1]&&m[1]!==APP_BUILD_VERSION)showUpdateBanner();
+  }catch(e){/* 네트워크 오류는 조용히 무시 (다음 주기에 재시도) */}
+}
+setTimeout(checkForAppUpdate,20000);
+setInterval(checkForAppUpdate,3*60*1000);
+
 function isTestOrg(orgId){
   if(!orgId)return false;
   return !!cache.orgs.find(o=>o.id===orgId)?.is_test;
