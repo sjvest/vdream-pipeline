@@ -1670,7 +1670,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260730-2';
+const APP_BUILD_VERSION='20260730-3';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -2803,9 +2803,9 @@ function updateDashboardMetrics(start,end){
 function expandLogTouchpoints(logs){
   const out=[];
   (logs||[]).forEach(l=>{
-    out.push({org_id:l.org_id,summary:l.summary,rangeDate:l.logged_at||l.created_at,displayDate:l.date,member:l.member,created_by_name:l.created_by_name});
-    (l.threads||[]).forEach(t=>{
-      out.push({org_id:l.org_id,summary:'[추가상담] '+(t.content||'').slice(0,40),rangeDate:t.date,displayDate:t.date,member:t.by,created_by_name:t.by});
+    out.push({log_id:l.id,is_thread:false,org_id:l.org_id,contact_type:l.contact_type||'기타',summary:l.summary,rangeDate:l.logged_at||l.created_at,displayDate:l.date,member:l.member,created_by_name:l.created_by_name});
+    (l.threads||[]).forEach((t,idx)=>{
+      out.push({log_id:l.id,is_thread:true,thread_idx:idx,org_id:l.org_id,contact_type:l.contact_type||'기타',summary:'[추가상담] '+(t.content||'').slice(0,40),rangeDate:t.date,displayDate:t.date,member:t.by,created_by_name:t.by});
     });
   });
   return out;
@@ -4163,15 +4163,17 @@ async function renderCold(){
 
   // 탭에 따라 전체 피드 구성
   const TYPE_ICON2={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-note"></i>','전화':'<i class="ti ti-phone"></i>','방문':'<i class="ti ti-walk"></i>'};
-  const logRows=(coldTab==='cold')?[]:(cache.logs||[]).map(l=>({
+  // 원본 로그 + 진행중 상담에 추가된 "추가 상담 내용"(threads)을 각각 별도 행으로 펼쳐서 보여준다.
+  // 안 그러면 오늘 실제로 연락했어도(스레드만 추가) 이 피드에는 안 잡히고 org 상세를 열어야만 보였다 (2026-07-30 수정).
+  const logRows=(coldTab==='cold')?[]:expandLogTouchpoints(cache.logs).map(l=>({
     _type:'reg',
-    id:'log-'+l.id,
+    id:'log-'+l.log_id+(l.is_thread?'-t'+l.thread_idx:''),
     org_id:l.org_id,
     orgName:(cache.orgs.find(o=>o.id===l.org_id)||{}).name||'',
-    contact_type:l.contact_type||'기타',
+    contact_type:l.contact_type,
     summary:l.summary||'',
     member:l.created_by_name||'',
-    date:l.logged_at||l.created_at
+    date:l.rangeDate
   }));
   const coldRows=(coldTab==='reg')?[]:(cache.cold||[]).map(c=>({
     _type:'cold',
