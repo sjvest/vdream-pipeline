@@ -879,7 +879,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div id="cold-org-warn" style="display:none;margin-top:6px;padding:10px 12px;background:#fff7ed;border:1.5px solid #f97316;border-radius:6px;font-size:12px;color:#c2410c;font-weight:600;">
            <span id="cold-org-warn-name"></span>은(는) 등록된 기관입니다.<br>
           <span style="font-weight:400;">기관 목록에서 해당 기관을 찾아 <b>컨택 히스토리</b>를 추가해주세요.</span>
-          <button onclick="nav('orgs')" style="margin-top:6px;display:block;padding:5px 12px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">기관 목록 바로가기 →</button>
+          <button onclick="goToDuplicateOrg()" style="margin-top:6px;display:block;padding:5px 12px;background:#f97316;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">해당 기관으로 바로가기 →</button>
         </div>
       </div>
     </div>
@@ -4973,8 +4973,17 @@ function checkColdOrgName(val){
   const warnName=document.getElementById('cold-org-warn-name');
   if(!val.trim()){warn.style.display='none';return;}
   const matched=findDuplicateOrg(val);
-  if(matched){warnName.textContent=matched.name;warn.style.display='block';}
-  else{warn.style.display='none';}
+  if(matched){warnName.textContent=matched.name;warn.dataset.orgId=matched.id;warn.style.display='block';}
+  else{warn.style.display='none';delete warn.dataset.orgId;}
+}
+// "기관 목록 바로가기" 클릭 시 목록 페이지로만 이동하고 뒤에 목록만 뜨던 문제 — 어떤 기관인지 다시 찾아야 했음.
+// 매칭된 기관 id를 warn 배지에 저장해뒀다가, 클릭하면 콜드컨택 모달을 닫고 그 기관 상세를 바로 열어준다 (2026-07-30).
+function goToDuplicateOrg(){
+  const warn=document.getElementById('cold-org-warn');
+  const orgId=warn?.dataset.orgId;
+  if(!orgId)return;
+  document.getElementById('cold-modal').style.display='none';
+  openOrg(Number(orgId));
 }
 function checkOrgNameDup(val){
   const warn=document.getElementById('n-name-warn');
@@ -4982,7 +4991,7 @@ function checkOrgNameDup(val){
   if(editOrgId){warn.style.display='none';return;} // 수정 모드에서는 자기 자신과 비교할 필요 없음
   const dup=findDuplicateOrg(val,editOrgId);
   if(dup){
-    warn.innerHTML=` <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();nav('orgs');" style="color:#c2410c;text-decoration:underline;">기관 목록</a>에서 해당 기관에 히스토리를 추가해주세요.`;
+    warn.innerHTML=` <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();openOrg(${dup.id});" style="color:#c2410c;text-decoration:underline;">해당 기관으로 바로가기</a>에서 히스토리를 추가해주세요.`;
     warn.style.display='block';
   }else{warn.style.display='none';}
 }
