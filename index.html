@@ -3183,7 +3183,7 @@ function renderActions(){
   const done=all.filter(a=>a.done).sort((a,b)=>new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
   const sumEl=document.getElementById('action-summary');
   if(sumEl){const kpis=[{label:'전체 미완료',val:undone.length,c:'var(--text)'},{label:'기한 초과',val:undone.filter(a=>a.diff<0).length,c:'var(--red)'},{label:'오늘 마감',val:undone.filter(a=>a.diff===0).length,c:'var(--red)'},{label:'D-3 이내',val:undone.filter(a=>a.diff>0&&a.diff<=3).length,c:'var(--amber)'},{label:'완료',val:done.length,c:'var(--green)'}];sumEl.innerHTML=kpis.map(k=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:800;color:${k.c};">${k.val}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${k.label}</div></div>`).join('');}
-  const ri=(a,isDone=false)=>`<div class="action-item" style="${isDone?'opacity:.65;':''}">
+  const ri=(a,isDone=false)=>`<div class="action-item" style="${isDone?'opacity:.65;':''}${a.org_id?'cursor:pointer;':''}" ${a.org_id?`onclick="openOrg(${a.org_id})"`:''}>
     <div class="action-cb ${a.done?'done':''}" onclick="event.stopPropagation();toggleAction(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
     <div style="flex:1;min-width:0;">
       <div class="action-text ${a.done?'done':''}" style="margin-bottom:3px;">${a.text}</div>
