@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -768,6 +769,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <select id="talent-filter-member" onchange="renderTalent()" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 담당자</option></select>
     <select id="talent-filter-status" onchange="renderTalent()" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 상태</option><option>인재풀</option><option>지원접수</option><option>서류검토</option><option>면접예정</option><option>합격</option><option>입사완료</option><option>계약종료</option><option>불합격</option></select>
     <button onclick="clearTalentFilter()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;cursor:pointer;color:var(--text3);">초기화</button>
+    <button onclick="exportTalentExcel()" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;"><i class="ti ti-file-spreadsheet"></i> 엑셀로 내보내기</button>
     <span id="talent-filter-count" style="font-size:12px;color:var(--text3);"></span>
   </div>
   <div class="card"><table class="tbl"><thead id="talent-thead"></thead><tbody id="talent-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody></table></div>
@@ -1670,7 +1672,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260730-3';
+const APP_BUILD_VERSION='20260730-4';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -3304,6 +3306,52 @@ function renderTalent(){
   tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');
 }
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderTalent();}
+// 인재영입 목록 화면에 적용된 검색/필터를 그대로 반영해서, 지금 화면에 보이는 인재만 뽑는다
+// (특정 기관만 필터해두고 내보내면 그 기관 소개 인재만 담긴 파일이 됨).
+function getFilteredTalentsForExport(){
+  const kw=(document.getElementById('talent-search')?.value||'').toLowerCase();
+  const fOrg=document.getElementById('talent-filter-org')?.value||'';
+  const fMem=document.getElementById('talent-filter-member')?.value||'';
+  const fStatus=document.getElementById('talent-filter-status')?.value||'';
+  let filtered=[...cache.talents];
+  if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw);});
+  if(fOrg)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return org?.name===fOrg;});
+  if(fMem)filtered=filtered.filter(t=>t.member===fMem);
+  if(fStatus){if(fStatus==='진행중')filtered=filtered.filter(t=>!['합격','불합격','입사완료','계약종료'].includes(t.status));else filtered=filtered.filter(t=>t.status===fStatus);}
+  return filtered;
+}
+// 소개 기관별로 묶어서 "소개기관 | 이름 | 전화번호 | 직무 | 장애명 | 장애정도 | 비고" 형식의
+// 엑셀로 내보낸다. 기관명 셀은 세로 병합해서 세세님이 쓰시던 수기 명단 양식과 맞춘다 (2026-07-30).
+function exportTalentExcel(){
+  if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  const filtered=getFilteredTalentsForExport();
+  if(!filtered.length){toast('내보낼 인재가 없어요 (필터를 확인해주세요)');return;}
+  const groupName=t=>{
+    const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
+    return org?.name||t.referrer||'기타/미상';
+  };
+  const groups={};
+  filtered.forEach(t=>{const g=groupName(t);(groups[g]=groups[g]||[]).push(t);});
+  const orderedGroupNames=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+  const aoa=[['소개 기관','이름','전화번호','직무','장애명','장애정도','비고']];
+  const merges=[];
+  orderedGroupNames.forEach(g=>{
+    const startRow=aoa.length; // 0-based data row index (헤더 포함 시트 기준으로는 +1)
+    groups[g].forEach(t=>{
+      aoa.push([g,t.name||'',t.phone||'',t.job||'',t.disability_type||'',t.disability_grade||'',t.memo||'']);
+    });
+    const endRow=aoa.length-1;
+    if(endRow>startRow)merges.push({s:{r:startRow,c:0},e:{r:endRow,c:0}});
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges']=merges;
+  ws['!cols']=[{wch:26},{wch:10},{wch:15},{wch:22},{wch:10},{wch:8},{wch:36}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'인재명단');
+  const fname=`인재명단_${today().replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast(`${filtered.length}명 엑셀로 내보냈어요`);
+}
 let currentDrawerTalentId=null;
 let drawerInfoEditMode=false;
 function openTalentDrawer(talentId){
