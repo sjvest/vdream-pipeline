@@ -759,7 +759,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">인재 영입</div><div class="page-sub">ATS · 지원자 추적 시스템</div></div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <div style="position:relative;"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i><input id="talent-search" placeholder="이름 / 기관 / 직무 / 담당자" oninput="renderTalent()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:220px;"></div>
+      <div style="position:relative;"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i><input id="talent-search" placeholder="이름 / 기관 / 기업명 / 직무 / 담당자" oninput="renderTalent()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:240px;"></div>
       <button class="btn btn-primary btn-sm" onclick="openAddTalent()"><i class="ti ti-plus"></i> 영입 등록</button>
     </div>
   </div>
@@ -1674,7 +1674,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-1';
+const APP_BUILD_VERSION='20260803-2';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -3299,7 +3299,7 @@ function renderTalent(){
   const STAGE_BG=Object.fromEntries(OFFICIAL_STATUSES.map(s=>[s,STATUS_META[s].bg]));
   const stageBadge=s=>`<span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;background:${STAGE_BG[s]||'#f3f4f6'};color:${STAGE_COLOR[s]||'#6b7280'};">${s||'인재등록'}</span>`;
   let filtered=[...tals];
-  if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw);});
+  if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const hireMatch=(t.hire_company||'').toLowerCase().includes(kw)||(cache.applications||[]).some(a=>a.talent_id===t.id&&(a.hire_company||'').toLowerCase().includes(kw));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw)||hireMatch;});
   if(fOrg)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return org?.name===fOrg;});
   if(fMem)filtered=filtered.filter(t=>t.member===fMem);
   if(fStatus){if(fStatus==='진행중')filtered=filtered.filter(t=>!['합격','불합격','입사완료','계약종료'].includes(t.status));else filtered=filtered.filter(t=>t.status===fStatus);}
@@ -3319,7 +3319,7 @@ function getFilteredTalentsForExport(){
   const fMem=document.getElementById('talent-filter-member')?.value||'';
   const fStatus=document.getElementById('talent-filter-status')?.value||'';
   let filtered=[...cache.talents];
-  if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw);});
+  if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const hireMatch=(t.hire_company||'').toLowerCase().includes(kw)||(cache.applications||[]).some(a=>a.talent_id===t.id&&(a.hire_company||'').toLowerCase().includes(kw));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw)||hireMatch;});
   if(fOrg)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return org?.name===fOrg;});
   if(fMem)filtered=filtered.filter(t=>t.member===fMem);
   if(fStatus){if(fStatus==='진행중')filtered=filtered.filter(t=>!['합격','불합격','입사완료','계약종료'].includes(t.status));else filtered=filtered.filter(t=>t.status===fStatus);}
