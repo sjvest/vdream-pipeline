@@ -1674,7 +1674,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-2';
+const APP_BUILD_VERSION='20260803-3';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -6565,6 +6565,9 @@ async function addThread(logId,orgId){
   const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=threadDate;
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
+  // 이 모달 뒤에 신규 컨택 로그/기관 목록 등 다른 페이지가 깔려있을 수 있는데, 지금까진 그 페이지가
+  // 안 갱신되고 있었다 (새로고침해야 보이던 원인). 지금 활성화된 페이지도 같이 새로고침한다 (2026-08-03).
+  renderCurrent();
   toast('추가 상담 내용 저장됨 ');
 }
 async function markLogComplete(logId,orgId){
@@ -6577,6 +6580,7 @@ async function markLogComplete(logId,orgId){
   log.status='완료';
   const logList=document.getElementById('contact-log-list');
   if(logList)logList.innerHTML=renderContactLogs(orgId);
+  renderCurrent();
   toast(' 완료 처리됐어요!');
 }
 let historyOrgId=null;
@@ -6665,6 +6669,7 @@ async function addContactLog(orgId){
   if(logList)logList.innerHTML=renderContactLogs(orgId);
   updateNavBadges();
   renderActions();
+  renderCurrent();
 }
 async function deleteContactLog(logId,orgId){
   const myName=currentProfile?.name||'';
@@ -6674,6 +6679,7 @@ async function deleteContactLog(logId,orgId){
   if(error){toast('오류: '+error.message);return;}
   cache.logs=cache.logs.filter(l=>l.id!==logId);
   toast('삭제됨');openOrg(orgId);
+  renderCurrent();
 }
 
 // ── 삭제 기능 ──
