@@ -1675,7 +1675,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-7';
+const APP_BUILD_VERSION='20260803-8';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -3013,7 +3013,7 @@ function renderPipeline(){
       <div class="stage-body">${items.length?items.map(o=>{
         const oa=actionsForOrg(o.id).filter(a=>!a.done&&dayDiff(a.due)<=3);
         return`<div class="p-card" onclick="openOrg(${o.id})">
-          ${o.card_image?`<img src="${o.card_image}" style="width:100%;height:60px;object-fit:contain;border-radius:4px;margin-bottom:5px;">`:'' }
+          ${o.business_card_url?`<img src="${o.business_card_url}" style="width:100%;height:60px;object-fit:contain;border-radius:4px;margin-bottom:5px;">`:'' }
           <div class="p-card-name">${o.name}</div>
           <div class="p-card-meta">${o.cat||''} · ${o.member||'—'}</div>
           ${oa.length?`<div class="p-card-warn"><i class="ti ti-alert-triangle"></i> ${oa[0].content||oa[0].text||''}</div>`:''}
@@ -3240,7 +3240,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
         <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
-        ${o.card_image?`<img src="${o.card_image}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
+        ${o.business_card_url?`<img src="${o.business_card_url}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
         <span style="font-weight:700;font-size:13px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
@@ -6928,6 +6928,15 @@ async function handleModalCardImage(event,orgId){
   if(!url){toast('업로드 실패');return;}
   const{error}=await sb.from('business_cards').insert({org_id:orgId,url});
   if(error){toast('오류: '+error.message);return;}
+  // 기관 목록 표의 명함 썸네일은 orgs.business_card_url을 읽는데(목록은 대량조회라 card_image는
+  // 아예 안 불러옴 — egress 절감 목적), 지금까진 이 값을 안 채워서 "명함 추가"로 올린 사진이
+  // 목록에서 안 보였다. 아직 비어있으면 방금 올린 명함으로 채워준다 (2026-08-03 수정).
+  const o0=cache.orgs.find(x=>x.id===orgId);
+  if(o0&&!o0.business_card_url){
+    const{error:urlErr}=await sb.from('orgs').update({business_card_url:url}).eq('id',orgId);
+    if(!urlErr)o0.business_card_url=url;
+    else console.warn('[Supabase Error] business_card_url 백필 실패:',urlErr);
+  }
   // 명함에서 담당자/연락처 등 정보를 추출해서, 기관에 아직 비어있는 항목만 자동으로 채운다
   // (이미 입력된 값은 덮어쓰지 않음). 여기서 실패해도 명함 사진 업로드 자체는 그대로 유지된다.
   let filledCount=0;
@@ -6964,6 +6973,12 @@ async function reExtractCardInfo(orgId){
   const{data}=await sb.from('business_cards').select('*').eq('org_id',orgId).order('created_at',{ascending:false}).limit(1);
   const cardUrl=data?.[0]?.url||o.business_card_url||o.card_image||null;
   if(!cardUrl){toast('등록된 명함 사진이 없어요. 먼저 명함을 추가해주세요.');return;}
+  // 기관 목록 표의 명함 썸네일은 business_card_url을 읽는데, "명함 추가"로만 올렸던 예전 기관은
+  // 이 값이 비어있어서 목록에 썸네일이 안 보였다. OCR 성공 여부와 무관하게 여기서 먼저 채운다.
+  if(!o.business_card_url&&data?.[0]?.url){
+    const{error:urlErr}=await sb.from('orgs').update({business_card_url:data[0].url}).eq('id',orgId);
+    if(!urlErr)o.business_card_url=data[0].url;
+  }
   toast('명함에서 정보 재추출 중...');
   try{
     const resp=await fetch(cardUrl);
