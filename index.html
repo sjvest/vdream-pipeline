@@ -1674,7 +1674,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260730-7';
+const APP_BUILD_VERSION='20260803-1';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -2420,8 +2420,11 @@ async function sendGChatDailySummary(){
   const logs=cache.logs||[];
   const todayLogs=logs.filter(l=>{const d=new Date(l.logged_at||l.created_at);return d.toDateString()===now.toDateString();});
 
-  // 헤더
-  await sendGChat('📋 *브이드림 알림 - '+todayStr+' '+timeStr+'*\n오늘 컨택: '+todayLogs.length+'건 · 등록기관: '+orgs.length+'개');
+  // 헤더 — 오전 9시는 하루가 막 시작해서 "오늘 컨택"이 항상 0건일 수밖에 없으니 그 줄은 빼고,
+  // 실제로 그날 컨택이 쌓였을 오후(14시/16시) 발송분에만 표시한다 (2026-08-03 요청).
+  const includeTodayContact=now.getHours()!==9;
+  const contactPart=includeTodayContact?'오늘 컨택: '+todayLogs.length+'건 · ':'';
+  await sendGChat('📋 *브이드림 알림 - '+todayStr+' '+timeStr+'*\n'+contactPart+'등록기관: '+orgs.length+'개');
 
   // ── 메시지 1: 채용 마감 임박 (D-7 이내 미완료) ──
   const urgentJobs=(cache.jobs||[]).filter(j=>{
