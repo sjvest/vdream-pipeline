@@ -529,6 +529,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
   </div>
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="max-width:300px;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;"><i class="ti ti-x"></i> 초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button onclick="exportOrgsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
+  </div>
   <div class="card">
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
@@ -1674,7 +1677,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-3';
+const APP_BUILD_VERSION='20260803-4';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -3039,6 +3042,41 @@ function memberBadge(name){
   return`<span style="display:inline-flex;align-items:center;padding:4px 12px;background:${s.bg};color:${s.c};border-radius:20px;font-size:11px;font-weight:700;">${name}</span>`;
 }
 function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';const fr=document.getElementById('filter-region');if(fr)fr.value='';renderOrgs();}
+// 기관 목록 화면에 적용된 검색/필터를 그대로 반영해서 지금 화면에 보이는 기관만 뽑는다 (renderOrgs()와 동일한 필터 로직).
+function getFilteredOrgsForExport(){
+  const fc=document.getElementById('filter-cat').value;
+  const fs=document.getElementById('filter-stage-orgs').value;
+  const fr=document.getElementById('filter-region')?.value||'';
+  const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();
+  const dateStart=document.getElementById('orgs-search-start')?.value;
+  const dateEnd=document.getElementById('orgs-search-end')?.value;
+  return cache.orgs.filter(o=>{
+    if(fc&&o.cat!==fc)return false;
+    if(fs!==''&&String(o.stage)!==fs)return false;
+    if(fr&&o.region!==fr)return false;
+    if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw)&&!(o.region||'').toLowerCase().includes(kw)&&!(o.address||'').toLowerCase().includes(kw))return false;
+    if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}
+    if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}
+    return true;
+  });
+}
+// 기관명 / 메일주소 / 전화번호 / 상태(관계등급) 형식으로 엑셀 내보내기 (2026-08-03 요청).
+function exportOrgsExcel(){
+  if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  const filtered=getFilteredOrgsForExport();
+  if(!filtered.length){toast('내보낼 기관이 없어요 (필터를 확인해주세요)');return;}
+  const aoa=[['기관명','메일주소','전화번호','상태']];
+  filtered.forEach(o=>{
+    aoa.push([o.name||'',o.email||'',o.phone||o.mobile||'',o.contact_tier||'미분류']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:28},{wch:26},{wch:16},{wch:10}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'기관목록');
+  const fname=`기관목록_${today().replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast(`${filtered.length}개 기관 엑셀로 내보냈어요`);
+}
 function calcHealthScore(orgId){
   const o=cache.orgs.find(x=>x.id===orgId);if(!o)return{score:0,details:[]};
   const now=new Date();let score=100;const details=[];
