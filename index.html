@@ -1676,7 +1676,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-11';
+const APP_BUILD_VERSION='20260803-12';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -6071,13 +6071,15 @@ function clearCardPreview(){
     </label>`;
 }
 
+// 반환값을 {url,error} 객체로 바꿈 — 예전엔 실패하면 콘솔에만 warn 찍고 null만 돌려줘서
+// "업로드 실패"라고만 뜨고 실제 원인(스토리지 권한/RLS 문제 등)을 알 방법이 없었다 (2026-08-03).
 async function uploadBusinessCard(file, orgName){
   const ext=file.name.split('.').pop()||'jpg';
   const fileName=`${Date.now()}_${(orgName||'card').replace(/\s/g,'_')}.${ext}`;
   const{data,error}=await sb.storage.from('business-cards').upload(fileName,file,{cacheControl:'3600',upsert:false});
-  if(error){console.warn('명함 업로드 실패:',error);return null;}
+  if(error){console.warn('명함 업로드 실패:',error);return{url:null,error};}
   const{data:urlData}=sb.storage.from('business-cards').getPublicUrl(fileName);
-  return urlData.publicUrl;
+  return{url:urlData.publicUrl,error:null};
 }
 // 명함 이미지에서 Gemini Vision으로 기관/담당자 정보를 추출한다 (실패 시 예외 던짐).
 // 기관 상세 모달의 "명함 추가"에서 사용 — 신규 기관 등록 폼의 analyzeBusinessCard()와는
@@ -6166,8 +6168,9 @@ async function analyzeBusinessCard(input){
     }
     if(info.address)document.getElementById('n-address').value=info.address;
     if(info.website)document.getElementById('n-website').value=info.website;
-    const cardUrl=await uploadBusinessCard(file,info.org_name||'');
+    const{url:cardUrl,error:cardUploadErr}=await uploadBusinessCard(file,info.org_name||'');
     if(cardUrl)window._lastCardUrl=cardUrl;
+    else if(cardUploadErr)console.warn('[Supabase Storage] 명함 스토리지 업로드 실패(정보 자동입력은 계속 진행):',cardUploadErr);
     const preview=document.getElementById('card-preview');
     if(preview){preview.src=URL.createObjectURL(file);preview.style.display='block';}
     cardImageBase64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
@@ -6949,10 +6952,24 @@ async function loadBizCards(orgId){
 async function handleModalCardImage(event,orgId){
   const file=event.target.files[0];
   if(!file)return;
-  const url=await uploadBusinessCard(file,'card');
-  if(!url){toast('업로드 실패');return;}
+  // 토스트는 몇 초면 사라지는데, "명함이 이미 있는 기관에 추가가 안 된다"는 제보가 있어서
+  // (unique 제약 등으로 두 번째 명함부터 insert가 실패할 가능성) 오류를 명함 영역에 계속 남긴다 (2026-08-03).
+  const statusEl0=document.getElementById(`card-reextract-status-${orgId}`);
+  const setStatus0=(msg,color)=>{if(statusEl0){statusEl0.textContent=msg;statusEl0.style.color=color;}};
+  setStatus0('명함 업로드 중...','var(--text3)');
+  const{url,error:uploadErr}=await uploadBusinessCard(file,'card');
+  if(!url){
+    console.error('[Supabase Storage] 명함 업로드 실패:',uploadErr);
+    setStatus0('업로드 실패 — '+(uploadErr?.message||'알 수 없는 오류')+(uploadErr?.statusCode?` (${uploadErr.statusCode})`:''),'#dc2626');
+    return;
+  }
   const{error}=await sb.from('business_cards').insert({org_id:orgId,url});
-  if(error){toast('오류: '+error.message);return;}
+  if(error){
+    console.error('[Supabase Error] 명함 저장 실패:',error);
+    setStatus0('오류: 명함 저장 실패 — '+error.message+(error.code?` (code: ${error.code})`:''),'#dc2626');
+    return;
+  }
+  setStatus0('','inherit');
   // 기관 목록 표의 명함 썸네일은 orgs.business_card_url을 읽는데(목록은 대량조회라 card_image는
   // 아예 안 불러옴 — egress 절감 목적), 지금까진 이 값을 안 채워서 "명함 추가"로 올린 사진이
   // 목록에서 안 보였다. 아직 비어있으면 방금 올린 명함으로 채워준다 (2026-08-03 수정).
