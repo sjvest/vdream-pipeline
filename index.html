@@ -1676,7 +1676,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-13';
+const APP_BUILD_VERSION='20260803-14';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -6949,6 +6949,22 @@ async function loadBizCards(orgId){
     </div>`;
   wrap.innerHTML=cards.map(c=>renderCard(c.url,c.id,c)).join('')+(legacyUrl&&!cards.find(c=>c.url===legacyUrl)?renderCard(legacyUrl,null,null):'');
 }
+// "담당자" 표시줄은 orgs.contacts 배열(담당자 관리 목록)이 있으면 그걸 우선해서 보여주고,
+// 단일 필드(orgs.phone/mobile)는 무시한다. 그래서 명함 자동추출로 phone/mobile만 채워봤자
+// 이미 담당자 목록에 이름이 등록돼 있으면(전화번호 없이) 화면엔 여전히 "—"로 보였다.
+// 이름이 일치하는 담당자 항목이 있으면 그 항목의 전화번호/이메일도 같이 채워준다 (2026-08-03).
+function mergeContactIntoContactsArray(o,info){
+  if(!Array.isArray(o.contacts)||!o.contacts.length||!info.contact_name)return null;
+  const norm=s=>(s||'').replace(/\s/g,'');
+  const idx=o.contacts.findIndex(c=>c.status!=='변경됨'&&norm(c.name)===norm(info.contact_name));
+  if(idx<0)return null;
+  const c=o.contacts[idx];
+  const newPhone=c.phone||info.mobile||info.phone||'';
+  const newEmail=c.email||info.email||'';
+  if(newPhone===(c.phone||'')&&newEmail===(c.email||''))return null;
+  const updated=o.contacts.map((x,i)=>i===idx?{...x,phone:newPhone,email:newEmail}:x);
+  return updated;
+}
 async function handleModalCardImage(event,orgId){
   const file=event.target.files[0];
   if(!file)return;
@@ -6995,6 +7011,8 @@ async function handleModalCardImage(event,orgId){
       if(!o.email&&info.email)payload.email=info.email;
       if(!o.address&&info.address)payload.address=info.address;
       if(!o.website&&info.website)payload.website=info.website;
+      const mergedContacts=mergeContactIntoContactsArray(o,info);
+      if(mergedContacts)payload.contacts=mergedContacts;
       if(Object.keys(payload).length){
         const{error:updErr}=await sb.from('orgs').update(payload).eq('id',orgId);
         if(!updErr){Object.assign(o,payload);filledCount=Object.keys(payload).length;}
@@ -7042,6 +7060,8 @@ async function reExtractCardInfo(orgId){
     if(!o.email&&info.email)payload.email=info.email;
     if(!o.address&&info.address)payload.address=info.address;
     if(!o.website&&info.website)payload.website=info.website;
+    const mergedContacts=mergeContactIntoContactsArray(o,info);
+    if(mergedContacts)payload.contacts=mergedContacts;
     if(!Object.keys(payload).length){setStatus('명함에서 새로 채울 정보를 못 찾았어요 (이미 다 채워져 있거나, 사진에서 글자를 못 읽었을 수 있어요)','#b45309');return;}
     const{error:updErr}=await sb.from('orgs').update(payload).eq('id',orgId);
     if(updErr){setStatus('오류: 저장 실패 — '+updErr.message,'#dc2626');return;}
