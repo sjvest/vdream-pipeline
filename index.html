@@ -1676,7 +1676,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-10';
+const APP_BUILD_VERSION='20260803-11';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -5833,11 +5833,15 @@ async function renderEvents(){
     const members=(e.members||[]).join(', ')||'—';
     const cards=e.result_cards!=null?`${e.result_cards}/${e.goal_cards||0}장`:'미입력';
     const meetings=e.result_meetings!=null?`${e.result_meetings}/${e.goal_meetings||0}건`:'미입력';
-    const linked=cache.orgs.filter(o=>o.event_id===e.id).length;
+    // event_id는 select 옵션의 value(문자열)를 parseInt해서 저장하긴 하지만, 이 세션에서 반복적으로
+    // 발견된 "다른 소스에서 온 id를 === 로 비교"하는 타입 불일치 버그와 같은 패턴일 수 있어 안전하게
+    // Number()로 캐스팅해서 비교한다 (2026-08-03 — 사용자가 등록 시 연결 행사를 실제로 선택하는데도
+    // 0으로 나온다고 확인해줌, 즉 저장은 되는데 매칭이 실패하는 케이스로 추정).
+    const linked=cache.orgs.filter(o=>Number(o.event_id)===Number(e.id)).length;
     // talents.event_id는 등록 화면에 입력 UI가 없어서 실제로는 한 번도 채워진 적이 없었다 —
     // "행사로 발굴한 기관을 통해 영입된 인재"를 기관 연결고리(source_org_id)로 대신 집계한다 (2026-08-03 수정).
-    const eventOrgIds=new Set(cache.orgs.filter(o=>o.event_id===e.id).map(o=>o.id));
-    const recruited=cache.talents.filter(t=>eventOrgIds.has(t.source_org_id||t.org_id)||t.event_id===e.id).length;
+    const eventOrgIds=new Set(cache.orgs.filter(o=>Number(o.event_id)===Number(e.id)).map(o=>o.id));
+    const recruited=cache.talents.filter(t=>eventOrgIds.has(t.source_org_id||t.org_id)||Number(t.event_id)===Number(e.id)).length;
     const CAT_CLS={'전국 행사':'b-red','구청/시청 행사':'b-blue','연합·협단체 행사':'b-teal','장애인 모임':'b-green','취업박람회':'b-purple','문화·예술 행사':'b-amber','기타':'b-gray'};
     return`<tr onclick="openEvent(${e.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:13px 16px;font-weight:700;">${e.name}</td>
@@ -6313,7 +6317,7 @@ async function openOrg(id){
   const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
   const oa=actionsForOrg(id);
   const tals=cache.talents.filter(t=>t.org_id===id);
-  const linkedEvent=o.event_id?(cache.events||[]).find(e=>e.id===o.event_id):null;
+  const linkedEvent=o.event_id?(cache.events||[]).find(e=>Number(e.id)===Number(o.event_id)):null;
   document.getElementById('m-title').innerHTML=`${o.name}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
