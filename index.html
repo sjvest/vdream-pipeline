@@ -1264,6 +1264,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveEvent()"><i class="ti ti-check"></i> 저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('event-modal').style.display='none'">취소</button>
+      <button id="ev-add-org-btn" class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);display:none;" onclick="goAddOrgFromEvent()"><i class="ti ti-building-plus"></i> 이 행사로 기관 등록</button>
       <button id="ev-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteEvent()"><i class="ti ti-trash"></i> 삭제</button>
     </div>
   </div>
@@ -1675,7 +1676,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260803-9';
+const APP_BUILD_VERSION='20260803-10';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -5177,6 +5178,20 @@ async function deleteCold(id){
     }
   });
 }
+// 행사 상세에서 바로 "이 행사로 기관 등록"으로 넘어가면 연결 행사 드롭다운을 미리 선택해준다.
+// 지금까진 기관 등록 폼에서 이 드롭다운을 직접 골라야만 발굴기관 카운트에 잡혔는데,
+// 놓치기 쉬운 수동 단계라 행사에 명함/미팅 실적을 입력해도 발굴기관이 0으로 남는 경우가 많았다 (2026-08-03).
+function goAddOrgFromEvent(){
+  if(!currentEventId)return;
+  const eventId=currentEventId;
+  document.getElementById('event-modal').style.display='none';
+  nav('add-org');
+  setTimeout(()=>{
+    const evSel=document.getElementById('n-event-id');
+    if(evSel)evSel.value=eventId;
+    toast('이 행사로 연결된 상태로 기관을 등록해요');
+  },300);
+}
 function convertToOrg(coldId,orgName){
   // 기관 등록 페이지로 이동하면서 기관명 자동 입력
   nav('add-org');
@@ -5819,7 +5834,10 @@ async function renderEvents(){
     const cards=e.result_cards!=null?`${e.result_cards}/${e.goal_cards||0}장`:'미입력';
     const meetings=e.result_meetings!=null?`${e.result_meetings}/${e.goal_meetings||0}건`:'미입력';
     const linked=cache.orgs.filter(o=>o.event_id===e.id).length;
-    const recruited=cache.talents.filter(t=>t.event_id===e.id).length;
+    // talents.event_id는 등록 화면에 입력 UI가 없어서 실제로는 한 번도 채워진 적이 없었다 —
+    // "행사로 발굴한 기관을 통해 영입된 인재"를 기관 연결고리(source_org_id)로 대신 집계한다 (2026-08-03 수정).
+    const eventOrgIds=new Set(cache.orgs.filter(o=>o.event_id===e.id).map(o=>o.id));
+    const recruited=cache.talents.filter(t=>eventOrgIds.has(t.source_org_id||t.org_id)||t.event_id===e.id).length;
     const CAT_CLS={'전국 행사':'b-red','구청/시청 행사':'b-blue','연합·협단체 행사':'b-teal','장애인 모임':'b-green','취업박람회':'b-purple','문화·예술 행사':'b-amber','기타':'b-gray'};
     return`<tr onclick="openEvent(${e.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:13px 16px;font-weight:700;">${e.name}</td>
@@ -5837,6 +5855,7 @@ function openAddEvent(){
   currentEventId=null;
   document.getElementById('event-modal-title').textContent='행사 등록';
   document.getElementById('ev-delete-btn').style.display='none';
+  document.getElementById('ev-add-org-btn').style.display='none';
   ['ev-name','ev-location','ev-host','ev-notes'].forEach(id=>document.getElementById(id).value='');
   ['ev-goal-cards','ev-goal-meetings','ev-result-cards','ev-result-meetings'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ev-date').value=today();
@@ -5859,6 +5878,7 @@ function openEvent(id){
   const e=cache.events.find(x=>x.id===id);if(!e)return;
   document.getElementById('event-modal-title').textContent=e.name;
   document.getElementById('ev-delete-btn').style.display=currentUser?.email==='sjvest@vdream.co.kr'?'':'none';
+  document.getElementById('ev-add-org-btn').style.display='';
   document.getElementById('ev-name').value=e.name||'';
   document.getElementById('ev-date').value=e.date||'';
   document.getElementById('ev-location').value=e.location||'';
