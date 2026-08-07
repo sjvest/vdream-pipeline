@@ -1676,7 +1676,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260808-1';
+const APP_BUILD_VERSION='20260808-2';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -4159,12 +4159,6 @@ function setAnalyticsPeriod(type){
 // ===== 발굴팀 경영진 대시보드 (2026-07-21 1차 구현) =====
 // 각 KPI는 자기 기준 날짜로 독립 계산한다 (단일 created_at 기준 아님). 테스트 기관 연결 데이터는 전부 제외.
 function renderAnalytics(){
-  console.log('[Analytics Debug]', {
-    orgs: cache.orgs?.length || 0,
-    talents: cache.talents?.length || 0,
-    applications: cache.applications?.length || 0,
-    logs: cache.logs?.length || 0
-  });
   const memberSel=document.getElementById('an-member');
   if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});}
   const filterMember=memberSel?.value||'';
@@ -6140,7 +6134,6 @@ async function analyzeBusinessCard(input){
       })}
     );
     const data=await response.json();
-    console.log('Gemini API 응답:',JSON.stringify(data));
     const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
     if(!text){
       const errMsg=data.error?.message||'알 수 없는 오류';
