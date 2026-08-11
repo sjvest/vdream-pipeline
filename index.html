@@ -2042,7 +2042,7 @@ async function loadApplications(){
 // ===== 경량/화면별 Loader 함수 (Hybrid Loading 2단계 대비 — 아직 어디서도 호출하지 않음) =====
 async function loadOrgLite(){
   const {data,error}=await sb.from('orgs')
-    .select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test')
+    .select('id,name,stage,lastcontact,member,mou_date,is_starred,cat,region,created_at,is_test,business_card_url')
     .order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] orgs(lite) 조회 실패:', error);
   return {data,error};
