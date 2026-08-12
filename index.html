@@ -1338,7 +1338,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div class="modal-body">
     <div class="fg"><label>제목</label><textarea id="tte-title" rows="3" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTeamTaskDetail();}" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>
-    <div class="fg"><label>구분</label><select id="tte-type" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;"><option value="할일">✅ 할일</option><option value="미팅">🗓️ 미팅</option></select></div>
+    <div class="fg"><label>구분</label><select id="tte-type" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;"><option value="할일">할일</option><option value="미팅">미팅</option></select></div>
     <div class="fg" id="tte-assignee-wrap"><label>담당자 <span style="font-size:10px;color:var(--text3);">(임세진만 변경 가능)</span></label><select id="tte-assignee"></select></div>
     <div class="fg"><label>마감일</label><input id="tte-due" type="date"></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:18px;">
@@ -7417,7 +7417,7 @@ function renderTeamTasks(){
               ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">🗓️ 미팅</span>':''}${t.title}</div>
+              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">미팅</span>':''}${t.title}</div>
               ${t.due_date?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
             </div>
           </div>`;
@@ -7429,8 +7429,8 @@ function renderTeamTasks(){
             onkeydown="if(event.key==='Enter')saveInlineTask(this);if(event.key==='Escape')cancelInlineTask(this)">
           <div style="display:flex;gap:6px;align-items:center;">
             <select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;flex-shrink:0;">
-              <option value="할일">✅ 할일</option>
-              <option value="미팅">🗓️ 미팅</option>
+              <option value="할일">할일</option>
+              <option value="미팅">미팅</option>
             </select>
             <input type="date" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;flex:1;min-width:0;">
             <button onclick="saveInlineTask(this)" style="padding:4px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">저장</button>
@@ -7467,7 +7467,7 @@ async function saveInlineTask(el){
   if(error){toast('저장 오류: '+error.message);return;}
   cache.team_tasks.push(data);
   renderTeamTasks();
-  sendGChat((task_type==='미팅'?'🗓️ *팀 미팅 등록*':' *팀 할일 등록*')+'\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
+  sendGChat((task_type==='미팅'?' *팀 미팅 등록*':' *팀 할일 등록*')+'\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
   toast('할일이 추가되었습니다.');
 }
 
