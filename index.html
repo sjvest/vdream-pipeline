@@ -1338,6 +1338,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div class="modal-body">
     <div class="fg"><label>제목</label><textarea id="tte-title" rows="3" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTeamTaskDetail();}" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>
+    <div class="fg"><label>구분</label><select id="tte-type" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;"><option value="할일">✅ 할일</option><option value="미팅">🗓️ 미팅</option></select></div>
     <div class="fg" id="tte-assignee-wrap"><label>담당자 <span style="font-size:10px;color:var(--text3);">(임세진만 변경 가능)</span></label><select id="tte-assignee"></select></div>
     <div class="fg"><label>마감일</label><input id="tte-due" type="date"></div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:18px;">
@@ -1677,7 +1678,7 @@ let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일�
 // 실제로는 데이터 버그가 아니라 "그 탭이 예전 버전 코드를 계속 쓰고 있어서" 발생하는 경우가 많다.
 // 주기적으로 배포된 index.html의 버전 문자열을 확인해서 지금 실행 중인 버전과 다르면 새로고침 배너를 띄운다.
 // (코드를 수정해서 새로 배포할 때마다 이 값을 새 문자열로 바꿔줘야 감지가 된다)
-const APP_BUILD_VERSION='20260811-3';
+const APP_BUILD_VERSION='20260812-1';
 function showUpdateBanner(){
   if(document.getElementById('app-update-banner'))return;
   const b=document.createElement('div');
@@ -7416,7 +7417,7 @@ function renderTeamTasks(){
               ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.title}</div>
+              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">🗓️ 미팅</span>':''}${t.title}</div>
               ${t.due_date?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
             </div>
           </div>`;
@@ -7427,6 +7428,10 @@ function renderTeamTasks(){
             style="width:100%;font-size:13px;border:none;outline:none;background:transparent;margin-bottom:6px;color:var(--text);"
             onkeydown="if(event.key==='Enter')saveInlineTask(this);if(event.key==='Escape')cancelInlineTask(this)">
           <div style="display:flex;gap:6px;align-items:center;">
+            <select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;flex-shrink:0;">
+              <option value="할일">✅ 할일</option>
+              <option value="미팅">🗓️ 미팅</option>
+            </select>
             <input type="date" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;flex:1;min-width:0;">
             <button onclick="saveInlineTask(this)" style="padding:4px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">저장</button>
             <button onclick="cancelInlineTask(this)" style="padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">취소</button>
@@ -7452,15 +7457,17 @@ async function saveInlineTask(el){
   const assigned_to=form.dataset.assignee;
   const titleEl=form.querySelector('input[type=text]');
   const dueEl=form.querySelector('input[type=date]');
+  const typeEl=form.querySelector('select');
   const title=titleEl.value.trim();
   const due_date=dueEl.value||null;
+  const task_type=typeEl?typeEl.value:'할일';
   if(!title){titleEl.focus();return;}
   const currentMember=getCurrentMember()||'임세진';
-  const{data,error}=await sb.from('team_tasks').insert({title,assigned_to,created_by:currentMember,due_date,done:false}).select().single();
+  const{data,error}=await sb.from('team_tasks').insert({title,assigned_to,created_by:currentMember,due_date,done:false,task_type}).select().single();
   if(error){toast('저장 오류: '+error.message);return;}
   cache.team_tasks.push(data);
   renderTeamTasks();
-  sendGChat(' *팀 할일 등록*\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
+  sendGChat((task_type==='미팅'?'🗓️ *팀 미팅 등록*':' *팀 할일 등록*')+'\n담당자: '+assigned_to+'\n내용: '+title+(due_date?'\n마감일: '+due_date:'')+'\n등록자: '+currentMember);
   toast('할일이 추가되었습니다.');
 }
 
@@ -7491,6 +7498,7 @@ function openTeamTaskDetail(id){
   const myName=getCurrentMember();
   const canDel=isAdmin||t.assigned_to===myName||t.created_by===myName;
   document.getElementById('tte-title').value=t.title||'';
+  document.getElementById('tte-type').value=t.task_type||'할일';
   document.getElementById('tte-due').value=t.due_date||'';
   document.getElementById('tte-done').checked=!!t.done;
   const ae=document.getElementById('tte-assignee');
@@ -7505,14 +7513,15 @@ function openTeamTaskDetail(id){
 async function saveTeamTaskDetail(){
   if(!editingTaskId)return;
   const title=document.getElementById('tte-title').value.trim();
+  const task_type=document.getElementById('tte-type').value||'할일';
   const assigned_to=document.getElementById('tte-assignee').value;
   const due_date=document.getElementById('tte-due').value||null;
   const done=document.getElementById('tte-done').checked;
   if(!title){toast('제목을 입력하세요.');return;}
-  const{error}=await sb.from('team_tasks').update({title,assigned_to,due_date,done}).eq('id',editingTaskId);
+  const{error}=await sb.from('team_tasks').update({title,task_type,assigned_to,due_date,done}).eq('id',editingTaskId);
   if(error){toast('저장 오류: '+error.message);return;}
   const idx=(cache.team_tasks||[]).findIndex(x=>x.id===editingTaskId);
-  if(idx!==-1)Object.assign(cache.team_tasks[idx],{title,assigned_to,due_date,done});
+  if(idx!==-1)Object.assign(cache.team_tasks[idx],{title,task_type,assigned_to,due_date,done});
   document.getElementById('team-task-edit-modal').style.display='none';
   renderTeamTasks();
   toast('저장되었습니다.');
