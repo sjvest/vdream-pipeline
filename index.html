@@ -6993,7 +6993,13 @@ function showImageLightbox(url){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;';
   ov.innerHTML=`<img src="${url}" style="max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.5);">`;
-  ov.onclick=()=>ov.remove();
+  // ESC로 안 닫히던 버그 수정 (2026-08-19): 하단의 공용 ESC 핸들러는 고정된 modal id 목록만 체크해서
+  // id 없이 동적으로 생성되는 이 라이트박스는 대상에서 빠져있었다. capture 단계에서 먼저 가로채
+  // 라이트박스만 닫고, 뒤에 깔린 다른 모달까지 같이 닫히지 않도록 전파를 막는다.
+  const close=()=>{ov.remove();document.removeEventListener('keydown',onKey,true);};
+  const onKey=(e)=>{if(e.key==='Escape'){e.stopImmediatePropagation();close();}};
+  document.addEventListener('keydown',onKey,true);
+  ov.onclick=close;
   document.body.appendChild(ov);
 }
 async function loadBizCards(orgId){
