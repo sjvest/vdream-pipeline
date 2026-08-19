@@ -592,7 +592,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
            갤러리에서 선택
         </button>
       </div>
-      <input type="file" id="business-card-input-gallery" accept="image/*" style="display:none;" onchange="analyzeBusinessCard(this)">
+      <input type="file" id="business-card-input-gallery" accept="image/*" multiple style="display:none;" onchange="analyzeBusinessCard(this)">
       <div id="ocr-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
       <img id="card-preview" style="max-width:200px;border-radius:8px;margin-top:8px;display:none;">
       <div id="card-camera-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
@@ -1739,6 +1739,7 @@ function doGuestLogin(){
   errEl.style.display='block';
 }
 let cardImageBase64=null;
+let extraCardFiles=[]; // 명함 여러 장 선택 시, 첫 장(OCR 자동입력용) 외 나머지 파일들. 기관 저장 시 business_cards에 일괄 저장.
 let trendChart=null;
 let currentChartMode='week';
 
@@ -6063,11 +6064,47 @@ function previewCard(event){
 }
 function clearCardPreview(){
   cardImageBase64=null;
+  extraCardFiles=[];
   document.getElementById('card-upload-wrap').innerHTML=`
     <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;">
       <i class="ti ti-camera" style="font-size:16px;color:var(--text3);"></i> 명함 사진 등록 (클릭 또는 끌어다 놓기)
       <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
     </label>`;
+}
+// 명함 여러 장 선택 시, 대표 사진(cardImageBase64) + 추가 사진들(extraCardFiles) 썸네일을 함께 보여준다.
+// 추가 사진은 X 클릭 시 extraCardFiles 배열에서만 제거(대표 사진 교체 없음).
+function renderCardThumbnails(){
+  const wrap=document.getElementById('card-upload-wrap');
+  if(!wrap||!cardImageBase64)return;
+  const extraThumbs=extraCardFiles.map((f,i)=>`
+    <div class="card-preview" style="width:70px;height:70px;">
+      <img src="${URL.createObjectURL(f)}" alt="추가 명함" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+      <button class="card-preview-del" onclick="removeExtraCard(${i})" title="삭제" style="transform:scale(.8);"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+  wrap.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;">
+      <div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button></div>
+      ${extraThumbs}
+      <label style="display:flex;align-items:center;justify-content:center;width:70px;height:70px;border:2px dashed var(--border2);border-radius:8px;cursor:pointer;color:var(--text3);font-size:11px;text-align:center;">
+        + 추가
+        <input type="file" accept="image/*" multiple style="display:none;" onchange="addExtraCards(this)">
+      </label>
+    </div>
+    ${extraCardFiles.length?`<div style="font-size:11px;color:var(--text3);margin-top:6px;">대표 사진 1장 + 추가 ${extraCardFiles.length}장 — 저장 시 함께 등록돼요</div>`:''}`;
+}
+function removeExtraCard(idx){
+  extraCardFiles.splice(idx,1);
+  renderCardThumbnails();
+}
+function addExtraCards(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  const tooBig=files.filter(f=>f.size>8*1024*1024);
+  const ok=files.filter(f=>f.size<=8*1024*1024);
+  if(tooBig.length)toast(`${tooBig.length}장은 8MB를 초과해 제외했어요`);
+  extraCardFiles.push(...ok);
+  renderCardThumbnails();
+  input.value='';
 }
 
 // 반환값을 {url,error} 객체로 바꿈 — 예전엔 실패하면 콘솔에만 warn 찍고 null만 돌려줘서
@@ -6109,22 +6146,41 @@ async function extractBusinessCardInfoForModal(file){
 }
 
 async function analyzeBusinessCard(input){
-  const file=input.files[0];if(!file)return;
+  const allFiles=Array.from(input.files||[]);if(!allFiles.length)return;
   const status=document.getElementById('ocr-status');
+  // 8MB 초과 파일은 Gemini 요청/업로드 실패 원인이 될 수 있어 미리 걸러낸다.
+  const tooBig=allFiles.filter(f=>f.size>8*1024*1024);
+  const files=allFiles.filter(f=>f.size<=8*1024*1024);
+  if(tooBig.length)toast(`${tooBig.length}장은 8MB를 초과해 제외했어요`);
+  if(!files.length){status.textContent=' 사진 용량이 너무 커요 (8MB 이하로 선택해주세요)';status.style.color='var(--red)';input.value='';return;}
+  const file=files[0];
+  extraCardFiles=files.slice(1); // 2장 이상 선택 시 첫 장만 OCR 분석, 나머지는 추가 명함으로 대기
   status.textContent=' 명함 분석 중...';
   status.style.color='var(--accent)';
-  const {data:setting}=await sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
-  if(!setting?.value){
-    status.textContent=' API 키 설정 필요';
+  let GEMINI_API_KEY, base64;
+  try{
+    const {data:setting,error:settingErr}=await sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
+    if(settingErr)throw settingErr;
+    if(!setting?.value){
+      status.textContent=' API 키 설정 필요';
+      status.style.color='var(--red)';
+      input.value='';
+      return;
+    }
+    GEMINI_API_KEY=setting.value;
+    base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=(e)=>resolve(e.target.result.split(',')[1]);
+      reader.onerror=()=>reject(new Error('사진 읽기 실패'));
+      reader.readAsDataURL(file);
+    });
+  }catch(e){
+    status.textContent=' 분석 실패: '+(e.message||'네트워크 오류 — 연결 상태를 확인해주세요');
     status.style.color='var(--red)';
+    console.error('OCR 준비 오류:',e);
+    input.value='';
     return;
   }
-  const GEMINI_API_KEY=setting.value;
-  const base64=await new Promise((resolve)=>{
-    const reader=new FileReader();
-    reader.onload=(e)=>resolve(e.target.result.split(',')[1]);
-    reader.readAsDataURL(file);
-  });
   try{
     const response=await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -6172,9 +6228,8 @@ async function analyzeBusinessCard(input){
     const preview=document.getElementById('card-preview');
     if(preview){preview.src=URL.createObjectURL(file);preview.style.display='block';}
     cardImageBase64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
-    const wrap=document.getElementById('card-upload-wrap');
-    if(wrap){wrap.innerHTML=`<div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button></div>`;}
-    status.textContent=' 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
+    renderCardThumbnails();
+    status.textContent=extraCardFiles.length?` 명함 정보 자동 입력 완료! (대표 1장 + 추가 ${extraCardFiles.length}장) 내용을 확인해주세요.`:' 명함 정보 자동 입력 완료! 내용을 확인해주세요.';
     status.style.color='var(--green)';
   }catch(e){
     status.textContent=' 분석 실패: '+e.message;
@@ -6191,6 +6246,19 @@ function addActionField(){
   div.className='fg-row fg-2';div.style.marginBottom='6px';
   div.innerHTML=`<div class="fg"><input placeholder="액션 내용 (예: 회사소개서 메일 발송)" data-atext="${actionFieldIdx}"></div><div class="fg"><input type="date" data-adue="${actionFieldIdx}"></div>`;
   document.getElementById('action-form-list').appendChild(div);
+}
+// 기관 등록/수정 폼에서 대표 사진 외에 추가로 선택한 명함 사진들을 business_cards에 일괄 저장한다.
+async function saveExtraCards(orgId){
+  if(!extraCardFiles.length)return;
+  const files=extraCardFiles;extraCardFiles=[];
+  let failCount=0;
+  for(const f of files){
+    const{url,error:upErr}=await uploadBusinessCard(f,'card');
+    if(!url){failCount++;console.warn('[Supabase Storage] 추가 명함 업로드 실패:',upErr);continue;}
+    const{error:insErr}=await sb.from('business_cards').insert({org_id:orgId,url});
+    if(insErr){failCount++;console.warn('[Supabase Error] 추가 명함 저장 실패:',insErr);}
+  }
+  if(failCount)toast(`추가 명함 ${files.length}장 중 ${failCount}장 저장 실패했어요`);
 }
 async function saveOrg(){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
@@ -6228,6 +6296,7 @@ async function saveOrg(){
         const{error}=await sb.from('orgs').update(orgRow).eq('id',editOrgId);
         if(error){toast('오류: '+error.message);return;}
         if(prevOrg)Object.assign(prevOrg,orgRow);
+        await saveExtraCards(editOrgId);
         writeAuditLog('수정','기관',name,{changes:`담당팀원: ${orgRow.member}, 단계: ${STAGES[orgRow.stage]}`,reason});
         clearEditMode();
         btn.disabled=false;btn.innerHTML=' 저장';
@@ -6259,6 +6328,7 @@ async function saveOrg(){
     if(el.value.trim())actionRows.push({org_id:org.id,text:el.value.trim(),due:due||null,done:false,created_by:currentUser?.id||null,created_by_name:myName});
   });
   if(actionRows.length){const {data:acts}=await sb.from('actions').insert(actionRows).select();if(acts)cache.actions.push(...acts);}
+  await saveExtraCards(org.id);
   clearOrgForm();window._lastCardUrl=null;clearDraft('org');hideDraftStatus();btn.disabled=false;btn.innerHTML=' 저장';
   toast('기관 등록 완료!');updateUrgentCount();updateNavBadges();nav('orgs');
   sendGChatOrgAlert(orgRow.name, orgRow.member);
@@ -6932,9 +7002,13 @@ async function loadBizCards(orgId){
   const{data,error}=await sb.from('business_cards').select('*').eq('org_id',orgId).order('created_at',{ascending:false});
   if(error){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);">불러오기 실패</div>';return;}
   const o=cache.orgs.find(x=>x.id===orgId);
-  const legacyUrl=o?.business_card_url||o?.card_image||null;
   const cards=data||[];
-  if(!cards.length&&!legacyUrl){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
+  // 최초 등록 사진은 business_card_url(짧은 Storage URL)과 card_image(base64 원본) 두 컬럼에 각각
+  // 남아있을 수 있다. 과거 "명함 추가" 시 캐시 오판으로 business_card_url이 다른 사진으로 덮어써진
+  // 사례가 있었는데(2026-08-19, 한국지체장애인협회), 그 경우에도 card_image엔 원본이 그대로 남아있을
+  // 수 있어 두 값을 각각 후보로 보여준다(같은 값이면 중복 제거, business_cards에 이미 있는 값은 제외).
+  const legacyUrls=[...new Set([o?.business_card_url,o?.card_image].filter(Boolean))].filter(u=>!cards.find(c=>c.url===u));
+  if(!cards.length&&!legacyUrls.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
   const renderCard=(url,cardId,info)=>`
     <div style="position:relative;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
       <img src="${url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="showImageLightbox(this.src)" title="클릭 시 크게 보기">
@@ -6945,7 +7019,7 @@ async function loadBizCards(orgId){
       </div>`:''}
       <button onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" style="position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;font-weight:700;"><i class="ti ti-trash"></i></button>
     </div>`;
-  wrap.innerHTML=cards.map(c=>renderCard(c.url,c.id,c)).join('')+(legacyUrl&&!cards.find(c=>c.url===legacyUrl)?renderCard(legacyUrl,null,null):'');
+  wrap.innerHTML=cards.map(c=>renderCard(c.url,c.id,c)).join('')+legacyUrls.map(u=>renderCard(u,null,null)).join('');
 }
 // "담당자" 표시줄은 orgs.contacts 배열(담당자 관리 목록)이 있으면 그걸 우선해서 보여주고,
 // 단일 필드(orgs.phone/mobile)는 무시한다. 그래서 명함 자동추출로 phone/mobile만 채워봤자
@@ -6993,10 +7067,14 @@ async function handleModalCardImage(event,orgId){
   // 기관 목록 표의 명함 썸네일은 orgs.business_card_url을 읽는데(목록은 대량조회라 card_image는
   // 아예 안 불러옴 — egress 절감 목적), 지금까진 이 값을 안 채워서 "명함 추가"로 올린 사진이
   // 목록에서 안 보였다. 아직 비어있으면 방금 올린 명함으로 채워준다 (2026-08-03 수정).
-  const o0=cache.orgs.find(x=>x.id===orgId);
-  if(o0&&!o0.business_card_url){
+  // ⚠️ cache.orgs는 Hybrid Loading으로 business_card_url이 아예 없는 경량 버전으로 덮어써질 수 있어서,
+  // 캐시만 보고 "비어있다"고 판단하면 이미 저장된 최초 명함 URL을 새 명함으로 덮어쓰는 사고가 났다
+  // (2026-08-19, 한국지체장애인협회 사례 — 오창석 최초 명함이 사라짐). DB에서 직접 최신값을 확인한다.
+  const{data:freshOrg,error:freshErr}=await sb.from('orgs').select('business_card_url').eq('id',orgId).single();
+  if(freshErr)console.warn('[Supabase Error] business_card_url 최신값 확인 실패:',freshErr);
+  else if(!freshOrg?.business_card_url){
     const{error:urlErr}=await sb.from('orgs').update({business_card_url:url}).eq('id',orgId);
-    if(!urlErr)o0.business_card_url=url;
+    if(!urlErr){const o0=cache.orgs.find(x=>x.id===orgId);if(o0)o0.business_card_url=url;}
     else console.warn('[Supabase Error] business_card_url 백필 실패:',urlErr);
   }
   // 명함에서 담당자/연락처 등 정보를 추출해서, 기관에 아직 비어있는 항목만 자동으로 채운다
