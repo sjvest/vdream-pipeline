@@ -6416,6 +6416,24 @@ async function openOrg(id){
       <div id="card-reextract-status-${id}" style="font-size:11px;margin-bottom:6px;"></div>
       <div id="biz-cards-list">로딩 중...</div>
     </div>
+    <div id="meetings-wrap" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--text3);"> 미팅</span>
+        <button onclick="toggleMeetingForm(${id})" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--purple);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--purple);background:var(--purple-bg);"><i class="ti ti-plus"></i> 미팅 기록</button>
+      </div>
+      <div id="meeting-form-${id}" style="display:none;margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <input type="date" id="meeting-date-${id}" value="${today()}" style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+          <input type="text" id="meeting-title-${id}" placeholder="미팅 제목 (예: 정기 미팅)" style="flex:1;min-width:0;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+        </div>
+        <textarea id="meeting-content-${id}" placeholder="미팅 내용" style="width:100%;min-height:60px;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;resize:vertical;"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+          <button onclick="toggleMeetingForm(${id})" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;">취소</button>
+          <button onclick="saveMeetingQuick(${id})" style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;background:var(--purple);color:#fff;font-weight:700;cursor:pointer;">저장</button>
+        </div>
+      </div>
+      <div id="meetings-list-${id}">로딩 중...</div>
+    </div>
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
       <span class="badge ${STAGE_CLS[o.stage]}">${STAGES[o.stage]}</span>
       <span class="badge b-gray">${o.cat||'—'}</span>
@@ -6631,6 +6649,7 @@ async function openOrg(id){
   document.getElementById('modal').querySelector('.modal').classList.add('modal-org');
   document.getElementById('modal').style.display='flex';
   loadBizCards(id);
+  loadMeetings(id);
   setTimeout(()=>initModalDrag(),50);
   // 날짜 항상 오늘로 세팅
   const logDateEl=document.getElementById('log-date');
@@ -6799,6 +6818,17 @@ function toggleRecontactDate(){
   const wrap=document.getElementById('recontact-date-wrap');
   if(wrap)wrap.style.display=status==='재연락 필요'?'block':'none';
 }
+// '미팅' 유형 히스토리가 남을 때 기관 단계/첫 미팅일을 자동 갱신 (addContactLog, saveMeetingQuick 공용).
+async function autoBumpMeetingStage(o,orgId,dateStr){
+  if(!o)return;
+  const stagePatch={};
+  if(Number(o.stage)<2)stagePatch.stage=2;
+  if(!o.date)stagePatch.date=dateStr;
+  if(!Object.keys(stagePatch).length)return;
+  const{error:stageErr}=await sb.from('orgs').update(stagePatch).eq('id',orgId);
+  if(stageErr)console.warn('[Supabase Error] 미팅 로그로 인한 단계/날짜 자동 갱신 실패:',stageErr);
+  else{if(stagePatch.stage!==undefined)o.stage=stagePatch.stage;if(stagePatch.date!==undefined)o.date=stagePatch.date;}
+}
 async function addContactLog(orgId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
   const summary=document.getElementById('log-summary').value.trim();
@@ -6819,16 +6849,7 @@ async function addContactLog(orgId){
   // 히스토리를 '미팅' 유형으로 남기면 기관 단계도 미팅완료(2) 이상으로 자동 승격하고,
   // 첫 미팅일이 비어있으면 이 로그의 날짜로 채운다 — 지금까진 단계 드롭다운을 따로 안 바꾸면
   // Analytics '미팅완료' KPI에 안 잡히는 게 실제 업무 흐름과 안 맞는다는 피드백 반영 (2026-08-20).
-  if(contactType==='미팅'&&o){
-    const stagePatch={};
-    if(Number(o.stage)<2)stagePatch.stage=2;
-    if(!o.date)stagePatch.date=date;
-    if(Object.keys(stagePatch).length){
-      const{error:stageErr}=await sb.from('orgs').update(stagePatch).eq('id',orgId);
-      if(stageErr)console.warn('[Supabase Error] 미팅 로그로 인한 단계/날짜 자동 갱신 실패:',stageErr);
-      else{if(stagePatch.stage!==undefined)o.stage=stagePatch.stage;if(stagePatch.date!==undefined)o.date=stagePatch.date;}
-    }
-  }
+  if(contactType==='미팅')await autoBumpMeetingStage(o,orgId,date);
   if(status==='재연락 필요'){
     const recontactDate=document.getElementById('log-recontact-date')?.value||null;
     const orgName=o?.name||'';
@@ -7018,6 +7039,55 @@ function showImageLightbox(url){
   document.addEventListener('keydown',onKey,true);
   ov.onclick=close;
   document.body.appendChild(ov);
+}
+function toggleMeetingForm(orgId){
+  const f=document.getElementById(`meeting-form-${orgId}`);
+  if(!f)return;
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  if(open)document.getElementById(`meeting-title-${orgId}`)?.focus();
+}
+// 명함 섹션처럼 독립된 '미팅' 섹션 — 히스토리 중 contact_type==='미팅'인 것만 모아 보여주고,
+// 이 안에서 바로 미팅 기록을 추가할 수 있다 (2026-08-20, 히스토리/단계 탭을 오가지 않도록).
+function loadMeetings(orgId){
+  const wrap=document.getElementById(`meetings-list-${orgId}`);
+  if(!wrap)return;
+  const meetings=cache.logs.filter(l=>l.org_id===orgId&&l.contact_type==='미팅').sort((a,b)=>new Date(b.date||b.logged_at)-new Date(a.date||a.logged_at));
+  if(!meetings.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">기록된 미팅이 없어요</div>';return;}
+  wrap.innerHTML=meetings.map(m=>`
+    <div style="position:relative;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:11px;font-weight:700;color:var(--purple);">${fDate(m.date)}</span>
+        <span style="font-size:12px;font-weight:700;flex:1;">${m.summary||'미팅'}</span>
+        <button onclick="removeMeetingLog(${m.id},${orgId})" title="삭제" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px;"><i class="ti ti-x"></i></button>
+      </div>
+      ${m.memo?`<div style="font-size:11px;color:var(--text2);white-space:pre-wrap;">${m.memo}</div>`:''}
+    </div>`).join('');
+}
+async function saveMeetingQuick(orgId){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  const title=document.getElementById(`meeting-title-${orgId}`)?.value.trim()||'';
+  const content=document.getElementById(`meeting-content-${orgId}`)?.value.trim()||'';
+  const date=document.getElementById(`meeting-date-${orgId}`)?.value||today();
+  if(!title){toast('미팅 제목을 입력하세요');return;}
+  const now=new Date().toISOString();
+  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const{data,error}=await sb.from('contact_logs').insert({org_id:orgId,summary:title,memo:content||null,date,logged_at:now,created_by:currentUser?.id||null,created_by_name:myName,contact_type:'미팅',status:'완료'}).select().single();
+  if(error){toast('오류: '+error.message);return;}
+  cache.logs.unshift(data);
+  await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
+  const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=date;
+  await autoBumpMeetingStage(o,orgId,date);
+  toast('미팅 기록 추가됨 ');
+  openOrg(orgId);
+}
+async function removeMeetingLog(logId,orgId){
+  if(!confirm('이 미팅 기록을 삭제하시겠어요?'))return;
+  const{error}=await sb.from('contact_logs').delete().eq('id',logId);
+  if(error){toast('오류: '+error.message);return;}
+  cache.logs=cache.logs.filter(l=>l.id!==logId);
+  toast('미팅 기록 삭제됨');
+  openOrg(orgId);
 }
 async function loadBizCards(orgId){
   const wrap=document.getElementById('biz-cards-list');
