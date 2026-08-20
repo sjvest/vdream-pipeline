@@ -7226,6 +7226,10 @@ async function updateOrgStage(){
   const newStage=parseInt(document.getElementById('m-stage-sel').value);
   const t=today();
   const payload={stage:newStage,lastcontact:t};
+  const o=cache.orgs.find(x=>x.id===currentOrgId);
+  // 미팅 완료(2) 이상으로 처음 바뀔 때 첫 미팅일(date)이 비어있으면 오늘로 자동 기록한다.
+  // 이 값이 Analytics KPI '미팅완료' 집계 기준이라, 안 채워지면 단계는 바뀌어도 카운팅에서 빠진다 (2026-08-20 발견).
+  if(newStage>=2&&!o?.date)payload.date=t;
   // MOU 완료(5) 이상으로 바뀔 때는 실제 체결일을 mou_date에 함께 저장해서
   // 주간/월간 MOU 집계가 등록일이 아니라 실제 체결일 기준으로 정확히 잡히도록 한다.
   if(newStage>=5){
@@ -7234,7 +7238,7 @@ async function updateOrgStage(){
   }
   const{error}=await sb.from('orgs').update(payload).eq('id',currentOrgId);
   if(error){console.error('[Supabase Error] 단계 변경 실패:',error);toast('오류: 단계 변경이 저장되지 않았습니다 — '+error.message);return;}
-  const o=cache.orgs.find(x=>x.id===currentOrgId);if(o){o.stage=newStage;o.lastcontact=t;if(payload.mou_date!==undefined)o.mou_date=payload.mou_date;}
+  if(o){o.stage=newStage;o.lastcontact=t;if(payload.date!==undefined)o.date=payload.date;if(payload.mou_date!==undefined)o.mou_date=payload.mou_date;}
   closeModal();renderCurrent();toast(newStage>=5?`단계 변경 완료 (MOU 체결일: ${payload.mou_date})`:'단계 변경 완료');
 }
 // 관계 등급(협조적/중립적/부정적)은 한 번 정해져도 팀 판단에 따라 언제든 바뀔 수 있어서
