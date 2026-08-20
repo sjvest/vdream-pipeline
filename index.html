@@ -215,6 +215,10 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .card-preview{position:relative;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border);max-width:360px;aspect-ratio:9/5;background:#fff;display:flex;align-items:center;justify-content:center;}
 .card-preview img{width:100%;height:100%;object-fit:contain;display:block;}
 .card-preview-del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+/* 명함 목록의 삭제 버튼: 평소엔 숨겨져 있다가 카드에 마우스를 올렸을 때만 나타난다 (실수 클릭 방지, 2026-08-19).
+   터치 환경(호버 개념 없음)에서는 첫 탭에서 살짝 보였다가 두 번째 탭에서 클릭되는 정도로 자연스럽게 동작한다. */
+.biz-card-item .biz-card-del{opacity:0;pointer-events:none;transition:opacity .15s;cursor:pointer;}
+.biz-card-item:hover .biz-card-del{opacity:1;pointer-events:auto;}
 
 /* ── 차트 탭 ── */
 .chart-tabs{display:flex;gap:6px;margin-bottom:18px;}
@@ -7019,20 +7023,20 @@ async function loadBizCards(orgId){
   const entries=[...legacyUrls.map(u=>({url:u,id:null,info:null})),...cards.map(c=>({url:c.url,id:c.id,info:c}))];
   if(!entries.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
   const [main,...rest]=entries;
-  const delBtn=(cardId,style)=>`<button onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" style="${style}"><i class="ti ti-trash" style="font-size:inherit;"></i></button>`;
+  const delBtn=(cardId,style)=>`<button class="biz-card-del" onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" style="${style}"><i class="ti ti-trash" style="font-size:inherit;"></i></button>`;
   const renderMain=(e)=>`
-    <div style="position:relative;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
+    <div class="biz-card-item" style="position:relative;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
       <img src="${e.url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="showImageLightbox(this.src)" title="클릭 시 크게 보기">
       ${e.info?`<div style="padding:6px 10px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);">
         ${e.info.contact_name?`<span style="font-weight:700;">${e.info.contact_name}</span> `:''}
         ${e.info.position?`<span style="color:var(--text3);">${e.info.position}</span>`:''}
         ${e.info.phone?`<span style="margin-left:6px;color:var(--text3);">${e.info.phone}</span>`:''}
       </div>`:''}
-      ${delBtn(e.id,'position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;font-weight:700;')}
+      ${delBtn(e.id,'position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:700;')}
     </div>`;
-  const delBtnX=(cardId)=>`<button onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" title="삭제" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border:none;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:.55;transition:opacity .15s,background .15s;" onmouseover="this.style.opacity=1;this.style.background='rgba(220,38,38,.9)'" onmouseout="this.style.opacity=.55;this.style.background='rgba(0,0,0,.45)'">×</button>`;
+  const delBtnX=(cardId)=>`<button class="biz-card-del" onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" title="삭제" style="position:absolute;top:2px;right:2px;width:16px;height:16px;border:none;border-radius:50%;background:rgba(220,38,38,.9);color:#fff;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;">×</button>`;
   const renderThumb=(e)=>`
-    <div style="position:relative;width:52px;height:52px;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;background:#fff;">
+    <div class="biz-card-item" style="position:relative;width:52px;height:52px;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;background:#fff;">
       <img src="${e.url}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;display:block;" onclick="showImageLightbox(this.src)" title="${e.info?.contact_name||'클릭해서 크게 보기'}">
       ${delBtnX(e.id)}
     </div>`;
