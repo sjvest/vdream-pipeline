@@ -6816,6 +6816,19 @@ async function addContactLog(orgId){
   cache.logs.unshift(data);
   await sb.from('orgs').update({lastcontact:date}).eq('id',orgId);
   const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=date;
+  // 히스토리를 '미팅' 유형으로 남기면 기관 단계도 미팅완료(2) 이상으로 자동 승격하고,
+  // 첫 미팅일이 비어있으면 이 로그의 날짜로 채운다 — 지금까진 단계 드롭다운을 따로 안 바꾸면
+  // Analytics '미팅완료' KPI에 안 잡히는 게 실제 업무 흐름과 안 맞는다는 피드백 반영 (2026-08-20).
+  if(contactType==='미팅'&&o){
+    const stagePatch={};
+    if(Number(o.stage)<2)stagePatch.stage=2;
+    if(!o.date)stagePatch.date=date;
+    if(Object.keys(stagePatch).length){
+      const{error:stageErr}=await sb.from('orgs').update(stagePatch).eq('id',orgId);
+      if(stageErr)console.warn('[Supabase Error] 미팅 로그로 인한 단계/날짜 자동 갱신 실패:',stageErr);
+      else{if(stagePatch.stage!==undefined)o.stage=stagePatch.stage;if(stagePatch.date!==undefined)o.date=stagePatch.date;}
+    }
+  }
   if(status==='재연락 필요'){
     const recontactDate=document.getElementById('log-recontact-date')?.value||null;
     const orgName=o?.name||'';
