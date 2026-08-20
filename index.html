@@ -4206,7 +4206,27 @@ function renderAnalytics(){
   const rgEl=document.getElementById('an-region');
   if(rgEl){const rm={};allOrgs.forEach(o=>{const r=o.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].o++;});allTals.forEach(t=>{const org=allOrgs.find(o=>o.id===(t.source_org_id||t.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].t++;});allApps.filter(a=>a.status==='합격'||a.status==='입사완료').forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);const org=allOrgs.find(o=>o.id===(t?.source_org_id||t?.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].h++;});rgEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+Object.entries(rm).sort((a,b)=>b[1].h-a[1].h||b[1].t-a[1].t).slice(0,8).map(([r,v])=>{const rate=v.t>0?Math.round(v.h/v.t*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;">${r}</span><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${rate>20?'var(--green-bg)':'var(--bg2)'};color:${rate>20?'var(--green)':'var(--text3)'};">${rate}%</span></div><div style="display:flex;gap:8px;font-size:11px;color:var(--text3);"><span>기관 <b style="color:var(--accent);">${v.o}</b></span><span>유입 <b style="color:var(--amber);">${v.t}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${v.h}</b></span></div></div>`;}).join('')+'</div>';}
   const iEl=document.getElementById('an-insight');
-  if(iEl){const ins=[];const mn=allOrgs.filter(o=>o.stage>=4&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:'')});const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length===0);if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:'')});const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요'});const nc=allOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장'});const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&(a.status==='합격'||a.status==='입사완료');}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`});const thisM=new Date(now.getFullYear(),now.getMonth(),1);const topM=cache.profiles.map(p=>{const h=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name&&(a.status==='합격'||a.status==='입사완료')&&new Date(a.created_at)>=thisM;}).length;return{name:p.name,h};}).sort((a,b)=>b.h-a.h)[0];if(topM?.h>0)ins.push({t:'success',msg:`이번달 TOP 담당자: ${topM.name}`,sub:`입사 ${topM.h}명 달성`});if(!ins.length)ins.push({t:'success',msg:'현재 위험 신호 없음',sub:'모든 지표 정상'});const bg={warning:'#fef3c7',danger:'#fee2e2',success:'#d1fae5'};const tc={warning:'#b54708',danger:'#dc2626',success:'#065f46'};const ic={warning:'',danger:'',success:''};iEl.innerHTML='<div style="display:grid;gap:8px;">'+ins.map(i=>`<div style="padding:10px 14px;background:${bg[i.t]};border-radius:var(--radius-sm);border-left:3px solid ${tc[i.t]};"><div style="font-size:12px;font-weight:700;color:${tc[i.t]};">${ic[i.t]} ${i.msg}</div>${i.sub?`<div style="font-size:11px;color:${tc[i.t]};opacity:.8;margin-top:2px;">${i.sub}</div>`:''}</div>`).join('')+'</div>';}
+  if(iEl){
+    const ins=[];
+    const mn=allOrgs.filter(o=>o.stage>=4&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);
+    if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:''),items:mn.map(o=>({id:o.id,name:o.name,open:'org'}))});
+    const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&(a.status==='합격'||a.status==='입사완료')).length===0);
+    if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:''),items:tn.map(o=>({id:o.id,name:o.name,open:'org'}))});
+    const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);
+    if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요',items:exp.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);const days=Math.ceil((new Date(a.contract_end_date)-now)/864e5);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:`D-${days}`,open:'talent'};})});
+    const nc=allOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
+    if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장',items:nc.map(o=>({id:o.id,name:o.name,extra:o.lastcontact?`${Math.floor((now-new Date(o.lastcontact))/864e5)}일 전`:'연락 기록 없음',open:'org'}))});
+    const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&(a.status==='합격'||a.status==='입사완료');}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);
+    if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`,items:chStats.map(c=>({name:c.ch,extra:`전환율 ${c.rate}% (${c.t}건 중 ${Math.round(c.rate*c.t/100)}건 전환)`}))});
+    const thisM=new Date(now.getFullYear(),now.getMonth(),1);
+    const topM=cache.profiles.map(p=>{const apps=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name&&(a.status==='합격'||a.status==='입사완료')&&new Date(a.created_at)>=thisM;});return{name:p.name,h:apps.length,apps};}).sort((a,b)=>b.h-a.h)[0];
+    if(topM?.h>0)ins.push({t:'success',msg:`이번달 TOP 담당자: ${topM.name}`,sub:`입사 ${topM.h}명 달성`,items:topM.apps.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:a.status,open:'talent'};})});
+    if(!ins.length)ins.push({t:'success',msg:'현재 위험 신호 없음',sub:'모든 지표 정상'});
+    // 카드 클릭 시 세부 목록을 보여주기 위해 전역에 보관 (2026-08-20)
+    window._analyticsInsights=ins;
+    const bg={warning:'#fef3c7',danger:'#fee2e2',success:'#d1fae5'};const tc={warning:'#b54708',danger:'#dc2626',success:'#065f46'};
+    iEl.innerHTML='<div style="display:grid;gap:8px;">'+ins.map((i,idx)=>`<div onclick="showInsightDetail(${idx})" style="padding:10px 14px;background:${bg[i.t]};border-radius:var(--radius-sm);border-left:3px solid ${tc[i.t]};cursor:pointer;transition:filter .15s;" onmouseover="this.style.filter='brightness(.97)'" onmouseout="this.style.filter=''"><div style="font-size:12px;font-weight:700;color:${tc[i.t]};">${i.msg}</div>${i.sub?`<div style="font-size:11px;color:${tc[i.t]};opacity:.8;margin-top:2px;">${i.sub}</div>`:''}</div>`).join('')+'</div>';
+  }
 }
 
 // ── 팀원 실적 ──
@@ -7026,6 +7046,37 @@ function switchOrgTalentTab(tabKey,orgId){
 // 예전 방식으로 등록된 명함(orgs.card_image)은 http URL이 아니라 base64 data URI라서
 // 크롬이 새 탭에서 data: URL로의 이동을 차단해 빈 about:blank 탭만 뜨는 문제가 있었다.
 // http URL/base64 데이터 URI 모두 안전하게 동작하도록 새 탭 대신 인앱 라이트박스로 표시.
+let _insightKeyHandler=null;
+// 대시보드/Analytics 인사이트 카드 클릭 시 세부 목록(기관/인재)을 보여준다 (2026-08-20 요청).
+function showInsightDetail(idx){
+  const i=window._analyticsInsights?.[idx];
+  if(!i)return;
+  closeInsightOverlay();
+  const items=i.items||[];
+  const rows=items.length?items.map(it=>{
+    const clickable=it.id&&it.open;
+    const action=it.open==='talent'?`openTalentDetail(${it.id})`:it.open==='org'?`openOrg(${it.id})`:'';
+    return `<div ${clickable?`onclick="closeInsightOverlay();${action}"`:''} style="padding:9px 10px;border-radius:6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border);${clickable?'cursor:pointer;':''}" ${clickable?`onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background=''"`:''}><span>${it.name}</span>${it.extra?`<span style="font-size:11px;color:var(--text3);white-space:nowrap;">${it.extra}</span>`:''}</div>`;
+  }).join(''):'<div style="padding:12px;color:var(--text3);font-size:12px;">세부 항목이 없어요</div>';
+  const ov=document.createElement('div');
+  ov.id='insight-detail-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.onclick=(e)=>{if(e.target===ov)closeInsightOverlay();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:70vh;overflow-y:auto;padding:16px;box-shadow:0 12px 48px rgba(0,0,0,.25);" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;">
+      <div style="font-size:14px;font-weight:800;">${i.msg}</div>
+      <button onclick="closeInsightOverlay()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1;flex-shrink:0;">×</button>
+    </div>
+    ${rows}
+  </div>`;
+  document.body.appendChild(ov);
+  _insightKeyHandler=(e)=>{if(e.key==='Escape'){e.stopImmediatePropagation();closeInsightOverlay();}};
+  document.addEventListener('keydown',_insightKeyHandler,true);
+}
+function closeInsightOverlay(){
+  document.getElementById('insight-detail-overlay')?.remove();
+  if(_insightKeyHandler){document.removeEventListener('keydown',_insightKeyHandler,true);_insightKeyHandler=null;}
+}
 function showImageLightbox(url){
   if(!url)return;
   const ov=document.createElement('div');
