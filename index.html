@@ -3849,6 +3849,21 @@ function selectExistingTalent(i,talentId){
   const bd=document.getElementById(`t-birthdate-${i}`);if(bd){bd.value=t.birth_date||'';bd.disabled=true;bd.style.background='var(--bg)';}
   const dt=document.getElementById(`t-distype-${i}`);if(dt){dt.value=t.disability_type||'';dt.disabled=true;dt.style.background='var(--bg)';}
   const dg=document.getElementById(`t-disgrade-${i}`);if(dg){dg.value=t.disability_grade||'';dg.disabled=true;dg.style.background='var(--bg)';}
+  // 연결 기관(발굴 기관)도 이 인재가 원래 유입된 기관 그대로 자동 채워준다 — 지금까진 매번
+  // 다시 검색해서 골라야 했고, 안 채우면 org_id 없이 지원이력이 만들어지는 문제가 있었다 (2026-08-22).
+  // 채널이 기관 관련(기관연계/협단체/특수학교)이 아니면 연결기관 입력란 자체가 숨어있어서,
+  // 원래 채널도 같이 맞춰줘야 값이 실제로 반영된다.
+  if(t.channel){const chEl=document.getElementById('t-channel');if(chEl&&[...chEl.options].some(o=>o.value===t.channel)){chEl.value=t.channel;toggleChannelFields();}}
+  const srcOrgId=t.source_org_id||t.org_id||null;
+  if(srcOrgId){
+    const srcOrg=(cache.orgs||[]).find(o=>o.id===srcOrgId);
+    if(srcOrg){
+      const orgSearchEl=document.getElementById('t-org-search');
+      const orgIdEl=document.getElementById('t-org');
+      if(orgSearchEl)orgSearchEl.value=srcOrg.name;
+      if(orgIdEl)orgIdEl.value=srcOrg.id;
+    }
+  }
   const box=document.getElementById(`t-match-${i}`);
   if(box){
     box.style.display='block';
