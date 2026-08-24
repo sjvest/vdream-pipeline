@@ -537,9 +537,28 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
     <button onclick="exportOrgsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
   </div>
+  <!-- 일괄 빠른 접촉: 체크박스로 여러 기관을 골라 채용공고/자료 등을 한 번에 발송했다는 기록을 남긴다 (2026-08-22). -->
+  <div id="bulk-quick-contact-bar" style="display:none;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+      <span style="font-size:13px;font-weight:800;color:var(--teal);"><i class="ti ti-bolt"></i> <span id="bulk-quick-contact-count">0</span>개 기관 선택됨</span>
+      <button onclick="clearSelectedOrgs()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;">선택 해제</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <select id="bulk-quick-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
+        <option>채용공고 발송</option><option>자료 전달</option><option>기타</option>
+      </select>
+      <select id="bulk-quick-channel" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
+        <option value="">채널 선택 (선택사항)</option>
+        <option>이메일</option><option>카카오톡</option><option>문자</option><option>기타</option>
+      </select>
+      <input id="bulk-quick-memo" placeholder="메모 (선택)" style="flex:1;min-width:140px;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+      <button id="bulk-quick-save-btn" onclick="saveBulkQuickContact()" style="font-size:12px;padding:7px 16px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;">선택 기관 전체 기록</button>
+    </div>
+  </div>
   <div class="card">
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
+        <th style="padding:13px 10px;width:32px;"><input type="checkbox" id="orgs-select-all" onchange="toggleSelectAllOrgs(this.checked)" style="width:15px;height:15px;cursor:pointer;"></th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">기관명</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">유형</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">지역</th>
@@ -549,7 +568,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">마지막 연락</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;">후속액션</th>
       </tr></thead>
-      <tbody id="org-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+      <tbody id="org-tbody"><tr><td colspan="9"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1665,7 +1684,10 @@ const OFFICIAL_STATUSES=['인재등록','채용지원','서류합격','서류불
 // 통화·미팅 같은 "직접 컨택"과 구분되는 "간편 접촉"(공고/자료 발송 등). 같은 contact_logs 테이블을
 // 재사용하되 is_quick=true로 표시한다. 마지막 연락일/전체 컨택 수엔 포함되지만, 미팅 KPI나 파이프라인
 // 단계 자동승격(autoBumpMeetingStage)은 절대 트리거하지 않는다.
-const QUICK_CONTACT_TYPES=['채용공고 발송','자료 전달','이메일 발송','카카오톡 공유','문자 발송','기타'];
+// 빠른 접촉 = "무엇을 보냈나"(내용)와 "어떻게 보냈나"(채널) 두 축을 분리해서 정보 손실 없이 기록한다.
+// 채널은 선택사항 — 급할 땐 내용만 고르고 바로 저장 가능 (2026-08-22, 실제 업무 피드백 반영해 재설계).
+const QUICK_CONTACT_TYPES=['채용공고 발송','자료 전달','기타'];
+const QUICK_CONTACT_CHANNELS=['이메일','카카오톡','문자','기타'];
 const STATUS_META={
   인재등록:{hex:'#7c3aed',bg:'#ede9fe',cls:'b-purple'},
   채용지원:{hex:'#2563eb',bg:'#dbeafe',cls:'b-blue'},
@@ -1689,6 +1711,8 @@ let sb=null, currentOrgId=null, actionFieldIdx=0;
 let cache={orgs:[],actions:[],talents:[],logs:[],profiles:[],events:[],jobs:[],cold:[],applications:[],team_tasks:[],sourcingAssignments:[],sourcingCandidates:[]};
 let _pendingInitialHash=null; // 새로고침 시 URL 해시로 즉시 진입한 페이지가 loadAll() 완료 전에 렌더되는 걸 막기 위한 대기값
 let jobScopedRegistration=null; // "+지원자 등록"으로 채용건 컨텍스트에서 인재 등록 폼을 열었을 때의 job id (사람이 다시 고르지 않고 자동 연결하기 위함)
+let selectedOrgIds=new Set(); // 기관 목록 일괄 빠른 접촉용 체크박스 선택 상태 (2026-08-22)
+let bulkQuickContactPending=false; // 일괄 저장 중복 클릭 방지
 let talentLinkMap={}; // 등록 폼 행 인덱스 -> 이름+전화번호가 일치해 연결하기로 한 기존 talent.id (재지원/동명이인 중복등록 방지)
 
 // ── 새 버전 배포 감지 배너 (2026-07-30) ──
@@ -3215,6 +3239,82 @@ function showHealthDetail(orgId,event){
   confirmCallback=()=>{};
   document.getElementById('confirm-modal').style.display='flex';
 }
+// ── 일괄 빠른 접촉 (2026-08-22 신설) ──
+function updateBulkQuickContactBar(){
+  const bar=document.getElementById('bulk-quick-contact-bar');
+  const countEl=document.getElementById('bulk-quick-contact-count');
+  if(!bar)return;
+  if(selectedOrgIds.size>0){bar.style.display='block';if(countEl)countEl.textContent=selectedOrgIds.size;}
+  else bar.style.display='none';
+  const selectAll=document.getElementById('orgs-select-all');
+  if(selectAll){
+    const boxes=document.querySelectorAll('.org-row-checkbox');
+    const total=boxes.length;
+    const checkedCount=[...boxes].filter(b=>b.checked).length;
+    selectAll.checked=total>0&&checkedCount===total;
+    selectAll.indeterminate=checkedCount>0&&checkedCount<total;
+  }
+}
+function toggleSelectOrg(orgId,checked){
+  if(checked)selectedOrgIds.add(orgId);else selectedOrgIds.delete(orgId);
+  updateBulkQuickContactBar();
+}
+function toggleSelectAllOrgs(checked){
+  document.querySelectorAll('.org-row-checkbox').forEach(box=>{
+    const oid=Number(box.dataset.orgId);
+    box.checked=checked;
+    if(checked)selectedOrgIds.add(oid);else selectedOrgIds.delete(oid);
+  });
+  updateBulkQuickContactBar();
+}
+function clearSelectedOrgs(){
+  selectedOrgIds.clear();
+  document.querySelectorAll('.org-row-checkbox').forEach(box=>box.checked=false);
+  updateBulkQuickContactBar();
+}
+// 선택된 기관 전체에 빠른 접촉을 한 번에 기록한다. 기관 하나하나 insert하는 순차 처리라
+// 수백 건 단위에선 다소 시간이 걸릴 수 있지만, 실패한 기관만 정확히 알려줄 수 있어 안전하다.
+async function saveBulkQuickContact(){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  if(selectedOrgIds.size===0){toast('기관을 먼저 선택하세요');return;}
+  if(bulkQuickContactPending)return; // 중복 저장 방지 (연타 시 두 번 기록되는 것 방지)
+  bulkQuickContactPending=true;
+  const saveBtn=document.getElementById('bulk-quick-save-btn');
+  const orgIds=[...selectedOrgIds];
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent=`저장 중... (0/${orgIds.length})`;}
+  try{
+    const type=document.getElementById('bulk-quick-type')?.value||'채용공고 발송';
+    const channel=document.getElementById('bulk-quick-channel')?.value||'';
+    const memo=document.getElementById('bulk-quick-memo')?.value.trim()||null;
+    const summary=channel?`${type} · ${channel}`:type;
+    const dateStr=today();
+    const nowIso=new Date().toISOString();
+    const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+    const rows=orgIds.map(orgId=>({
+      org_id:orgId,summary,memo,date:dateStr,logged_at:nowIso,
+      created_by:currentUser?.id||null,created_by_name:myName,
+      contact_type:type,status:'완료',is_quick:true
+    }));
+    // 한 번에 insert하되, 일부 기관에서 실패해도 나머지는 반영되도록 select()로 실제 성공분을 확인한다.
+    const{data,error}=await sb.from('contact_logs').insert(rows).select();
+    if(error){toast('일괄 저장 실패: '+error.message);return;}
+    (data||[]).forEach(d=>cache.logs.unshift(d));
+    const successOrgIds=new Set((data||[]).map(d=>d.org_id));
+    const{error:orgErr}=await sb.from('orgs').update({lastcontact:dateStr}).in('id',[...successOrgIds]);
+    if(orgErr)console.warn('[Supabase Error] 일괄 lastcontact 갱신 실패:',orgErr);
+    else successOrgIds.forEach(oid=>{const o=cache.orgs.find(x=>x.id===oid);if(o)o.lastcontact=dateStr;});
+    const failCount=orgIds.length-successOrgIds.size;
+    toast(failCount?`${successOrgIds.size}개 기관 기록 완료 (${failCount}개 실패)`:`${successOrgIds.size}개 기관에 "${type}" 기록 완료`);
+    clearSelectedOrgs();
+    document.getElementById('bulk-quick-memo').value='';
+    renderCurrent();
+  }catch(e){
+    toast('일괄 저장 중 오류가 발생했어요: '+(e?.message||e));
+  }finally{
+    bulkQuickContactPending=false;
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='선택 기관 전체 기록';}
+  }
+}
 function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const fr=document.getElementById('filter-region')?.value||'';const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(fr&&o.region!==fr)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw)&&!(o.region||'').toLowerCase().includes(kw)&&!(o.address||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs||fr;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
   rows.sort((a,b)=>{
     if(b.is_starred!==a.is_starred)return (b.is_starred?1:0)-(a.is_starred?1:0);
@@ -3231,8 +3331,9 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
       const mColor=MCOLOR[o.member]||'var(--purple)';
       const mBg=MBG[o.member]||'var(--purple-bg)';
       return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;${o.is_starred?'background:#fffbeb;':''}">
-        <td colspan="8" style="padding:12px 14px;">
+        <td colspan="9" style="padding:12px 14px;">
           <div style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onclick="event.stopPropagation();" onchange="toggleSelectOrg(${o.id},this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
             <button onclick="event.stopPropagation();toggleStar(${o.id},${!!o.is_starred})" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;flex-shrink:0;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
@@ -3251,7 +3352,8 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
           </div>
         </td>
       </tr>`;
-    }).join(''):`<tr><td colspan="8" class="empty">해당 기관 없음</td></tr>`;
+    }).join(''):`<tr><td colspan="9" class="empty">해당 기관 없음</td></tr>`;
+    updateBulkQuickContactBar();
     return;
   }
   document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
@@ -3264,6 +3366,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const daysFw=days===null||days>=7?'800':'400';
     const starredBg=o.is_starred?'#fffbeb':'';
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
+      <td style="padding:14px 10px;" onclick="event.stopPropagation();"><input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onchange="toggleSelectOrg(${o.id},this.checked)" style="width:15px;height:15px;cursor:pointer;"></td>
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
         <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
         ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
@@ -3278,7 +3381,8 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
       </td>
       <td style="padding:14px 16px;"><span style="font-size:12px;font-weight:${daysFw};color:${daysColor};background:${daysBg};padding:${daysBg!=='transparent'?'2px 8px':'0'};border-radius:${daysBg!=='transparent'?'12px':'0'};">${daysLabel}</span></td>
       <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
-    </tr>`;}).join(''):`<tr><td colspan="8" class="empty">해당 기관 없음</td></tr>`;
+    </tr>`;}).join(''):`<tr><td colspan="9" class="empty">해당 기관 없음</td></tr>`;
+  updateBulkQuickContactBar();
 }
 
 // ── 후속 액션 ──
@@ -6643,6 +6747,10 @@ async function openOrg(id){
         <span id="quick-contact-type-label-${id}" style="font-size:12px;font-weight:700;color:var(--teal);"></span>
         <span id="quick-contact-datetime-${id}" style="font-size:11px;color:var(--text3);"></span>
       </div>
+      <select id="quick-contact-channel-${id}" style="width:100%;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;margin-bottom:6px;box-sizing:border-box;">
+        <option value="">채널 선택 (선택사항)</option>
+        ${QUICK_CONTACT_CHANNELS.map(ch=>`<option value="${ch}">${ch}</option>`).join('')}
+      </select>
       <textarea id="quick-contact-memo-${id}" placeholder="메모 (선택)" style="width:100%;min-height:44px;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;resize:vertical;"></textarea>
       <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
         <button onclick="closeQuickContactForm(${id})" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;">취소</button>
@@ -6996,6 +7104,8 @@ function openQuickContactForm(orgId,type){
   if(label)label.textContent=type;
   const dt=document.getElementById(`quick-contact-datetime-${orgId}`);
   if(dt)dt.textContent=`${fDate(today())} ${new Date().toTimeString().slice(0,5)}`;
+  const channel=document.getElementById(`quick-contact-channel-${orgId}`);
+  if(channel)channel.value='';
   const memo=document.getElementById(`quick-contact-memo-${orgId}`);
   if(memo)memo.value='';
   const form=document.getElementById(`quick-contact-form-${orgId}`);
@@ -7017,12 +7127,15 @@ async function saveQuickContact(orgId){
     saveBtn.dataset.saving='1';saveBtn.disabled=true;saveBtn.textContent='저장 중...';
   }
   try{
+    const channel=document.getElementById(`quick-contact-channel-${orgId}`)?.value||'';
     const memo=document.getElementById(`quick-contact-memo-${orgId}`)?.value.trim()||null;
     const dateStr=today();
     const nowIso=new Date().toISOString();
     const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+    // 표시용 제목은 "내용 · 채널" 형태로 합쳐서 보여준다 (채널 미선택 시 내용만).
+    const summary=channel?`${type} · ${channel}`:type;
     const{data,error}=await sb.from('contact_logs').insert({
-      org_id:orgId,summary:type,memo,date:dateStr,logged_at:nowIso,
+      org_id:orgId,summary,memo,date:dateStr,logged_at:nowIso,
       created_by:currentUser?.id||null,created_by_name:myName,
       contact_type:type,status:'완료',is_quick:true
     }).select().single();
