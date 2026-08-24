@@ -3652,14 +3652,24 @@ async function saveApplicationDates(){
   if(!currentDrawerTalentId)return;
   const val=id=>document.getElementById(id)?.value||null;
   const chk=id=>document.getElementById(id)?.checked||false;
+  const newCompany=document.getElementById('app-hirecompany')?.value.trim()||null;
+  const apps=(cache.applications||[]).filter(a=>a.talent_id===currentDrawerTalentId);
+  // 이미 결과(불합격/입사완료 등)가 난 지원 건에서 회사명만 바꿔서 저장하면, 새 회차를 만드는 게 아니라
+  // 기존 기록을 그대로 덮어써서 이전 회사 지원 이력이 사라지는 버그가 있었다
+  // (2026-08-22 발견 — 재지원 시 이전 기업 기록 소실). 결과가 이미 난 건에서 회사명이 실제로 바뀌면
+  // 여기서 덮어쓰지 않고, 새 회차를 만들 수 있는 채용건 페이지로 안내한다.
+  const resolvedStatuses=['불합격','입사완료','재직','계약만료예정','계약종료','재계약완료'];
+  if(apps.length&&resolvedStatuses.includes(apps[0].status)&&newCompany&&apps[0].hire_company&&newCompany!==apps[0].hire_company){
+    toast(' 다른 회사로 재지원은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (기존 지원 기록이 보존됩니다)');
+    return;
+  }
   const payload={
     applied_date:val('app-applied-date'), applied_date_is_estimated:chk('app-applied-est'),
-    hire_company:document.getElementById('app-hirecompany')?.value.trim()||null,
+    hire_company:newCompany,
     pass_date:val('app-pass-date'), pass_date_is_estimated:chk('app-pass-est'),
     join_date:val('app-join-date'), join_date_is_estimated:chk('app-join-est'),
     rejected_at:val('app-rejected-date'), rejected_date_is_estimated:chk('app-rejected-est'),
   };
-  const apps=(cache.applications||[]).filter(a=>a.talent_id===currentDrawerTalentId);
   if(apps.length){
     const latestApp=apps[0];
     const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
