@@ -555,6 +555,15 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <button id="bulk-quick-save-btn" onclick="saveBulkQuickContact()" style="font-size:12px;padding:7px 16px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;">선택 기관 전체 기록</button>
     </div>
   </div>
+  <!-- 상단 고정 기관: 기존 즐겨찾기(is_starred)를 그대로 재사용하되, 명칭/표시 방식만 단순화 (2026-08-22 개편). -->
+  <div id="pinned-orgs-section" style="display:none;margin-bottom:14px;">
+    <div onclick="togglePinnedSection()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fffbeb;border:1.5px solid #f5d98b;border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;">
+      <span style="font-size:13px;font-weight:800;color:#92600a;">상단 고정 기관 <span id="pinned-org-count">0</span>개</span>
+      <span id="pinned-section-toggle-label" style="font-size:12px;color:#92600a;">접기</span>
+    </div>
+    <div id="pinned-orgs-list" style="border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--surface);"></div>
+  </div>
+  <div id="orgs-total-count" style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:8px;"></div>
   <div class="card">
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
@@ -3073,15 +3082,37 @@ function renderPipeline(){
 }
 
 // ── 기관 목록 ──
-async function toggleStar(id,e){
+// 상단 고정: 기존 "즐겨찾기(is_starred)" 컬럼을 그대로 재사용한다 — 데이터/의미는 동일하고
+// 명칭과 노출 방식(별표 아이콘 → ⋯메뉴 + 배지)만 단순화했다 (2026-08-22 개편).
+async function setOrgPinned(id,pinned,e){
   e&&e.stopPropagation();
+  closeAllRowMenus();
   const o=cache.orgs.find(x=>x.id===id);
   if(!o)return;
-  const val=!o.is_starred;
-  const{error}=await sb.from('orgs').update({is_starred:val}).eq('id',id);
-  if(error){toast('저장 실패');return;}
-  o.is_starred=val;
+  const{error}=await sb.from('orgs').update({is_starred:pinned}).eq('id',id);
+  if(error){toast('저장 실패: '+error.message);return;}
+  o.is_starred=pinned;
+  toast(pinned?'상단에 고정했어요':'고정 해제했어요');
   renderOrgs();
+}
+function closeAllRowMenus(){
+  document.querySelectorAll('[id^="org-row-menu-"]').forEach(m=>m.style.display='none');
+}
+function toggleRowMenu(orgId,e){
+  e&&e.stopPropagation();
+  const menu=document.getElementById(`org-row-menu-${orgId}`);
+  const wasOpen=menu&&menu.style.display==='block';
+  closeAllRowMenus();
+  if(menu)menu.style.display=wasOpen?'none':'block';
+}
+document.addEventListener('click',closeAllRowMenus);
+let pinnedSectionCollapsed=false;
+function togglePinnedSection(){
+  pinnedSectionCollapsed=!pinnedSectionCollapsed;
+  const list=document.getElementById('pinned-orgs-list');
+  const label=document.getElementById('pinned-section-toggle-label');
+  if(list)list.style.display=pinnedSectionCollapsed?'none':'block';
+  if(label)label.textContent=pinnedSectionCollapsed?'펼치기':'접기';
 }
 function memberBadge(name){
   if(!name||name==='—')return`<span class="member-pill">—</span>`;
@@ -3315,6 +3346,24 @@ async function saveBulkQuickContact(){
     if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='선택 기관 전체 기록';}
   }
 }
+function renderPinnedOrgsSection(pinnedRows){
+  const section=document.getElementById('pinned-orgs-section');
+  const countEl=document.getElementById('pinned-org-count');
+  const listEl=document.getElementById('pinned-orgs-list');
+  if(!section||!listEl)return;
+  if(!pinnedRows.length){section.style.display='none';return;}
+  section.style.display='block';
+  if(countEl)countEl.textContent=pinnedRows.length;
+  listEl.style.display=pinnedSectionCollapsed?'none':'block';
+  listEl.innerHTML=pinnedRows.map(o=>`
+    <div onclick="openOrg(${o.id})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid #f5c451;" onmouseover="this.style.background='#fffdf5'" onmouseout="this.style.background=''">
+      <span style="font-weight:700;font-size:13px;color:#0d1b2a;flex-shrink:0;">${o.name}</span>
+      <span style="font-size:10px;font-weight:700;color:#92600a;background:#fef3c7;padding:1px 8px;border-radius:10px;flex-shrink:0;">고정</span>
+      <span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
+      <span style="font-size:11px;color:var(--text3);flex:1;">${o.cat||''}</span>
+      <button onclick="setOrgPinned(${o.id},false,event)" style="font-size:11px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;flex-shrink:0;">고정 해제</button>
+    </div>`).join('');
+}
 function renderOrgs(){const fc=document.getElementById('filter-cat').value;const fs=document.getElementById('filter-stage-orgs').value;const fr=document.getElementById('filter-region')?.value||'';const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();const dateStart=document.getElementById('orgs-search-start')?.value;const dateEnd=document.getElementById('orgs-search-end')?.value;const now=new Date();let rows=cache.orgs.filter(o=>{if(fc&&o.cat!==fc)return false;if(fs!==''&&String(o.stage)!==fs)return false;if(fr&&o.region!==fr)return false;if(kw&&!(o.name||'').toLowerCase().includes(kw)&&!(o.member||'').toLowerCase().includes(kw)&&!(o.contact||'').toLowerCase().includes(kw)&&!(o.region||'').toLowerCase().includes(kw)&&!(o.address||'').toLowerCase().includes(kw))return false;if(dateStart){const d=new Date(o.created_at);if(d<new Date(dateStart))return false;}if(dateEnd){const d=new Date(o.created_at);const end=new Date(dateEnd);end.setHours(23,59,59,999);if(d>end)return false;}return true;});const resultEl=document.getElementById('orgs-search-result');if(resultEl){const isFiltered=kw||dateStart||dateEnd||fc||fs||fr;resultEl.textContent=isFiltered?`검색결과 ${rows.length}개 / 전체 ${cache.orgs.length}개`:'';}
   rows.sort((a,b)=>{
     if(b.is_starred!==a.is_starred)return (b.is_starred?1:0)-(a.is_starred?1:0);
@@ -3322,19 +3371,31 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const db=b.lastcontact?Math.floor((now-new Date(b.lastcontact))/864e5):9999;
     return db-da;
   });
+  // 상단 고정(옛 즐겨찾기) 기관은 별도 영역으로 분리 — 검색/필터가 걸린 rows 기준이라
+  // 지금 걸어둔 필터와 무관한 고정 기관까지 뜨는 일은 없다 (2026-08-22 개편).
+  const pinnedRows=rows.filter(o=>o.is_starred);
+  const unpinnedRows=rows.filter(o=>!o.is_starred);
+  renderPinnedOrgsSection(pinnedRows);
+  const totalCountEl=document.getElementById('orgs-total-count');
+  if(totalCountEl)totalCountEl.textContent=`전체 기관 ${unpinnedRows.length}개`;
+  const rowMenu=(o)=>`<div style="position:relative;display:inline-block;" onclick="event.stopPropagation();">
+    <button onclick="toggleRowMenu(${o.id},event)" style="background:none;border:1px solid var(--border);border-radius:6px;width:26px;height:26px;cursor:pointer;color:var(--text2);font-size:14px;line-height:1;">⋯</button>
+    <div id="org-row-menu-${o.id}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);z-index:60;min-width:100px;overflow:hidden;">
+      <div onclick="setOrgPinned(${o.id},true,event)" style="padding:8px 12px;font-size:12px;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">상단에 고정</div>
+    </div>
+  </div>`;
   if(window.innerWidth<=768){
     const MCOLOR={'임세진':'#3b82f6','이재성':'#f59e0b','이슬민':'#f97316'};
     const MBG={'임세진':'#eff6ff','이재성':'#fffbeb','이슬민':'#fff7ed'};
-    document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
+    document.getElementById('org-tbody').innerHTML=unpinnedRows.length?unpinnedRows.map(o=>{
       const oa=actionsForOrg(o.id);
       const urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
       const mColor=MCOLOR[o.member]||'var(--purple)';
       const mBg=MBG[o.member]||'var(--purple-bg)';
-      return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;${o.is_starred?'background:#fffbeb;':''}">
+      return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;">
         <td colspan="9" style="padding:12px 14px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onclick="event.stopPropagation();" onchange="toggleSelectOrg(${o.id},this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
-            <button onclick="event.stopPropagation();toggleStar(${o.id},${!!o.is_starred})" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;flex-shrink:0;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
                 <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
@@ -3348,7 +3409,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
                 <span style="font-size:11px;color:var(--text3);">${STAGES[o.stage]||''}</span>
               </div>
             </div>
-            <i class="ti ti-chevron-right" style="color:var(--text3);font-size:16px;flex-shrink:0;"></i>
+            ${rowMenu(o)}
           </div>
         </td>
       </tr>`;
@@ -3356,7 +3417,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     updateBulkQuickContactBar();
     return;
   }
-  document.getElementById('org-tbody').innerHTML=rows.length?rows.map(o=>{
+  document.getElementById('org-tbody').innerHTML=unpinnedRows.length?unpinnedRows.map(o=>{
     const oa=actionsForOrg(o.id);
     const pending=oa.filter(a=>!a.done).length,urgent=oa.filter(a=>!a.done&&dayDiff(a.due)<=3).length;
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
@@ -3364,11 +3425,9 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const daysColor=days===null?'#dc2626':days>=30?'#c0200f':days>=14?'#b54708':days>=7?'#d97706':'#64748b';
     const daysBg=days===null?'#fee2e2':days>=30?'#fee2e2':days>=14?'#fff7ed':days>=7?'#fffbeb':'transparent';
     const daysFw=days===null||days>=7?'800':'400';
-    const starredBg=o.is_starred?'#fffbeb':'';
-    return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;background:${starredBg};" onmouseover="this.style.background='${o.is_starred?'#fef3c7':'#f0f4ff'}'" onmouseout="this.style.background='${starredBg}'">
+    return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:14px 10px;" onclick="event.stopPropagation();"><input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onchange="toggleSelectOrg(${o.id},this.checked)" style="width:15px;height:15px;cursor:pointer;"></td>
       <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
-        <button onclick="toggleStar(${o.id},event)" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;line-height:1;color:${o.is_starred?'#f59e0b':'#d1d5db'};"><i class="ti ${o.is_starred?'ti-star-filled':'ti-star'}"></i></button>
         ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;background:#f1f4f9;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;"></div>'}
         <span style="font-weight:700;font-size:13px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}
       </td>
@@ -3380,7 +3439,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
         ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
       </td>
       <td style="padding:14px 16px;"><span style="font-size:12px;font-weight:${daysFw};color:${daysColor};background:${daysBg};padding:${daysBg!=='transparent'?'2px 8px':'0'};border-radius:${daysBg!=='transparent'?'12px':'0'};">${daysLabel}</span></td>
-      <td style="padding:14px 16px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}</td>
+      <td style="padding:14px 16px;display:flex;align-items:center;gap:8px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}<span style="margin-left:auto;">${rowMenu(o)}</span></td>
     </tr>`;}).join(''):`<tr><td colspan="9" class="empty">해당 기관 없음</td></tr>`;
   updateBulkQuickContactBar();
 }
