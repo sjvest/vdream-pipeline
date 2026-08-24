@@ -1661,6 +1661,11 @@ const MEMBERS=['김지현','박서준','이수민','최예진','정현우'];
 // 신규 저장은 반드시 이 8개 값 중 하나만 사용한다. "인재등록"은 업무 상태가 아니라
 // "아직 지원 안 하고 인재풀에만 등록된(대기)" 시스템 기준값이라 별도로 유지한다.
 const OFFICIAL_STATUSES=['인재등록','채용지원','서류합격','서류불합격','최종합격','최종불합격','지원취소','계약종료'];
+// ── 빠른 접촉 기록 (2026-08-22 신설) ──
+// 통화·미팅 같은 "직접 컨택"과 구분되는 "간편 접촉"(공고/자료 발송 등). 같은 contact_logs 테이블을
+// 재사용하되 is_quick=true로 표시한다. 마지막 연락일/전체 컨택 수엔 포함되지만, 미팅 KPI나 파이프라인
+// 단계 자동승격(autoBumpMeetingStage)은 절대 트리거하지 않는다.
+const QUICK_CONTACT_TYPES=['채용공고 발송','자료 전달','이메일 발송','카카오톡 공유','문자 발송','기타'];
 const STATUS_META={
   인재등록:{hex:'#7c3aed',bg:'#ede9fe',cls:'b-purple'},
   채용지원:{hex:'#2563eb',bg:'#dbeafe',cls:'b-blue'},
@@ -6629,6 +6634,21 @@ async function openOrg(id){
       </div>
     </div>`:''}
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
+    <div style="font-size:13px;font-weight:800;color:var(--teal);background:#f0fdfa;padding:6px 12px;border-radius:8px;margin:14px 0 8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bolt"></i> 빠른 접촉 기록</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+      ${QUICK_CONTACT_TYPES.map(qt=>`<button onclick="openQuickContactForm(${id},'${qt}')" style="font-size:11px;padding:6px 12px;border:1.5px solid var(--teal);color:var(--teal);background:var(--teal-bg);border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;">${qt}</button>`).join('')}
+    </div>
+    <div id="quick-contact-form-${id}" style="display:none;margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <span id="quick-contact-type-label-${id}" style="font-size:12px;font-weight:700;color:var(--teal);"></span>
+        <span id="quick-contact-datetime-${id}" style="font-size:11px;color:var(--text3);"></span>
+      </div>
+      <textarea id="quick-contact-memo-${id}" placeholder="메모 (선택)" style="width:100%;min-height:44px;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;resize:vertical;"></textarea>
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;">
+        <button onclick="closeQuickContactForm(${id})" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;">취소</button>
+        <button id="quick-contact-save-btn-${id}" onclick="saveQuickContact(${id})" style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;">저장</button>
+      </div>
+    </div>
     <div style="font-size:13px;font-weight:800;color:var(--purple);background:#faf5ff;padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-history"></i> 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
@@ -6819,18 +6839,22 @@ function renderContactLogItem(l,orgId){
   const timeStr=fTime(l.logged_at||l.created_at);
   const dateStr=fDate(l.date);
   const hasMemo=!!l.memo;
-  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
+  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>',
+    '채용공고 발송':'<i class="ti ti-briefcase"></i>','자료 전달':'<i class="ti ti-file-text"></i>','이메일 발송':'<i class="ti ti-mail"></i>','카카오톡 공유':'<i class="ti ti-message-circle"></i>','문자 발송':'<i class="ti ti-message"></i>'};
   const typeIcon=TYPE_ICON[l.contact_type]||'';
   const isInProgress=l.status==='진행중';
   const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 완료</span>';
+  // 빠른 접촉(간편 접촉)은 통화·미팅 같은 직접 컨택과 구분되게 별도 배지로 표시한다 (2026-08-22).
+  const quickBadge=l.is_quick?'<span style="font-size:10px;font-weight:700;color:var(--teal);background:var(--teal-bg);padding:1px 7px;border-radius:4px;flex-shrink:0;">간편 접촉</span>':'';
   const threads=l.threads||[];
   return`<div class="contact-log-item" id="log-item-${l.id}" style="${isInProgress?'border-left:3px solid #f97316;padding-left:8px;':''}">
-    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="toggleLogDetail(${l.id})">
+    <div style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-wrap:wrap;" onclick="toggleLogDetail(${l.id})">
       <div style="width:8px;height:8px;border-radius:50%;background:${isInProgress?'#f97316':'var(--accent)'};flex-shrink:0;"></div>
       <span style="font-size:12px;flex-shrink:0;">${typeIcon}</span>
       <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${dateStr}</span>
       <span style="font-size:11px;color:var(--accent);flex-shrink:0;background:var(--accent-bg);padding:1px 7px;border-radius:4px;font-weight:600;">${timeStr}</span>
       <span style="font-size:12px;font-weight:600;flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${l.summary}</span>
+      ${quickBadge}
       ${statusBadge}
       ${threads.length?`<span style="font-size:10px;font-weight:700;color:#b54708;background:#fffbeb;border:1px solid #fcd34d;padding:1px 7px;border-radius:10px;flex-shrink:0;">+${threads.length} 추가상담</span>`:''}
       ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
@@ -6964,6 +6988,63 @@ async function autoBumpMeetingStage(o,orgId,dateStr){
   const{error:stageErr}=await sb.from('orgs').update(stagePatch).eq('id',orgId);
   if(stageErr)console.warn('[Supabase Error] 미팅 로그로 인한 단계/날짜 자동 갱신 실패:',stageErr);
   else{if(stagePatch.stage!==undefined)o.stage=stagePatch.stage;if(stagePatch.date!==undefined)o.date=stagePatch.date;}
+}
+let quickContactPending=null; // {orgId,type} — 저장 중 중복 클릭 방지 + 폼이 어느 기관/유형용인지 추적
+function openQuickContactForm(orgId,type){
+  quickContactPending={orgId,type};
+  const label=document.getElementById(`quick-contact-type-label-${orgId}`);
+  if(label)label.textContent=type;
+  const dt=document.getElementById(`quick-contact-datetime-${orgId}`);
+  if(dt)dt.textContent=`${fDate(today())} ${new Date().toTimeString().slice(0,5)}`;
+  const memo=document.getElementById(`quick-contact-memo-${orgId}`);
+  if(memo)memo.value='';
+  const form=document.getElementById(`quick-contact-form-${orgId}`);
+  if(form)form.style.display='block';
+}
+function closeQuickContactForm(orgId){
+  quickContactPending=null;
+  const form=document.getElementById(`quick-contact-form-${orgId}`);
+  if(form)form.style.display='none';
+}
+async function saveQuickContact(orgId){
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
+  if(!quickContactPending||quickContactPending.orgId!==orgId)return;
+  const type=quickContactPending.type;
+  const saveBtn=document.getElementById(`quick-contact-save-btn-${orgId}`);
+  // 중복 저장 방지: 저장 중일 때 버튼을 잠가서 연타로 두 번 기록되는 것을 막는다.
+  if(saveBtn){
+    if(saveBtn.dataset.saving==='1')return;
+    saveBtn.dataset.saving='1';saveBtn.disabled=true;saveBtn.textContent='저장 중...';
+  }
+  try{
+    const memo=document.getElementById(`quick-contact-memo-${orgId}`)?.value.trim()||null;
+    const dateStr=today();
+    const nowIso=new Date().toISOString();
+    const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+    const{data,error}=await sb.from('contact_logs').insert({
+      org_id:orgId,summary:type,memo,date:dateStr,logged_at:nowIso,
+      created_by:currentUser?.id||null,created_by_name:myName,
+      contact_type:type,status:'완료',is_quick:true
+    }).select().single();
+    if(error){toast('저장 실패: '+error.message);return;}
+    cache.logs.unshift(data);
+    // 마지막 연락일 갱신(=미연락 일수 자동으로 0으로 초기화됨) — 직접 컨택과 동일하게 처리.
+    const{error:orgErr}=await sb.from('orgs').update({lastcontact:dateStr}).eq('id',orgId);
+    if(orgErr)console.warn('[Supabase Error] lastcontact 갱신 실패:',orgErr);
+    else{const o=cache.orgs.find(x=>x.id===orgId);if(o)o.lastcontact=dateStr;}
+    // 빠른 접촉은 간편 접촉이라 미팅완료 자동승격/파이프라인 단계 변경을 절대 트리거하지 않는다 (명세).
+    const logList=document.getElementById('contact-log-list');
+    if(logList)logList.innerHTML=renderContactLogs(orgId);
+    closeQuickContactForm(orgId);
+    toast(`${type} 기록됨`);
+    updateNavBadges();
+    renderCurrent();
+  }catch(e){
+    toast('저장 중 오류가 발생했어요: '+(e?.message||e));
+  }finally{
+    quickContactPending=null;
+    if(saveBtn){saveBtn.dataset.saving='';saveBtn.disabled=false;saveBtn.textContent='저장';}
+  }
 }
 async function addContactLog(orgId){
   if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
