@@ -3843,16 +3843,27 @@ function selectExistingTalent(i,talentId){
   const dd=document.getElementById(`t-name-dropdown-${i}`);if(dd)dd.style.display='none';
   document.getElementById(`t-name-${i}`).value=t.name;
   if(t.phone){const ph=document.getElementById(`t-phone-${i}`);if(ph)ph.value=t.phone;}
+  // 기존 인재로 연결되면 생년월일/장애유형/장애등급은 이 사람 고유 정보라 다시 입력받을 필요가 없다.
+  // 어차피 연결된 경우 talents insert를 안 타서 여기 값은 저장에 반영되지도 않았는데(무시됨),
+  // 화면엔 빈칸으로 보여서 "왜 정보가 안 채워지지" 혼란을 줬다 — 자동 채움 + 읽기전용으로 정리 (2026-08-22).
+  const bd=document.getElementById(`t-birthdate-${i}`);if(bd){bd.value=t.birth_date||'';bd.disabled=true;bd.style.background='var(--bg)';}
+  const dt=document.getElementById(`t-distype-${i}`);if(dt){dt.value=t.disability_type||'';dt.disabled=true;dt.style.background='var(--bg)';}
+  const dg=document.getElementById(`t-disgrade-${i}`);if(dg){dg.value=t.disability_grade||'';dg.disabled=true;dg.style.background='var(--bg)';}
   const box=document.getElementById(`t-match-${i}`);
   if(box){
     box.style.display='block';
-    box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;"> 기존 인재 <b>${t.name}</b>로 연결됨(${t.phone||'전화번호 없음'}) — 새로 등록하지 않고 지원이력만 추가됩니다. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">연결 취소</button></div>`;
+    box.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:6px;padding:8px 10px;font-size:12px;"> 기존 인재 <b>${t.name}</b>로 연결됨(${t.phone||'전화번호 없음'}) — 새로 등록하지 않고 지원이력만 추가됩니다. 생년월일/장애유형/장애등급은 기존 정보를 그대로 사용해요. <button type="button" onclick="unlinkExistingTalent(${i})" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">연결 취소</button></div>`;
   }
 }
 function unlinkExistingTalent(i){
   talentLinkMap[i]=null;
   const box=document.getElementById(`t-match-${i}`);
   if(box){box.style.display='none';box.innerHTML='';}
+  // 연결 해제 시 잠가뒀던 필드들을 다시 직접 입력 가능하게 되돌린다 (새 인물로 등록하는 경우이므로).
+  ['t-birthdate-','t-distype-','t-disgrade-'].forEach(prefix=>{
+    const el=document.getElementById(`${prefix}${i}`);
+    if(el){el.disabled=false;el.style.background='';}
+  });
 }
 // 이름 검색 드롭다운 바깥 클릭 시 닫기 (여러 행이 동시에 있을 수 있어 wrap id 패턴으로 판별)
 document.addEventListener('click',e=>{
