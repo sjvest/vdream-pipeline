@@ -5695,7 +5695,10 @@ async function renderJobs(){
       </td>
       <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}> 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}> 완료</option></select>${bufferBadgeHtml}</td>
       <td style="padding:13px 16px;">
-        <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+          <button onclick="event.stopPropagation();openAddTalentForJob(${j.id})" style="background:var(--accent);border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;" onmouseover="this.style.filter='brightness(.92)'" onmouseout="this.style.filter=''"><i class="ti ti-user-plus"></i> 지원자 등록</button>
+          <button onclick="event.stopPropagation();openEditJob(${j.id})" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:11px;color:var(--text2);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'"><i class="ti ti-edit"></i></button>
+        </div>
       </td>
     </tr>
     <tr class="${rowClass||''}" id="job-detail-${j.id}" style="display:none;">
