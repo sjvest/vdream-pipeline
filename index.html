@@ -540,7 +540,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <!-- 일괄 빠른 접촉: 체크박스로 여러 기관을 골라 채용공고/자료 등을 한 번에 발송했다는 기록을 남긴다 (2026-08-22). -->
   <div id="bulk-quick-contact-bar" style="display:none;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
-      <span style="font-size:13px;font-weight:800;color:var(--teal);"><i class="ti ti-bolt"></i> <span id="bulk-quick-contact-count">0</span>개 기관 선택됨</span>
+      <span style="font-size:13px;font-weight:800;color:var(--teal);"><span id="bulk-quick-contact-count">0</span>개 기관 선택됨</span>
       <button onclick="clearSelectedOrgs()" style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline;">선택 해제</button>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
@@ -6738,7 +6738,7 @@ async function openOrg(id){
       </div>
     </div>`:''}
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
-    <div style="font-size:13px;font-weight:800;color:var(--teal);background:#f0fdfa;padding:6px 12px;border-radius:8px;margin:14px 0 8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bolt"></i> 빠른 접촉 기록</div>
+    <div style="font-size:13px;font-weight:800;color:var(--teal);background:#f0fdfa;padding:6px 12px;border-radius:8px;margin:14px 0 8px;display:flex;align-items:center;gap:6px;">빠른 접촉 기록</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
       ${QUICK_CONTACT_TYPES.map(qt=>`<button onclick="openQuickContactForm(${id},'${qt}')" style="font-size:11px;padding:6px 12px;border:1.5px solid var(--teal);color:var(--teal);background:var(--teal-bg);border-radius:20px;cursor:pointer;font-weight:600;white-space:nowrap;">${qt}</button>`).join('')}
     </div>
@@ -6947,8 +6947,7 @@ function renderContactLogItem(l,orgId){
   const timeStr=fTime(l.logged_at||l.created_at);
   const dateStr=fDate(l.date);
   const hasMemo=!!l.memo;
-  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>',
-    '채용공고 발송':'<i class="ti ti-briefcase"></i>','자료 전달':'<i class="ti ti-file-text"></i>','이메일 발송':'<i class="ti ti-mail"></i>','카카오톡 공유':'<i class="ti ti-message-circle"></i>','문자 발송':'<i class="ti ti-message"></i>'};
+  const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
   const typeIcon=TYPE_ICON[l.contact_type]||'';
   const isInProgress=l.status==='진행중';
   const statusBadge=isInProgress?'<span style="font-size:10px;font-weight:700;color:#f97316;background:#fff7ed;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 진행중</span>':'<span style="font-size:10px;font-weight:700;color:var(--green);background:#f0fdf4;padding:1px 7px;border-radius:4px;flex-shrink:0;"> 완료</span>';
