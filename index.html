@@ -996,6 +996,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <!-- 요약 카드 -->
   <div id="job-metrics" style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;"></div>
 
+  <!-- 기업(기관)별 서칭 현황: 부여받은 기업에 지원자 1명 등록될 때마다 sourcing_candidates에 1건씩 쌓이는데,
+       이걸 job.company 기준으로 묶어서 "이 기업에 서칭 몇 건 했는지" 한눈에 보여준다 (2026-08-21 요청). -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleCompanySourcingPanel()">
+      <i class="ti ti-building-skyscraper" style="color:var(--purple)"></i> 기업별 서칭 현황
+      <span id="company-sourcing-toggle-icon" style="margin-left:auto;font-size:11px;color:var(--text3);"><i class="ti ti-chevron-down"></i></span>
+    </div>
+    <div id="company-sourcing-panel" style="display:none;padding:0 4px 4px;"></div>
+  </div>
+
   <!-- 채용 건 테이블 -->
   <div class="card">
     <div class="card-header"><i class="ti ti-briefcase" style="color:var(--accent)"></i>채용 건 목록</div>
@@ -3926,8 +3936,11 @@ async function saveTalent(){
           // 본인 앞으로 잡힌 서칭 배정이 없는 경우, 실적이 누락되지 않도록 그 자리에서 배정을 자동 생성한다.
           // 목표 인원은 미설정(null)으로 두고, 담당자가 나중에 채용건 화면에서 목표를 직접 채워넣을 수 있다.
           const job=cache.jobs.find(x=>x.id===scopedJobId);
+          // job.company(자유텍스트)와 기관명이 정확히 일치하면 org_id를 연결해둔다 — 지금까진 항상
+          // null로 남아있어서 "기업 연결이 안 된다"는 피드백을 받았다 (2026-08-21).
+          const matchedOrg=cache.orgs.find(o=>o.name===job?.company);
           const newRow={
-            job_id:scopedJobId,org_id:null,category:job?.job_title||null,
+            job_id:scopedJobId,org_id:matchedOrg?.id||null,category:job?.job_title||null,
             assigned_to:myName2,target_count:null,
             start_date:today(),due_date:null,status:'진행중'
           };
@@ -5471,9 +5484,11 @@ async function saveSourcingAssignment(jobId){
   if(!assignedTo){toast('담당자를 선택하세요');return;}
   const targetRaw=document.getElementById('sa-target-'+jobId)?.value;
   const job=cache.jobs.find(x=>Number(x.id)===Number(jobId));
+  // job.company(자유텍스트)와 기관명이 정확히 일치하면 org_id를 연결한다 (2026-08-21, "기업 연결 안 됨" 피드백 반영).
+  const matchedOrg=cache.orgs.find(o=>o.name===job?.company);
   const row={
     job_id:jobId,
-    org_id:null, // jobs에 org_id 연결이 없어 이번 단계에서는 비워둠 (추후 jobs-orgs 연결 정리 후 채울 예정)
+    org_id:matchedOrg?.id||null,
     category:job?.job_title||null,
     assigned_to:assignedTo,
     target_count:targetRaw===''?null:parseInt(targetRaw),
@@ -5502,6 +5517,41 @@ async function deleteSourcingAssignment(id){
   toast('배정 삭제됨');
   renderJobs();
 }
+// 기업(기관)별 서칭 건수 집계 — jobs.company(자유텍스트) 기준으로 묶는다.
+// sourcing_assignments.org_id는 예전부터 비워져 있는 경우가 많아(회사명↔기관 FK가 없었음) 이 값에는
+// 의존하지 않고, job.company 문자열 자체로 묶어서 안정적으로 집계한다. 이름이 orgs.name과 정확히
+// 일치하면 클릭 시 기관 상세로 이동할 수 있게 연결한다 (2026-08-21 요청).
+function renderCompanySourcing(){
+  const panel=document.getElementById('company-sourcing-panel');
+  if(!panel)return;
+  const byCompany={};
+  (cache.sourcingAssignments||[]).forEach(a=>{
+    const job=(cache.jobs||[]).find(j=>j.id===a.job_id);
+    const company=job?.company||'미상';
+    const cnt=(cache.sourcingCandidates||[]).filter(c=>c.sourcing_assignment_id===a.id).length;
+    if(!byCompany[company])byCompany[company]={count:0,jobs:new Set()};
+    byCompany[company].count+=cnt;
+    if(job?.job_title)byCompany[company].jobs.add(job.job_title);
+  });
+  const rows=Object.entries(byCompany).filter(([,v])=>v.count>0).sort((a,b)=>b[1].count-a[1].count);
+  if(!rows.length){panel.innerHTML='<div style="font-size:12px;color:var(--text3);padding:12px 10px;">아직 서칭 실적이 없어요</div>';return;}
+  panel.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:8px 10px;color:var(--text3);font-weight:600;">기업명</th><th style="text-align:left;padding:8px 10px;color:var(--text3);font-weight:600;">직무</th><th style="text-align:right;padding:8px 10px;color:var(--text3);font-weight:600;">서칭 건수</th></tr></thead>
+    <tbody>${rows.map(([company,v])=>{
+      const org=(cache.orgs||[]).find(o=>o.name===company);
+      const nameHtml=org?`<span style="color:var(--accent);cursor:pointer;font-weight:700;" onclick="openOrg(${org.id})">${company}</span>`:`<span style="font-weight:700;">${company}</span>`;
+      return `<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 10px;">${nameHtml}</td><td style="padding:8px 10px;color:var(--text3);">${[...v.jobs].join(', ')}</td><td style="padding:8px 10px;text-align:right;font-weight:800;color:var(--purple);">${v.count}건</td></tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+function toggleCompanySourcingPanel(){
+  const panel=document.getElementById('company-sourcing-panel');
+  const icon=document.getElementById('company-sourcing-toggle-icon');
+  if(!panel)return;
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  if(icon)icon.innerHTML=open?'<i class="ti ti-chevron-up"></i>':'<i class="ti ti-chevron-down"></i>';
+}
 async function renderJobs(){
   const{data,error}=await sb.from('jobs').select('*').order('deadline',{ascending:true});
   if(error){toast('오류: '+error.message);return;}
@@ -5528,6 +5578,7 @@ async function renderJobs(){
     <div class="metric"><div class="metric-label">완료 채용 건</div><div class="metric-value" style="color:var(--green);">${done}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">지원자 추천</div><div class="metric-value" style="color:var(--purple);">${referredApplicants}</div><div class="metric-sub">명</div></div>
   `;
+  renderCompanySourcing();
 
   // 테이블 렌더링 — 진행중 건은 그대로 표시, 완료 건은 아코디언으로 접어서 하단에 모아둔다
   const activeJobs=cache.jobs.filter(j=>j.status!=='완료').sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
