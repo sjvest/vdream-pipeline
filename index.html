@@ -545,7 +545,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
       <select id="bulk-quick-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
-        <option>채용공고 발송</option><option>자료 전달</option><option>기타</option>
+        <option>채용공고 발송</option><option>자료 전달</option><option>안부메세지 발송</option><option>기타</option>
       </select>
       <select id="bulk-quick-channel" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;">
         <option value="">채널 선택 (선택사항)</option>
@@ -1686,7 +1686,7 @@ const OFFICIAL_STATUSES=['인재등록','채용지원','서류합격','서류불
 // 단계 자동승격(autoBumpMeetingStage)은 절대 트리거하지 않는다.
 // 빠른 접촉 = "무엇을 보냈나"(내용)와 "어떻게 보냈나"(채널) 두 축을 분리해서 정보 손실 없이 기록한다.
 // 채널은 선택사항 — 급할 땐 내용만 고르고 바로 저장 가능 (2026-08-22, 실제 업무 피드백 반영해 재설계).
-const QUICK_CONTACT_TYPES=['채용공고 발송','자료 전달','기타'];
+const QUICK_CONTACT_TYPES=['채용공고 발송','자료 전달','안부메세지 발송','기타'];
 const QUICK_CONTACT_CHANNELS=['이메일','카카오톡','문자','기타'];
 const STATUS_META={
   인재등록:{hex:'#7c3aed',bg:'#ede9fe',cls:'b-purple'},
