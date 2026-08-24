@@ -7355,7 +7355,7 @@ async function handleModalCardImage(event,orgId){
   // 기관 목록 표의 명함 썸네일은 orgs.business_card_url을 읽는데(목록은 대량조회라 card_image는
   // 아예 안 불러옴 — egress 절감 목적), 지금까진 이 값을 안 채워서 "명함 추가"로 올린 사진이
   // 목록에서 안 보였다. 아직 비어있으면 방금 올린 명함으로 채워준다 (2026-08-03 수정).
-  // ⚠️ cache.orgs는 Hybrid Loading으로 business_card_url이 아예 없는 경량 버전으로 덮어써질 수 있어서,
+  // 주의: cache.orgs는 Hybrid Loading으로 business_card_url이 아예 없는 경량 버전으로 덮어써질 수 있어서,
   // 캐시만 보고 "비어있다"고 판단하면 이미 저장된 최초 명함 URL을 새 명함으로 덮어쓰는 사고가 났다
   // (2026-08-19, 한국지체장애인협회 사례 — 오창석 최초 명함이 사라짐). DB에서 직접 최신값을 확인한다.
   const{data:freshOrg,error:freshErr}=await sb.from('orgs').select('business_card_url').eq('id',orgId).single();
