@@ -4154,6 +4154,17 @@ async function saveTalent(){
     if(appErr){console.error('[Supabase Error] candidate_applications 자동생성 실패:',appErr);toast('일부 지원이력 생성 중 오류가 발생했습니다.');}
     else{
       apps.forEach(a=>cache.applications.push(a));
+      // 채용건 컨텍스트에서 등록된 경우, "확보 인원"도 등록한 인원 수만큼 자동으로 올려준다 —
+      // 지금까진 지원자 등록과 별개로 드롭다운에서 매번 수동으로 맞춰야 했다 (2026-08-24 요청).
+      if(scopedJobId){
+        const jobForCount=cache.jobs.find(x=>x.id===scopedJobId);
+        if(jobForCount){
+          const newCount=(jobForCount.current_count||0)+apps.length;
+          const{error:cntErr}=await sb.from('jobs').update({current_count:newCount}).eq('id',scopedJobId);
+          if(cntErr)console.error('[Supabase Error] 확보인원 자동 갱신 실패:',cntErr);
+          else{jobForCount.current_count=newCount;renderJobs();}
+        }
+      }
       // 채용건 컨텍스트에서 등록된 경우, 본인 앞으로 잡힌 서칭 배정에 실적을 자동 연결한다.
       // 사람이 배정을 다시 고르지 않고 (job_id + 본인 이름)으로만 매칭한다.
       if(scopedJobId){
