@@ -1046,7 +1046,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">마감일</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">D-day</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">진행 현황</th>
-        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">확보 인원 업데이트</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">확보 인원</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">상태</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;"></th>
       </tr></thead>
@@ -1073,7 +1073,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div class="fg-row fg-3">
       <div class="fg"><label>채용 목표 인원 *</label><input id="job-headcount" type="number" min="1" placeholder="0"></div>
-      <div class="fg"><label>현재 확보 인원</label><input id="job-current" type="number" min="0" placeholder="0"></div>
+      <div class="fg"><label>현재 확보 인원 (자동 집계)</label><input id="job-current" type="number" min="0" placeholder="0" disabled style="background:var(--bg);color:var(--text3);"></div>
       <div class="fg"><label>마감일 *</label><input id="job-deadline" type="date"></div>
     </div>
     <div class="fg-row fg-2">
@@ -4154,15 +4154,17 @@ async function saveTalent(){
     if(appErr){console.error('[Supabase Error] candidate_applications 자동생성 실패:',appErr);toast('일부 지원이력 생성 중 오류가 발생했습니다.');}
     else{
       apps.forEach(a=>cache.applications.push(a));
-      // 채용건 컨텍스트에서 등록된 경우, "확보 인원"도 등록한 인원 수만큼 자동으로 올려준다 —
-      // 지금까진 지원자 등록과 별개로 드롭다운에서 매번 수동으로 맞춰야 했다 (2026-08-24 요청).
+      // "확보 인원"은 화면(renderJobs)에서 매번 candidate_applications를 실시간으로 세어 보여주므로
+      // 화면 자체는 이 코드가 없어도 정확하다. 다만 구글챗 알림(job-alert-*)은 DB의 jobs.current_count
+      // 컬럼 값을 그대로 읽어가는 구조라, 알림 문구도 어긋나지 않도록 실제 건수로 동기화해둔다
+      // (상태 무관 전체 카운팅 — 2026-08-24 요청).
       if(scopedJobId){
         const jobForCount=cache.jobs.find(x=>x.id===scopedJobId);
         if(jobForCount){
-          const newCount=(jobForCount.current_count||0)+apps.length;
-          const{error:cntErr}=await sb.from('jobs').update({current_count:newCount}).eq('id',scopedJobId);
-          if(cntErr)console.error('[Supabase Error] 확보인원 자동 갱신 실패:',cntErr);
-          else{jobForCount.current_count=newCount;renderJobs();}
+          const actualCount=cache.applications.filter(a=>a.job_id===scopedJobId).length;
+          const{error:cntErr}=await sb.from('jobs').update({current_count:actualCount}).eq('id',scopedJobId);
+          if(cntErr)console.error('[Supabase Error] 확보인원(current_count) 동기화 실패:',cntErr);
+          else{jobForCount.current_count=actualCount;renderJobs();}
         }
       }
       // 채용건 컨텍스트에서 등록된 경우, 본인 앞으로 잡힌 서칭 배정에 실적을 자동 연결한다.
@@ -5823,20 +5825,19 @@ async function renderJobs(){
   const doneJobs=cache.jobs.filter(j=>j.status==='완료').sort((a,b)=>new Date(b.deadline)-new Date(a.deadline));
 
   const jobRowHtml=(j,rowClass)=>{
+    // "확보 인원"은 더 이상 별도 저장값을 수동으로 맞추지 않고, 이 채용건으로 실제 등록된
+    // 지원이력 건수를 그때그때 세어서 보여준다 — 상태(지원취소/불합격 포함) 무관하게 전부 포함
+    // (해당 부서에서 지원자를 찾아낸 것 자체가 실적이라는 판단, 2026-08-24).
+    const actualCount=(cache.applications||[]).filter(a=>a.job_id===j.id).length;
     const days=j.deadline?Math.floor((new Date(j.deadline)-now)/864e5):null;
-    const pct=j.headcount?Math.min(100,Math.round((j.current_count||0)/j.headcount*100)):0;
-    const remain=Math.max(0,(j.headcount||0)-(j.current_count||0));
+    const pct=j.headcount?Math.min(100,Math.round(actualCount/j.headcount*100)):0;
+    const remain=Math.max(0,(j.headcount||0)-actualCount);
     const daysColor=days===null?'var(--text3)':days<0?'var(--red)':days<=7?'var(--amber)':'var(--green)';
     const daysLabel=days===null?'—':days<0?`D+${Math.abs(days)} 초과`:days===0?'오늘 마감!':days<=7?` D-${days}`:`D-${days}`;
     const barColor=pct>=100?'var(--green)':days!==null&&days<=7?'var(--red)':'var(--accent)';
-    // 드롭다운 옵션 (0 ~ 목표인원+10). 예전엔 headcount까지만 옵션이 있어서 목표를 초과해
-    // 서칭했을 때 그 이상 값을 아예 선택할 수 없었다 (2026-08-22 발견 — 이슬민님 피드백).
-    // 실제 확보 인원이 이미 이 범위를 넘었다면 그 값까지는 무조건 포함되도록 상한을 더 여유있게 잡는다.
-    const optMax=Math.max((j.headcount||0)+10,(j.current_count||0)+5);
-    const opts=Array.from({length:optMax+1},(_,i)=>`<option value="${i}"${i===(j.current_count||0)?' selected':''}>${i}명</option>`).join('');
     // 목표 인원을 이미 다 채웠는데도 상태가 '서칭중'인 건 = 완료 후 추가 배정으로 재오픈된 "추가서칭" 건.
     // 목록에서 펼쳐보지 않아도 몇 건이 이런 상태이고 진행이 어떤지 바로 보이도록 배지로 표시한다 (2026-07-27).
-    const isBufferSourcing=j.status==='서칭중'&&(j.headcount||0)>0&&(j.current_count||0)>=(j.headcount||0);
+    const isBufferSourcing=j.status==='서칭중'&&(j.headcount||0)>0&&actualCount>=(j.headcount||0);
     let bufferBadgeHtml='';
     if(isBufferSourcing){
       const jobAssignments=(cache.sourcingAssignments||[]).filter(a=>a.job_id===j.id);
@@ -5860,17 +5861,15 @@ async function renderJobs(){
           <div style="flex:1;background:#f1f4f9;border-radius:20px;height:8px;overflow:hidden;">
             <div style="width:${pct}%;height:100%;background:${barColor};border-radius:20px;transition:width .3s;"></div>
           </div>
-          <span style="font-size:12px;font-weight:700;color:${barColor};white-space:nowrap;">${j.current_count||0}/${j.headcount}명</span>
+          <span style="font-size:12px;font-weight:700;color:${barColor};white-space:nowrap;">${actualCount}/${j.headcount}명</span>
         </div>
         ${remain>0&&j.status==='진행중'?`<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:600;">미충원 ${remain}명</div>`:''}
       </td>
       <td style="padding:13px 16px;">
         ${j.status!=='완료'?`
         <div style="display:flex;align-items:center;gap:6px;">
-          <select onchange="updateJobCount(${j.id},this.value)" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:#fff;font-weight:600;cursor:pointer;">
-            ${opts}
-          </select>
-          <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명</span>
+          <span style="font-size:13px;font-weight:800;color:var(--text);">${actualCount}명</span>
+          <span style="font-size:11px;color:var(--text3);">/ ${j.headcount}명 (자동집계)</span>
         </div>`:'—'}
       </td>
       <td style="padding:13px 16px;"><select onchange="event.stopPropagation();cycleJobStatusSelect(Number(${j.id}),this.value)" onclick="event.stopPropagation()" style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:6px;cursor:pointer;border:1.5px solid ${j.status==='완료'?'var(--green)':'var(--accent)'};background:${j.status==='완료'?'var(--green-bg)':'var(--accent-bg)'};color:${j.status==='완료'?'var(--green)':'var(--accent)'};"><option value='서칭중' ${j.status==='서칭중'?'selected':''}> 서칭중</option><option value='완료' ${j.status==='완료'?'selected':''}> 완료</option></select>${bufferBadgeHtml}</td>
@@ -5989,7 +5988,7 @@ function loadExistingJob(id){
   document.getElementById('job-company').value=j.company||'';
   document.getElementById('job-title').value=j.job_title||'';
   document.getElementById('job-headcount').value=j.headcount||'';
-  document.getElementById('job-current').value=j.current_count||0;
+  document.getElementById('job-current').value=(cache.applications||[]).filter(a=>a.job_id===j.id).length;
   document.getElementById('job-sourcing-target').value=j.sourcing_target_count??'';
   document.getElementById('job-unit-price').value=j.unit_price??'';
   document.getElementById('job-deadline').value=j.deadline||'';
@@ -6057,7 +6056,7 @@ function openEditJob(id){
   document.getElementById('job-company').value=j.company||'';
   document.getElementById('job-title').value=j.job_title||'';
   document.getElementById('job-headcount').value=j.headcount||'';
-  document.getElementById('job-current').value=j.current_count||0;
+  document.getElementById('job-current').value=(cache.applications||[]).filter(a=>a.job_id===j.id).length;
   document.getElementById('job-sourcing-target').value=j.sourcing_target_count??'';
   document.getElementById('job-unit-price').value=j.unit_price??'';
   document.getElementById('job-deadline').value=j.deadline||'';
@@ -6082,7 +6081,6 @@ async function saveJob(){
   const unitPriceRaw=document.getElementById('job-unit-price').value;
   const row={
     company,job_title:jobTitle,headcount,
-    current_count:parseInt(document.getElementById('job-current').value)||0,
     sourcing_target_count:sourcingTargetRaw===''?null:parseInt(sourcingTargetRaw),
     unit_price:unitPriceRaw===''?null:parseInt(unitPriceRaw),
     deadline:document.getElementById('job-deadline').value||null,
@@ -6098,6 +6096,10 @@ async function saveJob(){
     notes:document.getElementById('job-notes').value.trim(),
     created_by:currentUser?.id||null,created_by_name:myName
   };
+  // 확보 인원은 이제 지원자 등록 시 자동 집계되는 값이라 수정 폼에서 손대지 않는다.
+  // 수정 시엔 이 필드를 아예 안 보내서 자동 집계된 값을 그대로 유지하고, 신규 등록 시에만 0으로 시작한다
+  // (2026-08-24 요청 — 수동 수정 불필요).
+  if(!currentJobId)row.current_count=0;
   if(currentJobId){
     const{data,error}=await sb.from('jobs').update(row).eq('id',currentJobId).select().single();
     if(error){toast('오류: '+error.message);return;}
