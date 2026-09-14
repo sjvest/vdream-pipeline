@@ -2657,8 +2657,9 @@ function renderDashboard(){
   if(greetEl){const name=currentProfile?.name||'팀장님';const h=now.getHours();const greet=h<12?'좋은 아침이에요':h<18?'안녕하세요':'수고하셨어요';greetEl.textContent=`${greet}, ${name} `;}
   const total=metricOrgs.length,mou=metricOrgs.filter(o=>o.stage>=4).length,active=metricOrgs.filter(o=>o.stage>=1&&o.stage<=3).length;
   const placed=metricTals.filter(t=>t.status==='최종합격').length,failed=metricTals.filter(t=>t.status==='서류불합격'||t.status==='최종불합격').length,recruiting=metricTals.filter(t=>t.status==='지원중'||t.status==='면접').length;
-  const needContact=orgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
-  const needContactCount=metricOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30).length;
+  // 보류(stage 9) 기관은 의도적으로 연락을 중단한 것이므로 미연락 알림에서 제외 (2026-09-01)
+  const needContact=orgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30));
+  const needContactCount=metricOrgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30)).length;
   const mouSoon=metricOrgs.filter(o=>o.stage===4&&o.mou_date&&Math.floor((new Date(o.mou_date)-now)/864e5)<=7&&Math.floor((new Date(o.mou_date)-now)/864e5)>=0).length;
   const pendingActs=acts.filter(a=>!a.done).length;
   const thisMonth=metricOrgs.filter(o=>o.created_at&&new Date(o.created_at).getMonth()===now.getMonth()&&new Date(o.created_at).getFullYear()===now.getFullYear()).length;
@@ -4467,7 +4468,7 @@ function renderAnalytics(){
     if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:''),items:tn.map(o=>({id:o.id,name:o.name,open:'org'}))});
     const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);
     if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요',items:exp.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);const days=Math.ceil((new Date(a.contract_end_date)-now)/864e5);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:`D-${days}`,open:'talent'};})});
-    const nc=allOrgs.filter(o=>!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30);
+    const nc=allOrgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30));
     if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장',items:nc.map(o=>({id:o.id,name:o.name,extra:o.lastcontact?`${Math.floor((now-new Date(o.lastcontact))/864e5)}일 전`:'연락 기록 없음',open:'org'}))});
     const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&a.status==='최종합격';}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);
     if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`,items:chStats.map(c=>({name:c.ch,extra:`전환율 ${c.rate}% (${c.t}건 중 ${Math.round(c.rate*c.t/100)}건 전환)`}))});
@@ -4938,6 +4939,7 @@ function checkContactAlert(){
   });
   const base=new Date();base.setHours(0,0,0,0);
   const overdue=(cache.orgs||[]).filter(o=>{
+    if(o.stage===9)return false; // 보류 단계 기관은 의도적으로 연락을 안 하는 중이므로 이 알림에서 제외 (2026-09-01)
     const last=lastLogMap[o.id];
     if(!last)return false;
     return Math.floor((base-new Date(last))/864e5)>=7;
