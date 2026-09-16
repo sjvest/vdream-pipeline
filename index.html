@@ -490,9 +490,22 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
   </div>
 
+  <!-- 팀원별 이번달 현황 -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-header"><i class="ti ti-users" style="color:var(--accent)"></i>팀원별 이번달 현황</div>
+    <div class="card-body">
+      <div style="position:relative;height:240px;"><canvas id="team-month-chart"></canvas></div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2d5be3;display:inline-block;"></span>컨택</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eab308;display:inline-block;"></span>미팅</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block;"></span>인재영입</span>
+      </div>
+    </div>
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
     <div class="card"><div class="card-header"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>마감 임박 후속 액션</div><div class="card-body" style="padding:0 16px;" id="dash-actions"><div class="loading"><div class="spin"></div></div></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div class="loading"><div class="spin"></div></div></div></div>
+    <div class="card"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages"><div style="position:relative;height:180px;"><canvas id="stage-donut-chart"></canvas></div><div id="dash-stages-legend" style="margin-top:8px;font-size:11px;"></div></div></div>
   </div>
   <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-file-time" style="color:var(--amber)"></i>계약 만료 임박 (30일 이내)</div><div class="card-body" style="padding:0 16px;" id="dash-contract-expiry"></div></div>
   <div class="card" style="margin-bottom:12px;"><div class="card-header"><i class="ti ti-clock" style="color:var(--amber)"></i>안부 연락 필요 기관 (30일 이상 미연락)</div><div class="card-body" style="padding:0 16px;" id="dash-contact"><div class="loading"><div class="spin"></div></div></div></div>
@@ -1793,6 +1806,8 @@ function doGuestLogin(){
 let cardImageBase64=null;
 let extraCardFiles=[]; // 명함 여러 장 선택 시, 첫 장(OCR 자동입력용) 외 나머지 파일들. 기관 저장 시 business_cards에 일괄 저장.
 let trendChart=null;
+let stageDonutChart=null;
+let teamMonthChart=null;
 let currentChartMode='week';
 
 function saveConfig(){
@@ -2711,13 +2726,49 @@ function renderDashboard(){
       <div style="flex:1;"><div class="action-text ${a.done?'done':''}">${a.text}</div><div style="font-size:10px;color:var(--text3);">${a.orgName}</div></div>
       <div class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}</div>
     </div>`).join(''):'<div class="empty">마감 임박 액션 없음 </div>';
-  const stageCounts=[0,1,2,3,4,5,6,9].map(s=>({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s]}));
-  document.getElementById('dash-stages').innerHTML=stageCounts.filter(s=>s.cnt>0).map(s=>`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <span class="badge ${s.cls}" style="min-width:70px;justify-content:center;">${s.label}</span>
-      <div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${total?Math.round(s.cnt/total*100):0}%;background:currentColor;border-radius:3px;" class="${s.cls}"></div></div>
-      <span style="font-size:11px;font-weight:500;width:18px;text-align:right;">${s.cnt}</span>
+  const stageCounts=[0,1,2,3,4,5,6,9].map((s,i)=>({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s],hex:STAGE_COLORS[i]||'#94a3b8'}));
+  const stageNonZero=stageCounts.filter(s=>s.cnt>0);
+  if(stageDonutChart)stageDonutChart.destroy();
+  const stageDonutEl=document.getElementById('stage-donut-chart');
+  if(stageDonutEl){
+    stageDonutChart=new Chart(stageDonutEl,{
+      type:'doughnut',
+      data:{labels:stageNonZero.map(s=>s.label),datasets:[{data:stageNonZero.map(s=>s.cnt),backgroundColor:stageNonZero.map(s=>s.hex),borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}
+    });
+  }
+  document.getElementById('dash-stages-legend').innerHTML=stageNonZero.map(s=>`
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="width:9px;height:9px;border-radius:2px;background:${s.hex};display:inline-block;flex-shrink:0;"></span>
+      <span style="flex:1;">${s.label}</span>
+      <span style="font-weight:700;">${s.cnt}</span>
     </div>`).join('');
+
+  // 팀원별 이번달 현황 (컨택/미팅/인재영입) — "다들 지금 어떤 상황인지 한눈에" 요청 반영 (2026-09-16)
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  const teamNames=(cache.profiles||[]).map(p=>p.name).filter(Boolean);
+  const inThisMonth=d=>{if(!d)return false;const dt=new Date(d);return dt>=monthStart&&dt<=now;};
+  const monthTouchpoints=expandLogTouchpoints(cache.logs).filter(t=>inThisMonth(t.rangeDate));
+  const monthCold=(cache.cold||[]).filter(c=>inThisMonth(c.logged_at||c.created_at));
+  const contactByMember=name=>monthTouchpoints.filter(t=>t.member===name).length+monthCold.filter(c=>(c.member||c.created_by_name)===name).length;
+  const meetingByMember=name=>monthTouchpoints.filter(t=>t.member===name&&t.contact_type==='미팅').length;
+  const hiredByMember=name=>metricTals.filter(t=>t.member===name&&t.status==='최종합격'&&inThisMonth(t.date)).length;
+  if(teamMonthChart)teamMonthChart.destroy();
+  const teamMonthEl=document.getElementById('team-month-chart');
+  if(teamMonthEl&&teamNames.length){
+    teamMonthChart=new Chart(teamMonthEl,{
+      type:'bar',
+      data:{
+        labels:teamNames,
+        datasets:[
+          {label:'컨택',data:teamNames.map(contactByMember),backgroundColor:'#2d5be3',borderRadius:4,barPercentage:.6},
+          {label:'미팅',data:teamNames.map(meetingByMember),backgroundColor:'#eab308',borderRadius:4,barPercentage:.6},
+          {label:'인재영입',data:teamNames.map(hiredByMember),backgroundColor:'#22c55e',borderRadius:4,barPercentage:.6},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
+    });
+  }
   document.getElementById('dash-contact').innerHTML=needContact.length?needContact.map(o=>{
     const days=o.lastcontact?Math.floor((now-new Date(o.lastcontact))/864e5):null;
     return`<div class="action-item" style="cursor:pointer;" onclick="openOrg(${o.id})">
