@@ -4547,7 +4547,11 @@ async function renderCold(){
   const TYPE_ICON2={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-note"></i>','전화':'<i class="ti ti-phone"></i>','방문':'<i class="ti ti-walk"></i>'};
   // 원본 로그 + 진행중 상담에 추가된 "추가 상담 내용"(threads)을 각각 별도 행으로 펼쳐서 보여준다.
   // 안 그러면 오늘 실제로 연락했어도(스레드만 추가) 이 피드에는 안 잡히고 org 상세를 열어야만 보였다 (2026-07-30 수정).
-  const logRows=(coldTab==='cold')?[]:expandLogTouchpoints(cache.logs).map(l=>({
+  // 상단 요약 카드(전체/오늘/등록기관/신규컨택)는 탭과 무관하게 항상 전체 기준으로 보여줘야 하는데,
+  // logRows/coldRows를 탭에 따라 비워버린 값으로 계산해서 "신규 컨택" 탭에 있으면 오늘 등록기관
+  // 컨택 건수가 통째로 안 잡히는 버그가 있었다 (2026-09-16 발견). 요약 카드 전용으로 항상-전체
+  // 버전(full*)을 따로 두고, 탭별 목록 필터링에는 기존처럼 조건부로 비운 값을 그대로 쓴다.
+  const fullLogRows=expandLogTouchpoints(cache.logs).map(l=>({
     _type:'reg',
     id:'log-'+l.log_id+(l.is_thread?'-t'+l.thread_idx:''),
     org_id:l.org_id,
@@ -4557,7 +4561,7 @@ async function renderCold(){
     member:l.created_by_name||'',
     date:l.rangeDate
   }));
-  const coldRows=(coldTab==='reg')?[]:(cache.cold||[]).map(c=>({
+  const fullColdRows=(cache.cold||[]).map(c=>({
     _type:'cold',
     id:'cold-'+c.id,
     org_id:null,
@@ -4568,6 +4572,8 @@ async function renderCold(){
     date:c.logged_at||c.created_at,
     result:c.result
   }));
+  const logRows=(coldTab==='cold')?[]:fullLogRows;
+  const coldRows=(coldTab==='reg')?[]:fullColdRows;
 
   // 필터 적용
   const fm=document.getElementById('cold-filter-member')?.value||'';
@@ -4590,13 +4596,14 @@ async function renderCold(){
     return true;
   });
 
-  // 요약 카드 업데이트 (오늘 컨택 전체)
-  const todayAllCnt=allRows.filter(r=>r.date?.slice(0,10)===todayStr).length;
+  // 요약 카드 업데이트 (탭과 무관하게 항상 전체 기준)
+  const fullAllRows=[...fullLogRows,...fullColdRows];
+  const todayAllCnt=fullAllRows.filter(r=>r.date?.slice(0,10)===todayStr).length;
   document.getElementById('cold-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${allRows.length}</div><div class="metric-sub">건 누적</div></div>
+    <div class="metric"><div class="metric-label">전체 컨택</div><div class="metric-value">${fullAllRows.length}</div><div class="metric-sub">건 누적</div></div>
     <div class="metric"><div class="metric-label">오늘 컨택</div><div class="metric-value" style="color:var(--accent);">${todayAllCnt}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">등록기관</div><div class="metric-value" style="color:var(--green);">${logRows.length}</div><div class="metric-sub">건</div></div>
-    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--purple);">${coldRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">등록기관</div><div class="metric-value" style="color:var(--green);">${fullLogRows.length}</div><div class="metric-sub">건</div></div>
+    <div class="metric"><div class="metric-label">신규 컨택</div><div class="metric-value" style="color:var(--purple);">${fullColdRows.length}</div><div class="metric-sub">건</div></div>
     <div class="metric"><div class="metric-label">기관 등록 전환</div><div class="metric-value" style="color:var(--teal);">${converted}</div><div class="metric-sub">건</div></div>
   `;
 
