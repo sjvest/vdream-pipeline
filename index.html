@@ -5220,6 +5220,14 @@ function loadOrgForEdit(orgId){
       <span style="color:var(--text3);margin-left:8px;">${fDate(h.date)}</span>
       ${h.reason?`<div style="color:var(--text3);margin-top:2px;">사유: ${h.reason}</div>`:''}
     </div>`).join(''):'<div style="color:var(--text3);font-size:12px;">변경 이력 없음</div>';
+  // 명함 미리보기 위젯 갱신 — 지금까진 텍스트 필드만 새로 채우고 이 위젯은 그대로 둬서,
+  // 방금 다른 기관을 등록/수정할 때 올렸던 명함이 계속 남아있는 것처럼 보이는 버그가 있었다
+  // (2026-09-02 발견). 이 기관 자체의 저장된 명함이 있으면 그걸 보여주고, 없으면 빈 상태로 초기화.
+  cardImageBase64=null;
+  extraCardFiles=[];
+  const existingCardUrl=o.business_card_url||o.card_image||null;
+  if(existingCardUrl){cardImageBase64=existingCardUrl;renderCardThumbnails();}
+  else clearCardPreview();
   // 스크롤 상단
   document.getElementById('p-add-org').scrollTop=0;
   toast(`"${o.name}" 불러옴 `);
