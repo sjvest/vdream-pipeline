@@ -4696,9 +4696,27 @@ async function renderCold(){
     return;
   }
 
-  document.getElementById('cold-list').innerHTML=rows.length?`
+  // '신규 컨택' 탭 상세 카드: rows/coldRows는 다른 탭(전체/등록기관)과 공유하려고 필드명을
+  // orgName/contact_type/summary 등으로 뭉뚱그려놨는데, 이 카드는 org_name/phone/email/memo/
+  // created_by_name 같은 원본 필드를 그대로 쓰고 있어서 c.org_name이 undefined가 되어
+  // 매번 렌더링이 죽고 있었다 (2026-09-16 발견). cache.cold 원본을 직접 필터링해서 사용한다.
+  const filteredCold=(cache.cold||[]).filter(c=>{
+    if(fm&&(c.member||c.created_by_name)!==fm)return false;
+    if(fr&&c.result!==fr)return false;
+    const d=(c.logged_at||c.created_at||'').slice(0,10);
+    if(fs&&d<fs)return false;
+    if(fe&&d>fe)return false;
+    if(fk){
+      const orgMatch=(c.org_name||'').toLowerCase().includes(fk);
+      const memberMatch=(c.member||c.created_by_name||'').toLowerCase().includes(fk);
+      const summaryMatch=(c.summary||c.purpose||c.result||'').toLowerCase().includes(fk);
+      if(!orgMatch&&!memberMatch&&!summaryMatch)return false;
+    }
+    return true;
+  }).sort((a,b)=>new Date(b.logged_at||b.created_at)-new Date(a.logged_at||a.created_at));
+  document.getElementById('cold-list').innerHTML=filteredCold.length?`
     <div style="display:flex;flex-direction:column;gap:8px;">
-      ${rows.filter(r=>r._type==='cold').map(c=>`
+      ${filteredCold.map(c=>`
         <div style="display:flex;gap:12px;padding:12px 14px;border:1.5px solid ${getCardBorder(c)};border-radius:var(--radius-sm);background:${getCardBg(c)};transition:all .2s;">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${METHOD_ICON[c.method]||'<i class="ti ti-phone"></i>'}</div>
           <div style="flex:1;min-width:0;">
