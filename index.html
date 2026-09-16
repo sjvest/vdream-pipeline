@@ -4493,10 +4493,17 @@ function updateMemberSelects(){
 let coldTab='all';
 // 신규 컨택(cold_contacts) 항목을 클릭했을 때, 단순히 nav('cold')만 하면 이미 그 페이지에
 // 있는 경우 화면이 안 바뀌어서 "클릭해도 반응이 없다"고 느껴졌다 (2026-09-02 발견).
-// 실제로 수정/후속컨택/삭제가 가능한 "신규 컨택" 전용 탭까지 확실히 전환시킨다.
+// 처음엔 nav() 후에 setColdTab()을 따로 불러서 렌더링이 두 번(예전 탭 → 신규컨택 탭) 겹쳐 도는
+// 경합이 생겼다 — coldTab을 먼저 'cold'로 맞춰두고 nav()를 한 번만 태우도록 수정 (2026-09-16).
 async function openColdEntry(){
+  coldTab='cold';
+  ['all','reg','cold'].forEach(t=>{
+    const btn=document.getElementById('cold-tab-'+t);
+    if(!btn)return;
+    if(t==='cold'){btn.style.color='var(--accent)';btn.style.borderBottomColor='var(--accent)';btn.style.fontWeight='700';}
+    else{btn.style.color='var(--text3)';btn.style.borderBottomColor='transparent';btn.style.fontWeight='600';}
+  });
   await nav('cold');
-  setColdTab('cold');
 }
 function setColdTab(tab){
   coldTab=tab;
