@@ -2750,7 +2750,7 @@ function renderDashboard(){
     const dateLabel=sameDay(fDate,today)?'오늘':sameDay(fDate,yesterday)?'어제':fDate.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
     const timeStr=fDate.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     const groupHeader='';
-    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`nav('cold')`:`openOrg(${f.org_id})`}">
+    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`openColdEntry()`:`openOrg(${f.org_id})`}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -4491,6 +4491,13 @@ function updateMemberSelects(){
 }
 // ── 신규 컨택 로그 ──
 let coldTab='all';
+// 신규 컨택(cold_contacts) 항목을 클릭했을 때, 단순히 nav('cold')만 하면 이미 그 페이지에
+// 있는 경우 화면이 안 바뀌어서 "클릭해도 반응이 없다"고 느껴졌다 (2026-09-02 발견).
+// 실제로 수정/후속컨택/삭제가 가능한 "신규 컨택" 전용 탭까지 확실히 전환시킨다.
+async function openColdEntry(){
+  await nav('cold');
+  setColdTab('cold');
+}
 function setColdTab(tab){
   coldTab=tab;
   ['all','reg','cold'].forEach(t=>{
@@ -4634,7 +4641,7 @@ async function renderCold(){
       const grp3=lbl3!==ll3?(ll3=lbl3,'<div style="font-size:11px;font-weight:700;color:var(--text3);padding:10px 0 4px;border-top:1.5px solid var(--border);">'+lbl3+'</div>'):'';
       const ts3=fd3.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
       const ic3=r._type==='cold';
-      const fn3=ic3?"nav('cold')":'openOrg('+r.org_id+')';
+      const fn3=ic3?"openColdEntry()":'openOrg('+r.org_id+')';
       let html='<div class="action-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border);" onclick="'+fn3+'">';
       html+='<span style="font-size:16px;flex-shrink:0;">'+(TICON3[r.contact_type]||'<i class="ti ti-note"></i>')+'</span>';
       html+='<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:10px;">';
