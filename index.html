@@ -3482,9 +3482,11 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
     const daysFw=days===null||days>=7?'800':'400';
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:14px 10px;" onclick="event.stopPropagation();"><input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onchange="toggleSelectOrg(${o.id},this.checked)" style="width:15px;height:15px;cursor:pointer;"></td>
-      <td style="padding:14px 16px;display:flex;align-items:center;gap:10px;max-width:280px;overflow:hidden;">
-        ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
-        <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
+      <td style="padding:14px 16px;max-width:280px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
+          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
+        </div>
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
       <td style="padding:14px 16px;font-size:12px;color:#64748b;">${o.region||'—'}</td>
@@ -3494,7 +3496,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
         ${o.stage===4&&o.mou_date?(()=>{const md=Math.floor((new Date(o.mou_date)-now)/864e5);return md>=0?`<span style="margin-left:4px;background:${md<=7?'#fee2e2':'#eff4ff'};color:${md<=7?'#dc2626':'#3b6ef8'};padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D-${md}</span>`:`<span style="margin-left:4px;background:#fee2e2;color:#dc2626;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:800;">D+${Math.abs(md)}</span>`;})():''}
       </td>
       <td style="padding:14px 16px;"><span style="font-size:12px;font-weight:${daysFw};color:${daysColor};background:${daysBg};padding:${daysBg!=='transparent'?'2px 8px':'0'};border-radius:${daysBg!=='transparent'?'12px':'0'};">${daysLabel}</span></td>
-      <td style="padding:14px 16px;display:flex;align-items:center;gap:8px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}<span style="margin-left:auto;">${rowMenu(o)}</span></td>
+      <td style="padding:14px 16px;"><div style="display:flex;align-items:center;gap:8px;">${urgent?`<span class="badge b-red" style="font-size:11px;"> ${urgent}건 임박</span>`:pending?`<span class="badge b-amber" style="font-size:11px;">${pending}건</span>`:'<span style="color:#94a3b8;font-size:12px;">—</span>'}<span style="margin-left:auto;">${rowMenu(o)}</span></div></td>
     </tr>`;}).join(''):`<tr><td colspan="9" class="empty">해당 기관 없음</td></tr>`;
   updateBulkQuickContactBar();
 }
