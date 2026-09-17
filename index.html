@@ -487,8 +487,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-header"><i class="ti ti-chart-line" style="color:var(--accent)"></i>기간별 성과 현황</div>
     <div class="card-body">
       <div class="chart-tabs">
-        <button class="chart-tab active" onclick="switchChart('week',this)">주간</button>
-        <button class="chart-tab" onclick="switchChart('month',this)">월별</button>
+        <button class="chart-tab active" id="chart-tab-week" onclick="switchChart('week',this)">주간</button>
+        <button class="chart-tab" id="chart-tab-month" onclick="switchChart('month',this)">월별</button>
       </div>
       <div style="position:relative;height:220px;"><canvas id="trend-chart"></canvas></div>
       <div id="trend-legend-week" style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
@@ -2821,6 +2821,12 @@ function renderDashboard(){
       </div>
     </div>`;
   }).join(''):'<div class="empty" style="padding:1rem 0;">최근 컨택 활동 없음</div>';
+
+  // 기간별 보고 / 기간별 성과 현황은 버튼을 눌러야만 그려졌던 문제 수정 — 대시보드 진입 시 현재 선택된
+  // 기간·차트 모드로 한 번 그려준다 (버튼 자체는 그대로 눌러서 다른 기간/모드로 바꿀 수 있음).
+  setPeriod(currentPeriod);
+  const chartTabBtn=document.getElementById('chart-tab-'+currentChartMode);
+  if(chartTabBtn)switchChart(currentChartMode,chartTabBtn);
 }
 
 // ── 주간/월별 차트 ──
@@ -2835,7 +2841,7 @@ function switchChart(mode, btn){
 }
 
 // ── 기간별 보고 ──
-let currentPeriod='today';
+let currentPeriod='thisweek';
 // prefix로 어느 화면의 날짜 입력을 읽을지 고른다 (대시보드 기간별 보고: 'period', Analytics: 'an').
 // 예전엔 'custom' 분기가 항상 'period-start/end'만 읽어서, Analytics 페이지에서 직접 날짜를
 // 입력하고 조회를 눌러도 대시보드 쪽 입력칸(비어있음)을 보고 "날짜를 선택해주세요"만 떴다 (2026-08-08 수정).
