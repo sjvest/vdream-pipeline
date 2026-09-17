@@ -40,9 +40,9 @@
   --bg2:#F1F3F5;
   --white:#ffffff;
   --surface:#ffffff;
-  --sidebar:#D8D4EE;
-  --sidebar-text:#3D3680;
-  --sidebar-active:rgba(88,76,157,0.12);
+  --sidebar:#1E293B;
+  --sidebar-text:#94A3B8;
+  --sidebar-active:rgba(255,255,255,0.08);
   --sidebar-accent:#38A89F;
   --radius:10px;
   --radius-sm:6px;
@@ -64,19 +64,19 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .config-box .note{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
 
 /* ── 사이드바 ── */
-.sidebar{width:200px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;padding:0;border-right:1px solid var(--border);}
+.sidebar{width:200px;flex-shrink:0;background:var(--sidebar);display:flex;flex-direction:column;padding:0;}
 .logo{padding:16px 16px 12px;}
-.logo-title{font-size:15px;font-weight:800;color:var(--purple);letter-spacing:-.4px;}
+.logo-title{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.4px;}
 .logo-sub{font-size:10px;color:var(--sidebar-text);margin-top:2px;font-weight:400;opacity:.6;}
-.nav-divider{height:1px;background:rgba(76,68,128,.1);margin:4px 12px;}
+.nav-divider{height:1px;background:rgba(255,255,255,.08);margin:4px 12px;}
 .nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 8px;cursor:pointer;color:var(--sidebar-text);border:none;background:none;width:calc(100% - 16px);text-align:left;font-size:12px;font-weight:500;transition:all .14s;border-radius:8px;opacity:.7;}
-.nav-item:hover{background:rgba(88,76,157,.08);opacity:1;}
-.nav-item.active{background:rgba(88,76,157,.12);color:var(--purple);font-weight:700;opacity:1;border-left:2px solid var(--teal);}
+.nav-item:hover{background:rgba(255,255,255,.06);opacity:1;}
+.nav-item.active{background:rgba(255,255,255,.10);color:#fff;font-weight:700;opacity:1;border-left:2px solid var(--accent);}
 .nav-item i{font-size:15px;width:16px;text-align:center;flex-shrink:0;}
 .nav-section{padding:10px 16px 4px;font-size:10px;color:var(--sidebar-text);letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.5;}
 .urgent-count{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
 .new-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--accent);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
-.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(76,68,128,.1);font-size:11px;color:var(--sidebar-text);opacity:.6;}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--sidebar-text);opacity:.6;}
 .conn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#555;margin-right:6px;}
 
 /* ── 메인 콘텐츠 ── */
@@ -403,19 +403,19 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
   <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
   <div class="sidebar-bottom">
-    <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(88,76,157,.08)'" onmouseout="this.style.background='none'">
+    <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">
       <div style="position:relative;flex-shrink:0;">
-        <div style="width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;" id="user-avatar">?</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;" id="user-avatar">?</div>
         <div id="user-status-dot" style="display:none;position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#34d399;border:2px solid var(--sidebar);"></div>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:700;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
+        <div style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
         <div style="font-size:10px;color:var(--sidebar-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.6;" id="user-status-label">프로필 설정</div>
       </div>
       <i class="ti ti-settings" style="font-size:12px;color:var(--sidebar-text);opacity:.4;flex-shrink:0;"></i>
     </div>
-    <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"> 수정/삭제 로그</button>
-    <button onclick="doLogout()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(76,68,128,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">로그아웃</button>
+    <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"> 수정/삭제 로그</button>
+    <button onclick="doLogout()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">로그아웃</button>
     <div style="margin-top:6px;font-size:10px;"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">연결 중...</span></div>
   </div>
 </div>
