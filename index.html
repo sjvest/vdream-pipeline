@@ -2561,8 +2561,25 @@ async function sendGChatDailySummary(){
       meetMouMsg+=' D-'+d+' ('+o.mou_date+') | 담당: '+(o.member||'미배정')+'\n\n';
     });
   }
-  if(!hasMeetMou) meetMouMsg+='[정상] 예정된 미팅/MOU 없음';
-  await sendGChat(meetMouMsg);
+  if(hasMeetMou) await sendGChat(meetMouMsg);
+
+  // ── 메시지 4: 예정 행사 (14일 이내) ──
+  const upcomingEvents=(cache.events||[]).filter(e=>{
+    if(!e.date)return false;
+    const d=Math.floor((new Date(e.date)-now)/864e5);
+    return d>=0&&d<=14;
+  }).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(upcomingEvents.length){
+    let eventMsg='[행사] *예정 행사 현황*\n';
+    upcomingEvents.forEach(e=>{
+      const d=Math.floor((new Date(e.date)-now)/864e5);
+      const tag=d===0?'[오늘]':d<=3?'[임박]':'[여유]';
+      const members=(e.members||[]).join(', ')||'미배정';
+      eventMsg+=tag+' *'+e.name+'*\n';
+      eventMsg+=' D-'+d+' ('+e.date+') | '+(e.location||'장소 미정')+' | 담당: '+members+'\n\n';
+    });
+    await sendGChat(eventMsg);
+  }
 }
 
 async function sendGChatJobDeadlineAlert(){
