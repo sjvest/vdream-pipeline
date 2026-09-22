@@ -2493,8 +2493,8 @@ async function sendGChatDailySummary(){
     const d=Math.floor((new Date(j.deadline)-now)/864e5);
     return d>=0&&d<=7&&(j.current_count||0)<(j.headcount||0);
   });
-  let jobMsg='[채용] *[채용] 마감 임박 현황*\n';
   if(urgentJobs.length){
+    let jobMsg='[채용] *[채용] 마감 임박 현황*\n';
     urgentJobs.forEach(j=>{
       const d=Math.floor((new Date(j.deadline)-now)/864e5);
       const remain=(j.headcount||0)-(j.current_count||0);
@@ -2502,10 +2502,8 @@ async function sendGChatDailySummary(){
       jobMsg+=tag+' *'+j.company+' - '+j.job_title+'*\n';
       jobMsg+=' D-'+d+' | 확보 '+(j.current_count||0)+'/'+j.headcount+'명 | 미충원 *'+remain+'명* | 담당: '+(j.member||'미배정')+'\n\n';
     });
-  } else {
-    jobMsg+='[정상] 마감 임박 채용건 없음';
+    await sendGChat(jobMsg);
   }
-  await sendGChat(jobMsg);
 
   // ── 메시지 2: 미연락 기관 (컨택 시도 후 7일 이상) ──
   // 2026-07-27 팀 요청으로 잠시 중단: 기관마다 원래 연락 빈도가 달라서(자주 연락할 기관 vs 원래 뜸한 기관)
