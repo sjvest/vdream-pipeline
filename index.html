@@ -91,7 +91,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .page-header-left .page-sub{font-size:12px;color:var(--text3);margin-top:4px;}
 
 /* ── 메트릭 카드 ── */
-.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px;}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px;}
 .metric{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm);transition:all .15s;}
 .metric-label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:10px;letter-spacing:.03em;text-transform:uppercase;}
 .metric-value{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.8px;}
@@ -433,6 +433,13 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div id="alert-banner" style="display:none;margin-bottom:16px;"></div>
   <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
+
+  <!-- 인재영입 전환 현황: 기관발굴 → 지원자 유입 → 취업성공까지의 최종 전환율이 팀의 핵심 성과 지표라는
+       요청(2026-09-23)으로, 6개 미니 지표 중 하나로 묻혀있던 걸 빼서 별도의 큰 카드로 노출함. -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header"><i class="ti ti-trophy" style="color:var(--purple)"></i>인재영입 전환 현황</div>
+    <div class="card-body" id="dash-talent-conversion"></div>
+  </div>
 
   <!-- 기간별 성과 현황(주간/월별 차트): 팀원별 이번달 현황 자리로 이동 (2026-09-18 요청) -->
   <div class="card" style="margin-bottom:16px;">
@@ -2194,7 +2201,7 @@ async function ensureTalentDataLoaded(){
 async function renderCurrent(){
   const id=document.querySelector('.page.active')?.id;
   const map={'p-dashboard':renderDashboard,'p-pipeline':renderPipeline,'p-orgs':renderOrgs,'p-actions':renderActions,'p-talent':renderTalent,'p-team':renderTeam,'p-events':renderEvents,'p-jobs':renderJobs,'p-cold':renderCold,'p-analytics':renderAnalytics,'p-team-tasks':renderTeamTasks};
-  if(id==='p-talent'||id==='p-analytics'||id==='p-orgs')await ensureTalentDataLoaded();
+  if(id==='p-talent'||id==='p-analytics'||id==='p-orgs'||id==='p-dashboard')await ensureTalentDataLoaded();
   if(id&&map[id])await map[id]();
 }
 
@@ -2687,8 +2694,30 @@ function renderDashboard(){
     <div class="metric metric-clickable" onclick="nav('actions')" style="border-top:3px solid var(--amber);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">미완료 후속액션</div><div class="metric-value" style="color:${pendingActs>5?'var(--red)':'var(--amber)'};">${pendingActs}</div><div class="metric-sub">처리 대기 중</div></div>
     <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--orange);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">30일 이상 미연락</div><div class="metric-value" style="color:var(--orange);">${needContactCount}</div><div class="metric-sub">관계 관리 필요</div></div>
     <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--green);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">이번달 신규기관</div><div class="metric-value" style="color:var(--green);">${thisMonth}</div><div class="metric-sub">이번달 등록</div></div>
-    <div class="metric metric-clickable" onclick="openMetricModal('talents')" style="border-top:3px solid var(--purple);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">인재영입 현황</div><div class="metric-value" style="font-size:18px;line-height:1.3;"><span style="color:var(--green);">합격 ${placed}</span> <span style="color:var(--red);font-size:14px;">불합격 ${failed}</span></div><div class="metric-sub">전체 ${metricTals.length}명</div></div>
   `;
+  // 인재영입 전환 현황 — 기관발굴(유입) 대비 최종 취업성공 비율을 큰 숫자 + 막대로 한눈에.
+  const convEl=document.getElementById('dash-talent-conversion');
+  if(convEl){
+    const total=metricTals.length;
+    const successRate=total?Math.round(placed/total*100):0;
+    const segs=[{l:'합격',v:placed,c:'#059669'},{l:'진행중',v:recruiting,c:'#d97706'},{l:'불합격',v:failed,c:'#dc2626'},{l:'기타',v:Math.max(total-placed-recruiting-failed,0),c:'#94a3b8'}];
+    convEl.innerHTML=total?`
+      <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
+        <div style="text-align:center;flex-shrink:0;cursor:pointer;" onclick="openMetricModal('talents')">
+          <div style="font-size:44px;font-weight:800;line-height:1;color:${successRate>=30?'var(--green)':successRate>=15?'var(--amber)':'var(--red)'};">${successRate}%</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;font-weight:700;">취업 성공률</div>
+        </div>
+        <div style="flex:1;min-width:260px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">기관 발굴로 유입된 지원자 <b style="color:var(--text);font-size:15px;">${total}명</b> 중 취업 성공까지 이어진 비율이에요</div>
+          <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--bg);">
+            ${segs.filter(s=>s.v>0).map(s=>`<div style="width:${(s.v/total*100)}%;background:${s.c};" title="${s.l} ${s.v}명"></div>`).join('')}
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:12px;flex-wrap:wrap;">
+            ${segs.map(s=>`<span style="display:flex;align-items:center;gap:5px;"><span style="width:9px;height:9px;border-radius:2px;background:${s.c};display:inline-block;flex-shrink:0;"></span><span style="color:var(--text2);">${s.l} <b style="color:var(--text);">${s.v}</b>명</span></span>`).join('')}
+          </div>
+        </div>
+      </div>`:'<div class="empty" style="padding:1rem 0;">유입된 지원자 없음</div>';
+  }
   const stageCounts=[0,1,2,3,4,5,6,9].map((s,i)=>({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s],hex:STAGE_COLORS[i]||'#94a3b8'}));
   const stageNonZero=stageCounts.filter(s=>s.cnt>0);
   if(stageDonutChart)stageDonutChart.destroy();
