@@ -2186,7 +2186,12 @@ async function loadAll(){
     updateNavBadges();
     showTodayTasksOnLogin();
     scheduleDailyTasksPopup();
-    scheduleGChatDailySummary();
+    // GChat 자동 리포트는 09/14/16시에 "그 순간 탭을 열어둔 브라우저"에서 setTimeout으로 발송되는
+    // 구조라, localStorage 중복방지는 같은 브라우저 안에서만 유효하다. 팀원 여러 명이 동시에 탭을
+    // 열어두면 각자의 브라우저가 서로 독립적으로 스케줄을 잡아 같은 시간대에 2~3통씩 중복 발송되는
+    // 문제가 확인됨(2026-09-23). 서버(Supabase) 쪽 스케줄이 아직 없어 근본 해결은 아니지만, 관리자
+    // 계정 하나의 세션에서만 스케줄을 등록하도록 제한해 다른 팀원 브라우저발 중복 발송을 막는다.
+    if(currentUser?.email==='sjvest@vdream.co.kr')scheduleGChatDailySummary();
     setTimeout(checkContactAlert,800);
   }catch(e){toast('데이터 로딩 오류: '+e.message);}
 }
