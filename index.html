@@ -654,11 +654,15 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div id="card-crop-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column;align-items:center;justify-content:center;">
         <div id="crop-stage" style="position:relative;max-width:92vw;max-height:65vh;touch-action:none;">
           <img id="crop-img" style="display:block;max-width:92vw;max-height:65vh;user-select:none;-webkit-user-drag:none;">
-          <div id="crop-box" style="position:absolute;border:2px solid #4285f4;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;">
-            <div class="crop-handle" data-corner="tl" style="position:absolute;top:-11px;left:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;"></div>
-            <div class="crop-handle" data-corner="tr" style="position:absolute;top:-11px;right:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;"></div>
-            <div class="crop-handle" data-corner="bl" style="position:absolute;bottom:-11px;left:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;"></div>
-            <div class="crop-handle" data-corner="br" style="position:absolute;bottom:-11px;right:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;"></div>
+          <div id="crop-dim-top" style="position:absolute;left:0;top:0;background:rgba(0,0,0,.55);pointer-events:none;"></div>
+          <div id="crop-dim-bottom" style="position:absolute;left:0;background:rgba(0,0,0,.55);pointer-events:none;"></div>
+          <div id="crop-dim-left" style="position:absolute;background:rgba(0,0,0,.55);pointer-events:none;"></div>
+          <div id="crop-dim-right" style="position:absolute;background:rgba(0,0,0,.55);pointer-events:none;"></div>
+          <div id="crop-box" style="position:absolute;border:2px solid #4285f4;background:rgba(255,255,255,.08);cursor:move;touch-action:none;will-change:left,top,width,height;">
+            <div class="crop-handle" data-corner="tl" style="position:absolute;top:-14px;left:-14px;width:28px;height:28px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;touch-action:none;"></div>
+            <div class="crop-handle" data-corner="tr" style="position:absolute;top:-14px;right:-14px;width:28px;height:28px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;touch-action:none;"></div>
+            <div class="crop-handle" data-corner="bl" style="position:absolute;bottom:-14px;left:-14px;width:28px;height:28px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;touch-action:none;"></div>
+            <div class="crop-handle" data-corner="br" style="position:absolute;bottom:-14px;right:-14px;width:28px;height:28px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;touch-action:none;"></div>
           </div>
         </div>
         <div style="font-size:12px;color:#fff;margin-top:14px;opacity:.85;">모서리를 끌어 명함 영역에 맞춰주세요</div>
@@ -6511,6 +6515,16 @@ function openCardCropper(input){
   reader.onerror=()=>{toast('사진을 불러오지 못했어요');input.value='';};
   reader.readAsDataURL(file);
 }
+function updateCropDim(l,t,w,h){
+  const stage=document.getElementById('crop-stage');
+  const sw=stage.clientWidth, sh=stage.clientHeight;
+  const dt=document.getElementById('crop-dim-top'), db=document.getElementById('crop-dim-bottom');
+  const dl=document.getElementById('crop-dim-left'), dr=document.getElementById('crop-dim-right');
+  dt.style.width=sw+'px';dt.style.height=t+'px';
+  db.style.top=(t+h)+'px';db.style.width=sw+'px';db.style.height=(sh-t-h)+'px';
+  dl.style.top=t+'px';dl.style.width=l+'px';dl.style.height=h+'px';
+  dr.style.left=(l+w)+'px';dr.style.top=t+'px';dr.style.width=(sw-l-w)+'px';dr.style.height=h+'px';
+}
 function initCropBox(){
   const img=document.getElementById('crop-img');
   const box=document.getElementById('crop-box');
@@ -6519,12 +6533,25 @@ function initCropBox(){
     const bw=iw*0.85, bh=ih*0.85;
     const bx=(iw-bw)/2, by=(ih-bh)/2;
     box.style.left=bx+'px';box.style.top=by+'px';box.style.width=bw+'px';box.style.height=bh+'px';
+    updateCropDim(bx,by,bw,bh);
   });
 }
 function closeCardCropper(){
   document.getElementById('card-crop-modal').style.display='none';
   if(_cropTargetInput)_cropTargetInput.value='';
   _cropTargetInput=null;_cropExtraFiles=[];
+}
+// 드래그 중 매 pointermove마다 바로 스타일을 쓰지 않고 requestAnimationFrame으로 묶어서 적용 —
+// 특히 모바일에서 프레임당 한 번만 레이아웃/페인트가 일어나도록 해 손가락 움직임이 뻑뻑하지
+// 않고 부드럽게 따라오게 한다 (2026-09-28, "틀이 뻑뻑하다" 피드백 반영).
+let _cropPendingBox=null, _cropRafScheduled=false;
+function _applyCropBoxRaf(){
+  _cropRafScheduled=false;
+  if(!_cropPendingBox)return;
+  const{l,t,w,h}=_cropPendingBox;
+  const box=document.getElementById('crop-box');
+  box.style.left=l+'px';box.style.top=t+'px';box.style.width=w+'px';box.style.height=h+'px';
+  updateCropDim(l,t,w,h);
 }
 document.addEventListener('pointerdown',(e)=>{
   const modal=document.getElementById('card-crop-modal');
@@ -6536,6 +6563,8 @@ document.addEventListener('pointerdown',(e)=>{
   e.preventDefault();
   const stage=document.getElementById('crop-stage');
   const rect=stage.getBoundingClientRect();
+  if(handle&&handle.setPointerCapture)handle.setPointerCapture(e.pointerId);
+  else if(onBox&&box.setPointerCapture)box.setPointerCapture(e.pointerId);
   _cropDrag={
     mode:handle?handle.dataset.corner:'move',
     startX:e.clientX,startY:e.clientY,
@@ -6546,7 +6575,6 @@ document.addEventListener('pointerdown',(e)=>{
 });
 document.addEventListener('pointermove',(e)=>{
   if(!_cropDrag)return;
-  const box=document.getElementById('crop-box');
   const dx=e.clientX-_cropDrag.startX, dy=e.clientY-_cropDrag.startY;
   let{startLeft:l,startTop:t,startW:w,startH:h,stageW,stageH,mode}=_cropDrag;
   const MIN=40;
@@ -6559,7 +6587,8 @@ document.addEventListener('pointermove',(e)=>{
     if(mode.includes('t')){const nt=Math.max(0,Math.min(t+h-MIN,t+dy));h=h+(t-nt);t=nt;}
     if(mode.includes('b')){h=Math.max(MIN,Math.min(stageH-t,h+dy));}
   }
-  box.style.left=l+'px';box.style.top=t+'px';box.style.width=w+'px';box.style.height=h+'px';
+  _cropPendingBox={l,t,w,h};
+  if(!_cropRafScheduled){_cropRafScheduled=true;requestAnimationFrame(_applyCropBoxRaf);}
 });
 document.addEventListener('pointerup',()=>{_cropDrag=null;});
 function confirmCardCrop(){
