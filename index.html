@@ -617,7 +617,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="card"><div class="card-body">
     <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border:2px dashed #4285f4;border-radius:12px;text-align:center;">
       <div style="font-size:13px;font-weight:700;color:#4285f4;margin-bottom:8px;"> 명함으로 자동 입력</div>
-      <input type="file" id="business-card-input" accept="image/*" capture="environment" style="display:none;" onchange="analyzeBusinessCard(this)">
+      <input type="file" id="business-card-input" accept="image/*" capture="environment" style="display:none;" onchange="openCardCropper(this)">
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button type="button" onclick="document.getElementById('business-card-input').click()"
           style="padding:8px 20px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
@@ -628,7 +628,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
            갤러리에서 선택
         </button>
       </div>
-      <input type="file" id="business-card-input-gallery" accept="image/*" multiple style="display:none;" onchange="analyzeBusinessCard(this)">
+      <input type="file" id="business-card-input-gallery" accept="image/*" multiple style="display:none;" onchange="openCardCropper(this)">
       <div id="ocr-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
       <img id="card-preview" style="max-width:200px;border-radius:8px;margin-top:8px;display:none;">
       <div id="card-camera-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;align-items:center;justify-content:center;">
@@ -649,6 +649,23 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <button onclick="closeCardCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">취소</button>
           <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;display:flex;align-items:center;justify-content:center;"><i class="ti ti-camera"></i></button>
           <button onclick="switchCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;"> 전환</button>
+        </div>
+      </div>
+      <div id="card-crop-modal" style="display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="crop-stage" style="position:relative;max-width:92vw;max-height:65vh;touch-action:none;">
+          <img id="crop-img" style="display:block;max-width:92vw;max-height:65vh;user-select:none;-webkit-user-drag:none;">
+          <div id="crop-box" style="position:absolute;border:2px solid #4285f4;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;">
+            <div class="crop-handle" data-corner="tl" style="position:absolute;top:-11px;left:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;"></div>
+            <div class="crop-handle" data-corner="tr" style="position:absolute;top:-11px;right:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;"></div>
+            <div class="crop-handle" data-corner="bl" style="position:absolute;bottom:-11px;left:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nesw-resize;"></div>
+            <div class="crop-handle" data-corner="br" style="position:absolute;bottom:-11px;right:-11px;width:22px;height:22px;background:#4285f4;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;"></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#fff;margin-top:14px;opacity:.85;">모서리를 끌어 명함 영역에 맞춰주세요</div>
+        <canvas id="crop-canvas" style="display:none;"></canvas>
+        <div style="display:flex;gap:16px;margin-top:20px;">
+          <button onclick="closeCardCropper()" style="padding:10px 24px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">취소</button>
+          <button onclick="confirmCardCrop()" style="padding:10px 28px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">이 영역만 사용</button>
         </div>
       </div>
     </div>
@@ -6468,6 +6485,104 @@ async function captureCard(){
     const input=document.getElementById('business-card-input');
     input.files=dt.files;
     analyzeBusinessCard(input);
+  },'image/jpeg',0.92);
+}
+// ── 명함 촬영/선택 직후 "명함 영역만 잘라내기" 크롭 단계 (2026-09-28) ──
+// 폰 기본 카메라나 갤러리로 찍은/고른 사진에는 배경이 같이 찍히므로, OCR 분석과 저장 전에
+// 사용자가 손가락으로 사각 영역을 명함 크기에 맞춰 조정한 뒤 그 부분만 잘라서 넘기도록 한다.
+let _cropTargetInput=null;
+let _cropExtraFiles=[];
+let _cropDrag=null;
+function openCardCropper(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  _cropTargetInput=input;
+  _cropExtraFiles=files.slice(1); // 갤러리에서 여러 장 고른 경우, 첫 장만 크롭하고 나머지는 기존처럼 추가 명함으로 그대로 전달
+  const file=files[0];
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const img=document.getElementById('crop-img');
+    img.onload=()=>{
+      document.getElementById('card-crop-modal').style.display='flex';
+      initCropBox();
+    };
+    img.src=e.target.result;
+  };
+  reader.onerror=()=>{toast('사진을 불러오지 못했어요');input.value='';};
+  reader.readAsDataURL(file);
+}
+function initCropBox(){
+  const img=document.getElementById('crop-img');
+  const box=document.getElementById('crop-box');
+  requestAnimationFrame(()=>{
+    const iw=img.clientWidth, ih=img.clientHeight;
+    const bw=iw*0.85, bh=ih*0.85;
+    const bx=(iw-bw)/2, by=(ih-bh)/2;
+    box.style.left=bx+'px';box.style.top=by+'px';box.style.width=bw+'px';box.style.height=bh+'px';
+  });
+}
+function closeCardCropper(){
+  document.getElementById('card-crop-modal').style.display='none';
+  if(_cropTargetInput)_cropTargetInput.value='';
+  _cropTargetInput=null;_cropExtraFiles=[];
+}
+document.addEventListener('pointerdown',(e)=>{
+  const modal=document.getElementById('card-crop-modal');
+  if(!modal||modal.style.display==='none')return;
+  const box=document.getElementById('crop-box');
+  const handle=e.target.closest('.crop-handle');
+  const onBox=e.target===box;
+  if(!handle&&!onBox)return;
+  e.preventDefault();
+  const stage=document.getElementById('crop-stage');
+  const rect=stage.getBoundingClientRect();
+  _cropDrag={
+    mode:handle?handle.dataset.corner:'move',
+    startX:e.clientX,startY:e.clientY,
+    startLeft:parseFloat(box.style.left),startTop:parseFloat(box.style.top),
+    startW:parseFloat(box.style.width),startH:parseFloat(box.style.height),
+    stageW:rect.width,stageH:rect.height
+  };
+});
+document.addEventListener('pointermove',(e)=>{
+  if(!_cropDrag)return;
+  const box=document.getElementById('crop-box');
+  const dx=e.clientX-_cropDrag.startX, dy=e.clientY-_cropDrag.startY;
+  let{startLeft:l,startTop:t,startW:w,startH:h,stageW,stageH,mode}=_cropDrag;
+  const MIN=40;
+  if(mode==='move'){
+    l=Math.max(0,Math.min(stageW-w,l+dx));
+    t=Math.max(0,Math.min(stageH-h,t+dy));
+  }else{
+    if(mode.includes('l')){const nl=Math.max(0,Math.min(l+w-MIN,l+dx));w=w+(l-nl);l=nl;}
+    if(mode.includes('r')){w=Math.max(MIN,Math.min(stageW-l,w+dx));}
+    if(mode.includes('t')){const nt=Math.max(0,Math.min(t+h-MIN,t+dy));h=h+(t-nt);t=nt;}
+    if(mode.includes('b')){h=Math.max(MIN,Math.min(stageH-t,h+dy));}
+  }
+  box.style.left=l+'px';box.style.top=t+'px';box.style.width=w+'px';box.style.height=h+'px';
+});
+document.addEventListener('pointerup',()=>{_cropDrag=null;});
+function confirmCardCrop(){
+  const img=document.getElementById('crop-img');
+  const box=document.getElementById('crop-box');
+  const scaleX=img.naturalWidth/img.clientWidth;
+  const scaleY=img.naturalHeight/img.clientHeight;
+  const sx=parseFloat(box.style.left)*scaleX;
+  const sy=parseFloat(box.style.top)*scaleY;
+  const sw=parseFloat(box.style.width)*scaleX;
+  const sh=parseFloat(box.style.height)*scaleY;
+  const canvas=document.getElementById('crop-canvas');
+  canvas.width=sw;canvas.height=sh;
+  canvas.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  document.getElementById('card-crop-modal').style.display='none';
+  canvas.toBlob((blob)=>{
+    const croppedFile=new File([blob],'card_'+Date.now()+'.jpg',{type:'image/jpeg'});
+    const dt=new DataTransfer();
+    dt.items.add(croppedFile);
+    _cropExtraFiles.forEach(f=>dt.items.add(f));
+    const input=_cropTargetInput;
+    _cropTargetInput=null;_cropExtraFiles=[];
+    if(input){input.files=dt.files;analyzeBusinessCard(input);}
   },'image/jpeg',0.92);
 }
 // ── 명함 사진 ──
