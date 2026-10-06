@@ -2770,8 +2770,12 @@ function renderDashboard(){
   const inThisMonth=d=>{if(!d)return false;const dt=new Date(d);return dt>=monthStart&&dt<=now;};
   const monthTouchpoints=expandLogTouchpoints(cache.logs).filter(t=>inThisMonth(t.rangeDate));
   const monthCold=(cache.cold||[]).filter(c=>inThisMonth(c.logged_at||c.created_at));
-  const contactByMember=name=>monthTouchpoints.filter(t=>t.member===name).length+monthCold.filter(c=>(c.member||c.created_by_name)===name).length;
-  const meetingByMember=name=>monthTouchpoints.filter(t=>t.member===name&&t.contact_type==='미팅').length;
+  // 컨택로그(contact_logs)에는 담당자 단일 필드(member)가 없고, 담당자 표시는 created_by_name(기록자)
+  // 또는 our_members(참여자, 자유텍스트) 기준이다. 여기서 t.member만 보고 있었던 탓에 "팀원별 이번달
+  // 현황"의 컨택/미팅 막대가 항상 0으로 나오던 버그를 발견(2026-10-06, "데이터 반영이 안 되는 것 같다"
+  // 피드백) — Analytics 페이지의 담당자 필터(byM)와 동일하게 created_by_name 폴백을 추가해 수정.
+  const contactByMember=name=>monthTouchpoints.filter(t=>t.member===name||t.created_by_name===name).length+monthCold.filter(c=>(c.member||c.created_by_name)===name).length;
+  const meetingByMember=name=>monthTouchpoints.filter(t=>(t.member===name||t.created_by_name===name)&&t.contact_type==='미팅').length;
   const hiredByMember=name=>metricTals.filter(t=>t.member===name&&inThisMonth(talentRegDate(t))).length;
   const passedByMember=name=>metricTals.filter(t=>t.member===name&&t.status==='최종합격'&&inThisMonth(talentPassDate(t))).length;
   if(teamMonthChart)teamMonthChart.destroy();
