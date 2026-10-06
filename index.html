@@ -3631,7 +3631,7 @@ function renderTalent(){
   const statusSelect=(t,status)=>`<select onclick="event.stopPropagation()" onchange="event.stopPropagation();quickUpdateTalentStatus(${t.id},this.value)" style="font-size:11px;font-weight:700;padding:3px 22px 3px 8px;border-radius:20px;border:1.5px solid ${STAGE_COLOR[status]||'#6b7280'}55;background:${STAGE_BG[status]||'#f3f4f6'};color:${STAGE_COLOR[status]||'#6b7280'};cursor:pointer;">${OFFICIAL_STATUSES.map(s=>`<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}</select>`;
   if(!filtered.length){
     if(talentViewMode==='org'){
-      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:170px;">기관명</th><th style="${TH}width:115px;">이름</th><th style="${TH}width:110px;">직무</th><th style="${TH}width:90px;">담당자</th><th style="${TH}width:85px;">장애유형</th><th style="${TH}width:85px;">장애정도</th><th style="${TH}width:110px;">현재상태</th><th style="${TH}">비고</th><th style="${TH}width:90px;">등록일</th></tr>`;
+      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:170px;">기관명</th><th style="${TH}width:115px;">이름</th><th style="${TH}width:110px;">직무</th><th style="${TH}width:90px;">담당자</th><th style="${TH}width:85px;">장애유형</th><th style="${TH}width:85px;">장애정도</th><th style="${TH}width:110px;">현재상태</th><th style="${TH}width:220px;">비고</th><th style="${TH}width:90px;">등록일</th></tr>`;
       tbody.innerHTML='<tr><td colspan="9" class="empty">해당 인재 없음</td></tr>';
     }else{
       if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
@@ -3644,7 +3644,7 @@ function renderTalent(){
     // 장애유형/장애정도/비고(바로 입력 가능)를 추가하고 "현재단계" 표기를 "현재상태"로 변경 (2026-10-06, 세세님 피드백).
     // 기관 종류(orgs.cat)는 기관 등록시 입력된 값을 그대로 가져와 기관명 아래 작게 표시 — 별도 입력 불필요, 자동 반영됨.
     // 엑셀 내보내기(페이지 상단 버튼·기관상세 모달에 이미 있음)와 행별 삭제 버튼은 이 보기에서는 빼서 우측이 복잡해지지 않게 함.
-    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:170px;">기관명</th><th style="${TH}width:115px;">이름</th><th style="${TH}width:110px;">직무</th><th style="${TH}width:90px;">담당자</th><th style="${TH}width:85px;">장애유형</th><th style="${TH}width:85px;">장애정도</th><th style="${TH}width:110px;">현재상태</th><th style="${TH}">비고</th><th style="${TH}width:90px;">등록일</th></tr>`;
+    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:170px;">기관명</th><th style="${TH}width:115px;">이름</th><th style="${TH}width:110px;">직무</th><th style="${TH}width:90px;">담당자</th><th style="${TH}width:85px;">장애유형</th><th style="${TH}width:85px;">장애정도</th><th style="${TH}width:110px;">현재상태</th><th style="${TH}width:220px;">비고</th><th style="${TH}width:90px;">등록일</th></tr>`;
     const groups={};
     filtered.forEach(t=>{
       const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
@@ -3657,18 +3657,21 @@ function renderTalent(){
     // 글자 수에 맞춰 처음부터 줄 수를 넉넉히 잡아준다(입력 중엔 oninput으로 계속 자동으로 늘어남).
     const memoRows=t=>Math.min(6,Math.max(1,Math.ceil((t.memo||'').length/14)));
     const memoInput=t=>`<textarea rows="${memoRows(t)}" placeholder="특이사항" onclick="event.stopPropagation()" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onchange="event.stopPropagation();quickUpdateTalentMemo(${t.id},this.value)" style="width:100%;box-sizing:border-box;font-size:11px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);resize:vertical;font-family:inherit;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${(t.memo||'').replace(/</g,'&lt;')}</textarea>`;
-    tbody.innerHTML=orderedKeys.map(key=>{
+    // 기관 그룹 사이를 2cm 이상 띄워 눈으로 쉽게 구분되게 하는 빈 여백 행 (2026-10-06, 세세님 요청)
+    const groupSpacer='<tr><td colspan="9" style="padding:0;border:none;background:transparent;height:80px;"></td></tr>';
+    tbody.innerHTML=orderedKeys.map((key,gi)=>{
       const g=groups[key];
       const orgCell=`<td rowspan="${g.items.length}" style="padding:10px 20px;vertical-align:top;border-right:1px solid var(--border);background:#fafbff;">
         <div style="font-size:13px;font-weight:800;color:var(--text);${g.id?'cursor:pointer;':''}" ${g.id?`onclick="openOrg(${g.id})"`:''}>${g.name}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${g.cat?`<span class="badge b-gray" style="font-size:9px;">${g.cat}</span>`:''}<span>${g.items.length}명</span></div>
       </td>`;
-      return g.items.map((t,idx)=>{
+      const groupHtml=g.items.map((t,idx)=>{
         const talApps=apps.filter(a=>a.talent_id===t.id);
         const status=talApps[0]?.status||t.status||'인재등록';
         const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
         return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">${idx===0?orgCell:''}<td style="padding:10px 18px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--text2);padding:10px 18px;">${t.job||'—'}</td><td style="padding:10px 18px;"><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:12px;color:var(--text2);padding:10px 18px;">${t.disability_type||'—'}</td><td style="font-size:12px;color:var(--text2);padding:10px 18px;">${t.disability_grade||'—'}</td><td style="padding:10px 18px;">${statusSelect(t,status)}</td><td style="padding:10px 18px;">${memoInput(t)}</td><td style="font-size:11px;color:var(--text3);padding:10px 18px;">${regDate}</td></tr>`;
       }).join('');
+      return groupHtml+(gi<orderedKeys.length-1?groupSpacer:'');
     }).join('');
     return;
   }
