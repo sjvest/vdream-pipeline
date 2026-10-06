@@ -2938,7 +2938,7 @@ function updateDashboardMetrics(start,end){
 function expandLogTouchpoints(logs){
   const out=[];
   (logs||[]).forEach(l=>{
-    out.push({log_id:l.id,is_thread:false,org_id:l.org_id,contact_type:l.contact_type||'기타',summary:l.summary,rangeDate:l.logged_at||l.created_at,displayDate:l.date,member:l.member,created_by_name:l.created_by_name});
+    out.push({log_id:l.id,is_thread:false,org_id:l.org_id,contact_type:l.contact_type||'기타',summary:l.summary,rangeDate:l.logged_at||l.created_at,displayDate:l.date,member:l.member||l.created_by_name, /* 2026-10-06: contact_logs엔 member 컬럼이 없어 팀원별 집계가 항상 0이었음 → 작성자 기준 */created_by_name:l.created_by_name});
     (l.threads||[]).forEach((t,idx)=>{
       out.push({log_id:l.id,is_thread:true,thread_idx:idx,org_id:l.org_id,contact_type:l.contact_type||'기타',summary:'[추가상담] '+(t.content||'').slice(0,40),rangeDate:t.date,displayDate:t.date,member:t.by,created_by_name:t.by});
     });
