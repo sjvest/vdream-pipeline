@@ -834,6 +834,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <select id="talent-filter-status" onchange="renderTalent()" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 상태</option><option>인재등록</option><option>채용지원</option><option>서류합격</option><option>서류불합격</option><option>최종합격</option><option>최종불합격</option><option>지원취소</option><option>계약종료</option></select>
     <button onclick="clearTalentFilter()" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;cursor:pointer;color:var(--text3);">초기화</button>
     <span id="talent-filter-count" style="font-size:12px;color:var(--text3);"></span>
+    <div style="margin-left:auto;display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px;">
+      <button id="talent-view-list" onclick="setTalentViewMode('list')" style="font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08);">목록 보기</button>
+      <button id="talent-view-org" onclick="setTalentViewMode('org')" style="font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:none;color:var(--text3);font-weight:700;">기관별 보기</button>
+    </div>
   </div>
   <div class="card"><table class="tbl"><thead id="talent-thead"></thead><tbody id="talent-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody></table></div>
 </div>
@@ -1828,6 +1832,14 @@ let trendChart=null;
 let stageDonutChart=null;
 let teamMonthChart=null;
 let currentChartMode='week';
+let talentViewMode='list'; // 인재영입 목록보기/기관별보기 전환 (2026-10-06)
+function setTalentViewMode(m){
+  talentViewMode=m;
+  const lb=document.getElementById('talent-view-list'),ob=document.getElementById('talent-view-org');
+  if(lb)lb.style.cssText=m==='list'?'font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08);':'font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:none;color:var(--text3);font-weight:700;';
+  if(ob)ob.style.cssText=m==='org'?'font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08);':'font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:none;color:var(--text3);font-weight:700;';
+  renderTalent();
+}
 
 function saveConfig(){
   const url=document.getElementById('cfg-url').value.trim();
@@ -3615,10 +3627,43 @@ function renderTalent(){
   const countEl=document.getElementById('talent-filter-count');if(countEl)countEl.textContent=`${filtered.length}명`;
   const TH='padding:10px 14px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;';
   const thead=document.getElementById('talent-thead');const tbody=document.getElementById('talent-tbody');
+  // 상태 셀을 뱃지 대신 select로 그려서 그 자리에서 바로 상태를 바꿀 수 있게 한다 (기관별 보기 전용, 2026-10-06 요청).
+  const statusSelect=(t,status)=>`<select onclick="event.stopPropagation()" onchange="event.stopPropagation();quickUpdateTalentStatus(${t.id},this.value)" style="font-size:11px;font-weight:700;padding:3px 22px 3px 8px;border-radius:20px;border:1.5px solid ${STAGE_COLOR[status]||'#6b7280'}55;background:${STAGE_BG[status]||'#f3f4f6'};color:${STAGE_COLOR[status]||'#6b7280'};cursor:pointer;">${OFFICIAL_STATUSES.map(s=>`<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}</select>`;
+  if(!filtered.length){
+    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
+    tbody.innerHTML='<tr><td colspan="8" class="empty">해당 인재 없음</td></tr>';return;
+  }
+  if(talentViewMode==='org'){
+    // 기관별 보기: 유입기관 컬럼 대신 기관명을 그룹 헤더로 올리고, 그 아래 인재들을 모아서 보여준다.
+    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
+    const groups={};
+    filtered.forEach(t=>{
+      const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
+      const key=org?org.name:(t.referrer||'기타/미상');
+      (groups[key]=groups[key]||{id:org?org.id:null,name:key,items:[]}).items.push(t);
+    });
+    const orderedKeys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+    tbody.innerHTML=orderedKeys.map(key=>{
+      const g=groups[key];
+      const headerRow=`<tr style="background:#eef2ff;"><td colspan="7" style="padding:9px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;font-weight:800;color:var(--text);${g.id?'cursor:pointer;':''}" ${g.id?`onclick="openOrg(${g.id})"`:''}>${g.name}</span>
+          <span style="font-size:11px;color:var(--text3);font-weight:600;">${g.items.length}명</span>
+          ${g.id?`<button onclick="exportOrgTalentStatusExcel(${g.id})" style="margin-left:auto;font-size:10px;padding:3px 8px;border:1px solid var(--green);border-radius:6px;background:var(--green-bg);color:var(--green);font-weight:700;cursor:pointer;">엑셀</button>`:''}
+        </div>
+      </td></tr>`;
+      const rows=g.items.map(t=>{
+        const talApps=apps.filter(a=>a.talent_id===t.id);
+        const status=talApps[0]?.status||t.status||'인재등록';
+        const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
+        return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:10px 16px 10px 28px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:10px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:10px 14px;">${t.job||'—'}</td><td style="padding:10px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:10px 14px;">${statusSelect(t,status)}</td><td style="font-size:11px;color:var(--text3);padding:10px 14px;">${regDate}</td><td style="padding:10px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;
+      }).join('');
+      return headerRow+rows;
+    }).join('');
+    return;
+  }
   if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" class="empty">해당 인재 없음</td></tr>';return;}
-  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');
-}
+  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');}
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderTalent();}
 // 인재영입 목록 화면에 적용된 검색/필터를 그대로 반영해서, 지금 화면에 보이는 인재만 뽑는다
 // (특정 기관만 필터해두고 내보내면 그 기관 소개 인재만 담긴 파일이 됨).
@@ -3872,11 +3917,12 @@ const DATE_FIELD_BY_STATUS={
   '서류불합격':{date:'rejected_at',est:'rejected_date_is_estimated'},
   '최종불합격':{date:'rejected_at',est:'rejected_date_is_estimated'},
 };
-async function updateDrawerStatus(){
-  if(!currentDrawerTalentId)return;
-  const status=document.getElementById('drawer-status')?.value;if(!status)return;
-  const t=cache.talents.find(x=>x.id===currentDrawerTalentId);if(!t)return;
-  const apps=(cache.applications||[]).filter(a=>a.talent_id===currentDrawerTalentId);
+// 상태값 변경 공통 로직 (드로어의 상태 select와 인재영입 '기관별 보기'의 인라인 select가 공유한다).
+// 재지원 가드 / 최초지원 job_id 연결 가드 / 날짜 자동입력 / talents.status 동기화를 한 곳에서만 처리해서
+// 두 UI의 상태 변경 동작이 서로 어긋나지 않도록 한다 (2026-10-06 리팩터, updateDrawerStatus에서 분리).
+async function applyTalentStatusChange(talentId,status){
+  const t=cache.talents.find(x=>x.id===talentId);if(!t)return false;
+  const apps=(cache.applications||[]).filter(a=>a.talent_id===talentId);
   const dateField=DATE_FIELD_BY_STATUS[status];
   const todayStr=today();
 
@@ -3884,10 +3930,10 @@ async function updateDrawerStatus(){
     const latestApp=apps[0];
     // 재지원 케이스: 최신 지원이력이 불합격(지원서/면접 불합격)인데 새로 '채용지원'을 선택한 경우.
     // 재지원은 이전과 같은 회사에는 할 수 없어(항상 다른 채용건) job_id를 여기서
-    // 자동으로 알 방법이 없다. 드로어에서 새 지원이력을 만들지 않고, 채용건 페이지에서 등록하도록 유도한다.
+    // 자동으로 알 방법이 없다. 여기서 새 지원이력을 만들지 않고, 채용건 페이지에서 등록하도록 유도한다.
     if((latestApp.status==='서류불합격'||latestApp.status==='최종불합격')&&status==='채용지원'){
       toast(' 재지원은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
-      return;
+      return false;
     }
     // 1) 지원이력이 있으면 candidate_applications.status 갱신 + 관련 날짜가 비어있으면 오늘 날짜 자동입력
     const payload={status};
@@ -3896,29 +3942,42 @@ async function updateDrawerStatus(){
       payload[dateField.est]=false; // 자동입력 날짜는 추정일 아님
     }
     const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
-    if(error){toast('오류: '+error.message);return;}
+    if(error){toast('오류: '+error.message);return false;}
     Object.assign(latestApp,payload);
     // talents.status도 함께 동기화 (2026-07-08 결정: DB 정합성 목적, 화면 표시 우선순위엔 영향 없음)
     // 다건 지원 기능 도입 시 이 동기화 정책은 재검토 필요 (V:Scout 데이터 표준 v1.0 참고)
-    const{error:tErr}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
+    const{error:tErr}=await sb.from('talents').update({status}).eq('id',talentId);
     if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
     else t.status=status;
   }else if(status!=='인재등록'){
     // 2) 지원이력이 없고 새 상태가 '인재등록'이 아닌 경우: 예전엔 여기서 candidate_applications를 job_id 없이
-    // 새로 만들었지만, 2026-07-21부터는 job_id 자동 연결 원칙에 따라 드로어에서 만들지 않고
+    // 새로 만들었지만, 2026-07-21부터는 job_id 자동 연결 원칙에 따라 여기서 만들지 않고
     // 채용건 페이지의 "+ 지원자 등록"으로 유도한다.
     toast(' 최초 지원 등록은 채용 건 관리 페이지의 "+ 지원자 등록"에서 진행해주세요 (어느 채용건인지 연결하기 위해)');
-    return;
+    return false;
   }else{
     // 3) 지원이력이 없고 새 상태가 '인재등록'이면 talents.status만 갱신 (candidate_applications 생성 안 함)
-    const{error}=await sb.from('talents').update({status}).eq('id',currentDrawerTalentId);
-    if(error){toast('오류: '+error.message);return;}
+    const{error}=await sb.from('talents').update({status}).eq('id',talentId);
+    if(error){toast('오류: '+error.message);return false;}
     t.status=status;
   }
   toast('상태 변경됨: '+status);
+  return true;
+}
+async function updateDrawerStatus(){
+  if(!currentDrawerTalentId)return;
+  const status=document.getElementById('drawer-status')?.value;if(!status)return;
+  const ok=await applyTalentStatusChange(currentDrawerTalentId,status);
+  if(!ok)return;
   // 지원이력 탭을 보고 있었다면 자동입력된 날짜가 바로 보이도록 새로고침
   if(document.getElementById('dtab-history')?.style.color==='var(--accent)')switchDrawerTab('history');
   renderTalent();
+}
+// 인재영입 페이지 '기관별 보기'의 인라인 상태 select에서 호출 (2026-10-06 추가).
+// 드로어를 열지 않고 목록에서 바로 상태를 바꿀 수 있게 하되, 가드/동기화 로직은 위 공통 함수를 그대로 탄다.
+async function quickUpdateTalentStatus(talentId,status){
+  await applyTalentStatusChange(talentId,status);
+  renderTalent(); // 실패했을 때도 select가 실제 저장된 상태로 되돌아가도록 다시 그린다
 }
 // 지원일/합격일/입사일/불합격일 + 추정여부 저장. 지원이력(candidate_applications)이 없으면 새로 생성한다(job_id는 비워둠).
 async function saveApplicationDates(){
