@@ -3631,7 +3631,7 @@ function renderTalent(){
   const statusSelect=(t,status)=>`<select onclick="event.stopPropagation()" onchange="event.stopPropagation();quickUpdateTalentStatus(${t.id},this.value)" style="font-size:11px;font-weight:700;padding:3px 22px 3px 8px;border-radius:20px;border:1.5px solid ${STAGE_COLOR[status]||'#6b7280'}55;background:${STAGE_BG[status]||'#f3f4f6'};color:${STAGE_COLOR[status]||'#6b7280'};cursor:pointer;">${OFFICIAL_STATUSES.map(s=>`<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}</select>`;
   if(!filtered.length){
     if(talentViewMode==='org'){
-      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">기관명</th><th style="${TH}">이름</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">장애유형</th><th style="${TH}">장애정도</th><th style="${TH}">현재상태</th><th style="${TH}">비고</th><th style="${TH}">등록일</th></tr>`;
+      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:150px;">기관명</th><th style="${TH}width:100px;">이름</th><th style="${TH}width:90px;">직무</th><th style="${TH}width:75px;">담당자</th><th style="${TH}width:70px;">장애유형</th><th style="${TH}width:70px;">장애정도</th><th style="${TH}width:95px;">현재상태</th><th style="${TH}">비고</th><th style="${TH}width:75px;">등록일</th></tr>`;
       tbody.innerHTML='<tr><td colspan="9" class="empty">해당 인재 없음</td></tr>';
     }else{
       if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
@@ -3644,7 +3644,7 @@ function renderTalent(){
     // 장애유형/장애정도/비고(바로 입력 가능)를 추가하고 "현재단계" 표기를 "현재상태"로 변경 (2026-10-06, 세세님 피드백).
     // 기관 종류(orgs.cat)는 기관 등록시 입력된 값을 그대로 가져와 기관명 아래 작게 표시 — 별도 입력 불필요, 자동 반영됨.
     // 엑셀 내보내기(페이지 상단 버튼·기관상세 모달에 이미 있음)와 행별 삭제 버튼은 이 보기에서는 빼서 우측이 복잡해지지 않게 함.
-    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">기관명</th><th style="${TH}">이름</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">장애유형</th><th style="${TH}">장애정도</th><th style="${TH}">현재상태</th><th style="${TH}">비고</th><th style="${TH}">등록일</th></tr>`;
+    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}width:150px;">기관명</th><th style="${TH}width:100px;">이름</th><th style="${TH}width:90px;">직무</th><th style="${TH}width:75px;">담당자</th><th style="${TH}width:70px;">장애유형</th><th style="${TH}width:70px;">장애정도</th><th style="${TH}width:95px;">현재상태</th><th style="${TH}">비고</th><th style="${TH}width:75px;">등록일</th></tr>`;
     const groups={};
     filtered.forEach(t=>{
       const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
