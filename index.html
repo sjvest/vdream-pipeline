@@ -3666,6 +3666,29 @@ function exportTalentExcel(){
   XLSX.writeFile(wb,fname);
   toast(`${filtered.length}명 엑셀로 내보냈어요`);
 }
+// 기관 상세모달 "인재풀/지원현황"에서 그 기관 하나의 인재 현황만 엑셀로 내보낸다 — 기관 담당자에게
+// "우리가 보낸 인재들 지금 상태" 공유용으로 직접 전달할 수 있게 하기 위함 (2026-10-06 요청).
+// 매출/단가 등 내부 정보는 제외하고 인재 현황만 담는다.
+function exportOrgTalentStatusExcel(orgId){
+  if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  const org=cache.orgs.find(o=>o.id===orgId);
+  const orgTals=cache.talents.filter(t=>(t.source_org_id||t.org_id)===orgId&&!isTestTalent(t));
+  const orgApps=(cache.applications||[]).filter(a=>a.org_id===orgId);
+  if(!orgTals.length){toast('내보낼 인재가 없어요');return;}
+  const aoa=[['이름','전화번호','직무','장애유형','장애정도','상태','기업명','입사일','비고']];
+  orgTals.forEach(t=>{
+    const ap=orgApps.find(a=>a.talent_id===t.id);
+    const status=ap?.status||t.status||'인재등록';
+    aoa.push([t.name||'',t.phone||'',t.job||'',t.disability_type||'',t.disability_grade||'',status,ap?.hire_company||t.hire_company||'',ap?.join_date?fDate(ap.join_date):'',t.memo||'']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:10},{wch:15},{wch:18},{wch:10},{wch:8},{wch:12},{wch:22},{wch:12},{wch:30}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,(org?.name||'인재현황').replace(/[\\/?*\[\]:]/g,'').slice(0,28));
+  const fname=`${(org?.name||'기관')}_인재현황_${today().replace(/-/g,'')}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  toast(`${orgTals.length}명 엑셀로 내보냈어요`);
+}
 let currentDrawerTalentId=null;
 let drawerInfoEditMode=false;
 function openTalentDrawer(talentId){
@@ -7203,7 +7226,10 @@ async function openOrg(id){
         </div>`;
       };
       return`<div style="margin-top:12px;padding:12px 14px;background:#f8faff;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-        <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:10px;"> 인재풀 / 지원 현황</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;color:var(--accent);"> 인재풀 / 지원 현황</div>
+          <button onclick="exportOrgTalentStatusExcel(${id})" style="font-size:11px;padding:5px 10px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px;">${summaryCards}</div>
         <div id="org-tal-list-${id}">${orgTals.map(t=>renderRow(t,orgApps.find(a=>a.talent_id===t.id))).join('')||'<div style="color:var(--text3);font-size:12px;padding:8px 0;">없음</div>'}</div>
       </div>
