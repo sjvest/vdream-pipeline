@@ -3630,35 +3630,42 @@ function renderTalent(){
   // 상태 셀을 뱃지 대신 select로 그려서 그 자리에서 바로 상태를 바꿀 수 있게 한다 (기관별 보기 전용, 2026-10-06 요청).
   const statusSelect=(t,status)=>`<select onclick="event.stopPropagation()" onchange="event.stopPropagation();quickUpdateTalentStatus(${t.id},this.value)" style="font-size:11px;font-weight:700;padding:3px 22px 3px 8px;border-radius:20px;border:1.5px solid ${STAGE_COLOR[status]||'#6b7280'}55;background:${STAGE_BG[status]||'#f3f4f6'};color:${STAGE_COLOR[status]||'#6b7280'};cursor:pointer;">${OFFICIAL_STATUSES.map(s=>`<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}</select>`;
   if(!filtered.length){
-    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
-    tbody.innerHTML='<tr><td colspan="8" class="empty">해당 인재 없음</td></tr>';return;
+    if(talentViewMode==='org'){
+      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">기관명</th><th style="${TH}">이름</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">장애유형</th><th style="${TH}">장애정도</th><th style="${TH}">현재상태</th><th style="${TH}">비고</th><th style="${TH}">등록일</th></tr>`;
+      tbody.innerHTML='<tr><td colspan="9" class="empty">해당 인재 없음</td></tr>';
+    }else{
+      if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
+      tbody.innerHTML='<tr><td colspan="8" class="empty">해당 인재 없음</td></tr>';
+    }
+    return;
   }
   if(talentViewMode==='org'){
-    // 기관별 보기: 유입기관 컬럼 대신 기관명을 그룹 헤더로 올리고, 그 아래 인재들을 모아서 보여준다.
-    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
+    // 기관별 보기: "기관명"을 그룹 헤더 행이 아니라 시트처럼 세로로 병합된(rowspan) 실제 첫 컬럼으로 보여주고,
+    // 장애유형/장애정도/비고(바로 입력 가능)를 추가하고 "현재단계" 표기를 "현재상태"로 변경 (2026-10-06, 세세님 피드백).
+    // 기관 종류(orgs.cat)는 기관 등록시 입력된 값을 그대로 가져와 기관명 아래 작게 표시 — 별도 입력 불필요, 자동 반영됨.
+    // 엑셀 내보내기(페이지 상단 버튼·기관상세 모달에 이미 있음)와 행별 삭제 버튼은 이 보기에서는 빼서 우측이 복잡해지지 않게 함.
+    if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">기관명</th><th style="${TH}">이름</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">장애유형</th><th style="${TH}">장애정도</th><th style="${TH}">현재상태</th><th style="${TH}">비고</th><th style="${TH}">등록일</th></tr>`;
     const groups={};
     filtered.forEach(t=>{
       const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
       const key=org?org.name:(t.referrer||'기타/미상');
-      (groups[key]=groups[key]||{id:org?org.id:null,name:key,items:[]}).items.push(t);
+      (groups[key]=groups[key]||{id:org?org.id:null,cat:org?.cat||'',name:key,items:[]}).items.push(t);
     });
     const orderedKeys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
+    // 비고(memo)는 그 자리에서 바로 입력/수정하고 저장할 수 있게 텍스트 입력으로 그린다.
+    const memoInput=t=>`<input type="text" value="${(t.memo||'').replace(/"/g,'&quot;')}" placeholder="특이사항" onclick="event.stopPropagation()" onchange="event.stopPropagation();quickUpdateTalentMemo(${t.id},this.value)" style="width:120px;font-size:11px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);">`;
     tbody.innerHTML=orderedKeys.map(key=>{
       const g=groups[key];
-      const headerRow=`<tr style="background:#eef2ff;"><td colspan="7" style="padding:9px 16px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:13px;font-weight:800;color:var(--text);${g.id?'cursor:pointer;':''}" ${g.id?`onclick="openOrg(${g.id})"`:''}>${g.name}</span>
-          <span style="font-size:11px;color:var(--text3);font-weight:600;">${g.items.length}명</span>
-          ${g.id?`<button onclick="exportOrgTalentStatusExcel(${g.id})" style="margin-left:auto;font-size:10px;padding:3px 8px;border:1px solid var(--green);border-radius:6px;background:var(--green-bg);color:var(--green);font-weight:700;cursor:pointer;">엑셀</button>`:''}
-        </div>
-      </td></tr>`;
-      const rows=g.items.map(t=>{
+      const orgCell=`<td rowspan="${g.items.length}" style="padding:10px 16px;vertical-align:top;border-right:1px solid var(--border);background:#fafbff;">
+        <div style="font-size:13px;font-weight:800;color:var(--text);${g.id?'cursor:pointer;':''}" ${g.id?`onclick="openOrg(${g.id})"`:''}>${g.name}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${g.cat?`<span class="badge b-gray" style="font-size:9px;">${g.cat}</span>`:''}<span>${g.items.length}명</span></div>
+      </td>`;
+      return g.items.map((t,idx)=>{
         const talApps=apps.filter(a=>a.talent_id===t.id);
         const status=talApps[0]?.status||t.status||'인재등록';
         const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
-        return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:10px 16px 10px 28px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:10px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:10px 14px;">${t.job||'—'}</td><td style="padding:10px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:10px 14px;">${statusSelect(t,status)}</td><td style="font-size:11px;color:var(--text3);padding:10px 14px;">${regDate}</td><td style="padding:10px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;
+        return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">${idx===0?orgCell:''}<td style="padding:10px 14px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--text2);padding:10px 14px;">${t.job||'—'}</td><td style="padding:10px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="font-size:12px;color:var(--text2);padding:10px 14px;">${t.disability_type||'—'}</td><td style="font-size:12px;color:var(--text2);padding:10px 14px;">${t.disability_grade||'—'}</td><td style="padding:10px 14px;">${statusSelect(t,status)}</td><td style="padding:10px 14px;">${memoInput(t)}</td><td style="font-size:11px;color:var(--text3);padding:10px 14px;">${regDate}</td></tr>`;
       }).join('');
-      return headerRow+rows;
     }).join('');
     return;
   }
@@ -3978,6 +3985,14 @@ async function updateDrawerStatus(){
 async function quickUpdateTalentStatus(talentId,status){
   await applyTalentStatusChange(talentId,status);
   renderTalent(); // 실패했을 때도 select가 실제 저장된 상태로 되돌아가도록 다시 그린다
+}
+// 인재영입 페이지 '기관별 보기'의 인라인 비고 입력에서 호출 (2026-10-06 추가). talents.memo를 바로 저장한다.
+async function quickUpdateTalentMemo(talentId,memo){
+  const t=cache.talents.find(x=>x.id===talentId);if(!t)return;
+  const{error}=await sb.from('talents').update({memo}).eq('id',talentId);
+  if(error){toast('오류: '+error.message);return;}
+  t.memo=memo;
+  toast('비고 저장됨');
 }
 // 지원일/합격일/입사일/불합격일 + 추정여부 저장. 지원이력(candidate_applications)이 없으면 새로 생성한다(job_id는 비워둠).
 async function saveApplicationDates(){
