@@ -541,6 +541,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="max-width:300px;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;"><i class="ti ti-x"></i> 초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
   <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button onclick="openRelExportModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;margin-right:8px;">선물·초청 명단 내보내기</button>
     <button onclick="exportOrgsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
   </div>
   <!-- 일괄 빠른 접촉: 체크박스로 여러 기관을 골라 채용공고/자료 등을 한 번에 발송했다는 기록을 남긴다 (2026-08-22). -->
@@ -1429,6 +1430,30 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
   </div>
 </div>
+</div>
+
+<!-- 관계 이력 엑셀 내보내기 모달 (명절 선물 / 행사 초청 명단) -->
+<div id="rel-export-modal" class="overlay" style="display:none;z-index:160;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:460px;width:100%;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1.5px solid var(--border);">
+      <div style="font-size:16px;font-weight:800;">선물·초청 명단 내보내기</div>
+      <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">연도</div><select id="rel-exp-year" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></select></div>
+        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">월</div><select id="rel-exp-month" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 월</option></select></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">구분</div><select id="rel-exp-kind" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="명절 선물">명절 선물</option><option value="행사 초청">행사 초청</option><option value="">전체 구분</option></select></div>
+        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">항목 (설, 추석, 행사명)</div><input id="rel-exp-item" placeholder="전체" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+        <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);">취소</button>
+        <button onclick="exportOrgRelationsExcel()" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 기관 상세 모달 -->
@@ -7203,6 +7228,9 @@ async function openOrg(id){
         <button id="quick-contact-save-btn-${id}" onclick="saveQuickContact(${id})" style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;">저장</button>
       </div>
     </div>
+    <div style="font-size:13px;font-weight:800;color:var(--teal);background:var(--teal-bg);padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;">관계 이력 (명절 선물 · 행사 초청)<button onclick="openRelForm(${id})" style="margin-left:auto;font-size:11px;padding:3px 10px;border:1.5px solid var(--teal);border-radius:6px;background:#fff;color:var(--teal);font-weight:700;cursor:pointer;">이력 추가</button></div>
+    <div id="org-rel-form"></div>
+    <div id="org-rel-list"><div class="empty" style="padding:.5rem 0;font-size:12px;">불러오는 중</div></div>
     <div style="font-size:13px;font-weight:800;color:var(--purple);background:#faf5ff;padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-history"></i> 컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
@@ -7363,6 +7391,7 @@ async function openOrg(id){
   document.getElementById('modal').style.display='flex';
   loadBizCards(id);
   loadMeetings(id);
+  loadOrgRelations(id);
   setTimeout(()=>initModalDrag(),50);
   // 날짜 항상 오늘로 세팅
   const logDateEl=document.getElementById('log-date');
@@ -7384,6 +7413,204 @@ async function openOrg(id){
       });
     },50);
   }
+}
+
+// ── 관계 이력 (명절 선물 / 행사 초청) ──
+// 기관별로 "그 해 왜 선물을 보냈고 / 행사에 초대했는지"를 쌓는다. 선정 사유 태그는 app_settings.relation_reasons(JSON)에서 불러오며 화면에서 추가·비활성화할 수 있다.
+const REL_REASONS_DEFAULT=['지원자 유입','타 행사 초청·소개','유의미한 정보 제공','네트워크 연결','관계 유지 필요','기타'];
+let relReasons=null;
+const relRowsByOrg={};
+function relEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function getRelReasons(){
+  if(relReasons)return relReasons;
+  try{
+    const{data}=await sb.from('app_settings').select('value').eq('key','relation_reasons').maybeSingle();
+    const arr=data&&data.value?JSON.parse(data.value):null;
+    relReasons=Array.isArray(arr)&&arr.length?arr:[...REL_REASONS_DEFAULT];
+  }catch(e){relReasons=[...REL_REASONS_DEFAULT];}
+  return relReasons;
+}
+async function addRelReason(orgId){
+  const input=document.getElementById('rel-new-reason');
+  const name=(input&&input.value||'').trim();
+  if(!name){toast('추가할 사유를 입력해주세요');return;}
+  const list=await getRelReasons();
+  if(list.includes(name)){toast('이미 있는 사유예요');return;}
+  const next=[...list,name];
+  const{error}=await sb.from('app_settings').upsert({key:'relation_reasons',value:JSON.stringify(next)});
+  if(error){toast('오류: '+error.message);return;}
+  relReasons=next;
+  const wrap=document.getElementById('rel-reason-wrap');
+  if(wrap){
+    const lb=document.createElement('label');
+    lb.style.cssText='font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;';
+    lb.innerHTML=`<input type="checkbox" class="rel-reason-cb" value="${relEsc(name)}" checked>${relEsc(name)}`;
+    wrap.appendChild(lb);
+  }
+  input.value='';
+  toast('사유를 추가했어요');
+}
+async function loadOrgRelations(orgId){
+  const box=document.getElementById('org-rel-list');
+  if(!box)return;
+  const{data,error}=await sb.from('org_relations').select('*').eq('org_id',orgId).order('year',{ascending:false}).order('month',{ascending:false,nullsFirst:false}).order('id',{ascending:false});
+  if(error){box.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:12px;">관계 이력을 불러오지 못했어요: '+relEsc(error.message)+'</div>';return;}
+  relRowsByOrg[orgId]=data||[];
+  renderOrgRelations(orgId);
+}
+function renderOrgRelations(orgId){
+  const box=document.getElementById('org-rel-list');
+  if(!box)return;
+  const rows=relRowsByOrg[orgId]||[];
+  if(!rows.length){box.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:12px;">등록된 관계 이력 없음</div>';return;}
+  const tagCount={};
+  rows.forEach(r=>(r.reasons||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1;}));
+  const summary=Object.keys(tagCount).length?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">누적 ${rows.length}회 · 사유: ${Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([t,c])=>relEsc(t)+' '+c).join(', ')}</div>`:`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">누적 ${rows.length}회</div>`;
+  const NEXT_COLOR={'유지':'var(--green)','보류':'#b54708','제외':'#dc2626'};
+  box.innerHTML=summary+rows.map(r=>{
+    const when=r.year+'년'+(r.month?' '+r.month+'월':'');
+    const gift=[r.gift_name,r.quantity?r.quantity+'개':''].filter(Boolean).join(' ');
+    return`<div style="padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--surface);">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:800;">${relEsc(when)}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-bg);padding:1px 7px;border-radius:4px;">${relEsc(r.kind)}${r.item?' · '+relEsc(r.item):''}</span>
+        ${gift?`<span style="font-size:12px;color:var(--text2);">${relEsc(gift)}</span>`:''}
+        ${r.next_status?`<span style="font-size:10px;font-weight:700;color:${NEXT_COLOR[r.next_status]||'var(--text3)'};border:1px solid currentColor;padding:1px 7px;border-radius:10px;">다음해 ${relEsc(r.next_status)}</span>`:''}
+        <span style="margin-left:auto;display:flex;gap:8px;">
+          <button onclick="openRelForm(${orgId},${r.id})" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-weight:700;">수정</button>
+          <button onclick="deleteOrgRelation(${r.id},${orgId})" style="font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;font-weight:700;">삭제</button>
+        </span>
+      </div>
+      ${(r.reasons||[]).length?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">${r.reasons.map(t=>`<span style="font-size:10px;font-weight:600;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:1px 7px;border-radius:10px;">${relEsc(t)}</span>`).join('')}</div>`:''}
+      ${r.note?`<div style="margin-top:6px;font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.6;">${relEsc(r.note)}</div>`:''}
+      ${r.next_reason?`<div style="margin-top:4px;font-size:11px;color:var(--text3);">다음해 사유: ${relEsc(r.next_reason)}</div>`:''}
+      <div style="margin-top:4px;font-size:10px;color:var(--text3);">${[r.sent_date?fDate(r.sent_date):'',r.handler?'담당 '+relEsc(r.handler):''].filter(Boolean).join(' · ')}</div>
+    </div>`;
+  }).join('');
+}
+async function openRelForm(orgId,relId,keepReasons){
+  const form=document.getElementById('org-rel-form');
+  if(!form)return;
+  const r=relId?((relRowsByOrg[orgId]||[]).find(x=>x.id===relId)||{}):{};
+  window._relEditing={id:relId||null};
+  const reasons=await getRelReasons();
+  const selected=keepReasons||r.reasons||[];
+  const curYear=new Date().getFullYear();
+  const years=[];for(let y=curYear+1;y>=curYear-8;y--)years.push(y);
+  const yearVal=r.year||curYear;
+  const inp='font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);box-sizing:border-box;';
+  const lbl='font-size:11px;color:var(--text3);font-weight:600;margin-bottom:3px;';
+  form.innerHTML=`<div style="padding:12px;border:1.5px solid var(--teal);border-radius:var(--radius-sm);background:var(--teal-bg);margin-bottom:10px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div><div style="${lbl}">구분</div><select id="rel-kind" style="${inp}"><option value="명절 선물"${r.kind==='명절 선물'||!r.kind?' selected':''}>명절 선물</option><option value="행사 초청"${r.kind==='행사 초청'?' selected':''}>행사 초청</option></select></div>
+      <div><div style="${lbl}">연도</div><select id="rel-year" style="${inp}">${years.map(y=>`<option value="${y}"${y===yearVal?' selected':''}>${y}</option>`).join('')}</select></div>
+      <div><div style="${lbl}">월</div><select id="rel-month" style="${inp}"><option value="">월 선택</option>${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}"${r.month===m?' selected':''}>${m}월</option>`).join('')}</select></div>
+      <div><div style="${lbl}">항목 (설, 추석, 행사명)</div><input id="rel-item" value="${relEsc(r.item||'')}" placeholder="추석" style="${inp}width:150px;"></div>
+      <div><div style="${lbl}">발송·초청일</div><input id="rel-date" type="date" value="${r.sent_date||''}" onchange="relSyncMonth()" style="${inp}"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="flex:1;min-width:140px;"><div style="${lbl}">선물명</div><input id="rel-gift" value="${relEsc(r.gift_name||'')}" placeholder="선물명" style="${inp}width:100%;"></div>
+      <div><div style="${lbl}">수량</div><input id="rel-qty" type="number" min="0" value="${r.quantity==null?'':r.quantity}" style="${inp}width:80px;"></div>
+      <div><div style="${lbl}">우리측 담당</div><input id="rel-handler" value="${relEsc(r.handler||(currentProfile&&currentProfile.name)||'')}" style="${inp}width:110px;"></div>
+    </div>
+    <div style="${lbl}">선정 사유 (복수 선택)</div>
+    <div id="rel-reason-wrap" style="display:flex;gap:10px 14px;flex-wrap:wrap;margin-bottom:6px;">${reasons.map(t=>`<label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="rel-reason-cb" value="${relEsc(t)}"${selected.includes(t)?' checked':''}>${relEsc(t)}</label>`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;"><input id="rel-new-reason" placeholder="사유 직접 추가" style="${inp}width:160px;"><button onclick="addRelReason(${orgId})" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;">사유 추가</button></div>
+    <div style="${lbl}">협력 내용 메모</div>
+    <textarea id="rel-note" placeholder="예: 지원자는 없었지만 OO 행사에 초청해 줌" style="${inp}width:100%;min-height:54px;resize:vertical;margin-bottom:8px;">${relEsc(r.note||'')}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div><div style="${lbl}">다음 해 대상 여부</div><select id="rel-next" style="${inp}"><option value="">미정</option>${['유지','보류','제외'].map(s=>`<option value="${s}"${r.next_status===s?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div style="flex:1;min-width:160px;"><div style="${lbl}">사유</div><input id="rel-next-reason" value="${relEsc(r.next_reason||'')}" style="${inp}width:100%;"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:6px;">
+      <button onclick="document.getElementById('org-rel-form').innerHTML=''" style="font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;">취소</button>
+      <button id="rel-save-btn" onclick="saveOrgRelation(${orgId},${relId||'null'})" style="font-size:12px;padding:6px 14px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;">저장</button>
+    </div>
+  </div>`;
+}
+function relSyncMonth(){
+  const d=document.getElementById('rel-date').value;
+  if(d){document.getElementById('rel-month').value=String(Number(d.slice(5,7)));document.getElementById('rel-year').value=d.slice(0,4);}
+}
+async function saveOrgRelation(orgId,relId){
+  const g=id=>document.getElementById(id);
+  const year=Number(g('rel-year').value);
+  const monthVal=g('rel-month').value;
+  const row={
+    org_id:orgId,
+    kind:g('rel-kind').value,
+    year,
+    month:monthVal?Number(monthVal):null,
+    item:g('rel-item').value.trim()||null,
+    sent_date:g('rel-date').value||null,
+    gift_name:g('rel-gift').value.trim()||null,
+    quantity:g('rel-qty').value===''?null:Number(g('rel-qty').value),
+    handler:g('rel-handler').value.trim()||null,
+    reasons:[...document.querySelectorAll('.rel-reason-cb:checked')].map(x=>x.value),
+    note:g('rel-note').value.trim()||null,
+    next_status:g('rel-next').value||null,
+    next_reason:g('rel-next-reason').value.trim()||null
+  };
+  if(!row.month&&!row.sent_date){toast('월 또는 발송·초청일을 입력해주세요');return;}
+  const btn=g('rel-save-btn');if(btn)btn.disabled=true;
+  let error;
+  if(relId){
+    ({error}=await sb.from('org_relations').update(row).eq('id',relId));
+  }else{
+    row.created_by=currentUser&&currentUser.id||null;
+    row.created_by_name=currentProfile&&currentProfile.name||'';
+    ({error}=await sb.from('org_relations').insert(row));
+  }
+  if(btn)btn.disabled=false;
+  if(error){toast('오류: '+error.message);return;}
+  g('org-rel-form').innerHTML='';
+  await loadOrgRelations(orgId);
+  toast(relId?'관계 이력을 수정했어요':'관계 이력을 등록했어요');
+}
+async function deleteOrgRelation(relId,orgId){
+  if(!confirm('이 관계 이력을 삭제할까요?'))return;
+  const{error}=await sb.from('org_relations').delete().eq('id',relId);
+  if(error){toast('오류: '+error.message);return;}
+  await loadOrgRelations(orgId);
+  toast('삭제했어요');
+}
+// 명절 선물 / 행사 초청 대상 기관 명단 엑셀 (연도·월·구분·항목 필터)
+async function openRelExportModal(){
+  const curYear=new Date().getFullYear();
+  const ySel=document.getElementById('rel-exp-year');
+  ySel.innerHTML='';
+  for(let y=curYear+1;y>=curYear-8;y--)ySel.innerHTML+=`<option value="${y}"${y===curYear?' selected':''}>${y}년</option>`;
+  const mSel=document.getElementById('rel-exp-month');
+  mSel.innerHTML='<option value="">전체 월</option>'+[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}">${m}월</option>`).join('');
+  document.getElementById('rel-exp-item').value='';
+  document.getElementById('rel-export-modal').style.display='flex';
+}
+async function exportOrgRelationsExcel(){
+  if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  const year=Number(document.getElementById('rel-exp-year').value);
+  const month=document.getElementById('rel-exp-month').value;
+  const kind=document.getElementById('rel-exp-kind').value;
+  const item=document.getElementById('rel-exp-item').value.trim();
+  let q=sb.from('org_relations').select('*').eq('year',year).order('month',{ascending:true,nullsFirst:false}).order('id',{ascending:true});
+  if(month)q=q.eq('month',Number(month));
+  if(kind)q=q.eq('kind',kind);
+  if(item)q=q.ilike('item','%'+item.replace(/[%_]/g,'')+'%');
+  const{data,error}=await q;
+  if(error){toast('오류: '+error.message);return;}
+  if(!data||!data.length){toast('조건에 맞는 이력이 없어요');return;}
+  const aoa=[['연도','월','구분','항목','기관명','기관유형','기관 담당자','직함','연락처','주소','선물명','수량','발송·초청일','우리측 담당','선정 사유','협력 내용 메모','다음해 대상','다음해 사유']];
+  data.forEach(r=>{
+    const o=cache.orgs.find(x=>x.id===r.org_id)||{};
+    aoa.push([r.year,r.month||'',r.kind,r.item||'',o.name||'(삭제된 기관)',o.cat||'',o.contact||'',o.contact_title||'',o.mobile||o.phone||'',o.address||'',r.gift_name||'',r.quantity==null?'':r.quantity,r.sent_date||'',r.handler||'',(r.reasons||[]).join(', '),r.note||'',r.next_status||'',r.next_reason||'']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:6},{wch:5},{wch:10},{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:16},{wch:34},{wch:18},{wch:6},{wch:12},{wch:10},{wch:26},{wch:36},{wch:10},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'선물초청명단');
+  const label=[year+'년',month?month+'월':'',kind||'전체',item].filter(Boolean).join('_');
+  XLSX.writeFile(wb,`관계이력_${label}_${today().replace(/-/g,'')}.xlsx`);
+  document.getElementById('rel-export-modal').style.display='none';
+  toast(`${data.length}건 엑셀로 내보냈어요`);
 }
 
 // ── 컨택 히스토리 ──
