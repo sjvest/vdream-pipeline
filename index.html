@@ -454,6 +454,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a78d6;display:inline-block;"></span>컨택</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eb6834;display:inline-block;"></span>미팅</span>
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#1baf7a;display:inline-block;"></span>인재영입</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#7c3aed;display:inline-block;"></span>합격</span>
       </div>
     </div>
   </div>
@@ -494,6 +495,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#2a78d6;display:inline-block;"></span>컨택</span>
           <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#eb6834;display:inline-block;"></span>미팅</span>
           <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#1baf7a;display:inline-block;"></span>인재영입</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#7c3aed;display:inline-block;"></span>합격</span>
         </div>
       </div>
     </div>
@@ -2770,7 +2772,8 @@ function renderDashboard(){
   const monthCold=(cache.cold||[]).filter(c=>inThisMonth(c.logged_at||c.created_at));
   const contactByMember=name=>monthTouchpoints.filter(t=>t.member===name).length+monthCold.filter(c=>(c.member||c.created_by_name)===name).length;
   const meetingByMember=name=>monthTouchpoints.filter(t=>t.member===name&&t.contact_type==='미팅').length;
-  const hiredByMember=name=>metricTals.filter(t=>t.member===name&&t.status==='최종합격'&&inThisMonth(t.date)).length;
+  const hiredByMember=name=>metricTals.filter(t=>t.member===name&&inThisMonth(talentRegDate(t))).length;
+  const passedByMember=name=>metricTals.filter(t=>t.member===name&&t.status==='최종합격'&&inThisMonth(talentPassDate(t))).length;
   if(teamMonthChart)teamMonthChart.destroy();
   const teamMonthEl=document.getElementById('team-month-chart');
   if(teamMonthEl&&teamNames.length){
@@ -2782,6 +2785,7 @@ function renderDashboard(){
           {label:'컨택',data:teamNames.map(contactByMember),backgroundColor:'#2a78d6',borderRadius:4,barPercentage:.6},
           {label:'미팅',data:teamNames.map(meetingByMember),backgroundColor:'#eb6834',borderRadius:4,barPercentage:.6},
           {label:'인재영입',data:teamNames.map(hiredByMember),backgroundColor:'#1baf7a',borderRadius:4,barPercentage:.6},
+          {label:'합격',data:teamNames.map(passedByMember),backgroundColor:'#7c3aed',borderRadius:4,barPercentage:.6},
         ]
       },
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
@@ -3037,16 +3041,28 @@ function renderPeriodReport(start,end){
 // 기간별 성과 현황: 컨택/미팅/인재영입 위주로 통일 (2026-09-17 요청) — 그 전엔 5개 항목(신규발굴/미팅예정/
 // 미팅완료/인재영입/MOU완료, 월별은 또 다른 3항목)이 뒤섞여 있어서 "팀원별 이번달 현황"과 기준도 안 맞고
 // 한눈에 보기 어려웠음. 컨택 로그(신규컨택 포함)/미팅 컨택/합격 인재 수를 주간(2주, 평일)·월별(6개월)로 집계.
+// 2026-10-06 수정: 인재영입 = "인재등록" 시점(talents.created_at)에 카운트, 합격은 별도 시리즈로 분리.
+// 그 전엔 '인재영입' 막대가 status==='최종합격'인 사람만 세고 있어서, 인재등록만 해둔 인재는 그래프에 안 잡혔음.
+// talentRegDate: 인재 등록일(시스템). talentPassDate: 최종합격 인재의 합격일
+// (지원이력의 합격일 → 입사일 → 유입일 → 등록일 순으로 fallback).
+function talentRegDate(t){return t.created_at||null;}
+function talentPassDate(t){
+  const apps=(cache.applications||[]).filter(a=>a.talent_id===t.id);
+  for(const a of apps){if(a.pass_date)return a.pass_date;}
+  for(const a of apps){if(a.join_date)return a.join_date;}
+  return t.date||t.created_at||null;
+}
 function renderTrendChart(mode){
-  const tals=cache.talents;
+  const tals=getMetricTalents(); // 테스트 데이터 제외 (다른 대시보드 지표와 기준 통일)
   const touchpoints=expandLogTouchpoints(cache.logs);
   const cold=cache.cold||[];
   const inRange=(dateStr,d,de)=>{if(!dateStr)return false;const t=new Date(dateStr);return t>=d&&t<=de;};
   const contactCount=(d,de)=>touchpoints.filter(t=>inRange(t.rangeDate,d,de)).length+cold.filter(c=>inRange(c.logged_at||c.created_at,d,de)).length;
   const meetingCount=(d,de)=>touchpoints.filter(t=>t.contact_type==='미팅'&&inRange(t.rangeDate,d,de)).length;
-  const hiredCount=(d,de)=>tals.filter(t=>t.status==='최종합격'&&inRange(t.date,d,de)).length;
+  const hiredCount=(d,de)=>tals.filter(t=>inRange(talentRegDate(t),d,de)).length;
+  const passedCount=(d,de)=>tals.filter(t=>t.status==='최종합격'&&inRange(talentPassDate(t),d,de)).length;
 
-  const labels=[],contactData=[],meetingData=[],hiredData=[];
+  const labels=[],contactData=[],meetingData=[],hiredData=[],passedData=[];
 
   if(mode==='week'){
     // 오늘 기준으로 지난 월요일부터 2주 (평일만)
@@ -3066,6 +3082,7 @@ function renderTrendChart(mode){
       contactData.push(contactCount(d,de));
       meetingData.push(meetingCount(d,de));
       hiredData.push(hiredCount(d,de));
+      passedData.push(passedCount(d,de));
     }
     if(trendChart)trendChart.destroy();
     trendChart=new Chart(document.getElementById('trend-chart'),{
@@ -3076,6 +3093,7 @@ function renderTrendChart(mode){
           {label:'컨택',data:contactData,backgroundColor:'#2a78d6',borderRadius:4,barPercentage:.6},
           {label:'미팅',data:meetingData,backgroundColor:'#eb6834',borderRadius:4,barPercentage:.6},
           {label:'인재영입',data:hiredData,backgroundColor:'#1baf7a',borderRadius:4,barPercentage:.6},
+          {label:'합격',data:passedData,backgroundColor:'#7c3aed',borderRadius:4,barPercentage:.6},
         ]
       },
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
@@ -3092,6 +3110,7 @@ function renderTrendChart(mode){
     contactData.push(contactCount(rs,re));
     meetingData.push(meetingCount(rs,re));
     hiredData.push(hiredCount(rs,re));
+    passedData.push(passedCount(rs,re));
   }
 
   if(trendChart) trendChart.destroy();
@@ -3103,6 +3122,7 @@ function renderTrendChart(mode){
         {label:'컨택',data:contactData,backgroundColor:'rgba(42,120,214,0.8)',borderRadius:4,barPercentage:.6},
         {label:'미팅',data:meetingData,backgroundColor:'rgba(235,104,52,0.8)',borderRadius:4,barPercentage:.6},
         {label:'인재영입',data:hiredData,backgroundColor:'rgba(27,175,122,0.8)',borderRadius:4,barPercentage:.6},
+        {label:'합격',data:passedData,backgroundColor:'rgba(124,58,237,0.8)',borderRadius:4,barPercentage:.6},
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1},beginAtZero:true}}}
