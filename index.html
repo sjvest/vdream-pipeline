@@ -3303,6 +3303,7 @@ async function exportFullBackup(){
   const wb=XLSX.utils.book_new();
   const summary=[['시트','건수']];
   const failed=[];
+  const fetched={};
   try{
     for(let i=0;i<BACKUP_TABLES.length;i++){
       const [sheet,table,cols]=BACKUP_TABLES[i];
@@ -3315,12 +3316,26 @@ async function exportFullBackup(){
         if(!data||data.length<1000)break;
         from+=1000;
       }
-      if(!ok)continue;
+      if(ok)fetched[table]=rows;
+    }
+    // ID → 이름 변환표 (ID 컬럼은 복원용으로 유지하고, 옆에 읽기용 이름 컬럼을 추가)
+    const mk=(t,fn)=>{const m={};(fetched[t]||[]).forEach(r=>{m[r.id]=fn(r);});return m;};
+    const orgName=mk('orgs',r=>r.name),talentName=mk('talents',r=>r.name),eventName=mk('events',r=>r.name),
+          jobName=mk('jobs',r=>[r.company,r.job_title].filter(Boolean).join(' / '));
+    const asgOrg=mk('sourcing_assignments',r=>orgName[r.org_id]||'');
+    const NAME_COLS={sourcing_assignment_id:['배정기관명',asgOrg],org_id:['기관명',orgName],source_org_id:['소개기관명',orgName],converted_org_id:['전환기관명',orgName],
+      talent_id:['인재명',talentName],event_id:['행사명',eventName],job_id:['공고명',jobName]};
+    for(const [sheet,table] of BACKUP_TABLES){
+      if(!(table in fetched))continue;
+      const rows=fetched[table];
       const flat=rows.map(r=>{const o={};Object.keys(r).forEach(k=>{
         let v=r[k];
         if(v!==null&&typeof v==='object')v=JSON.stringify(v);
         if(typeof v==='string'&&v.length>32000)v=v.slice(0,32000)+'…(잘림)';
-        o[k]=v;});return o;});
+        o[k]=v;
+        const nc=NAME_COLS[k];
+        if(nc&&!(table==='events'&&k==='id'))o[nc[0]]=(r[k]!=null?(nc[1][r[k]]||''):'');
+      });return o;});
       const ws=flat.length?XLSX.utils.json_to_sheet(flat):XLSX.utils.aoa_to_sheet([['(데이터 없음)']]);
       XLSX.utils.book_append_sheet(wb,ws,sheet);
       summary.push([sheet,rows.length]);
