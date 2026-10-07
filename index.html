@@ -506,7 +506,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:0;"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 현황</div><div class="card-body" id="dash-stages" style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:140px;height:140px;flex-shrink:0;"><canvas id="stage-donut-chart"></canvas></div><div id="dash-stages-legend" style="font-size:11px;flex:1;min-width:0;"></div></div></div>
+    <div class="card" style="margin-bottom:0;"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 기관수 현황</div><div class="card-body" id="dash-stages" style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:140px;height:140px;flex-shrink:0;"><canvas id="stage-donut-chart"></canvas></div><div id="dash-stages-legend" style="font-size:11px;flex:1;min-width:0;"></div></div></div>
   </div>
 
   <div class="card" style="margin-bottom:12px;max-width:900px;">
@@ -2870,7 +2870,17 @@ function renderDashboard(){
         </div>
       </div>`:'<div class="empty" style="padding:1rem 0;">유입된 지원자 없음</div>';
   }
-  const stageCounts=[0,1,2,3,4,5,6,9].map((s,i)=>({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s],hex:STAGE_COLORS[i]||'#94a3b8'}));
+  // '인재영입 완료' 단계는 (1) 인재 유입·영입만 된 기관 과 (2) 최종합격자까지 나온 기관 으로 나눠서 표시 (2026-10-07 요청: 영입과 합격자 구분)
+  const hiredOrgIds=new Set(metricTals.filter(t=>t.status==='최종합격').map(t=>t.source_org_id||t.org_id));
+  const stageCounts=[];
+  [0,1,2,3,4,5,6,9].forEach((s,i)=>{
+    if(s===6){
+      const s6=metricOrgs.filter(o=>o.stage===6);
+      const hired=s6.filter(o=>hiredOrgIds.has(o.id)).length;
+      stageCounts.push({label:'인재영입(합격 전)',cnt:s6.length-hired,cls:STAGE_CLS[6],hex:STAGE_COLORS[6],tip:'인재영입 완료 단계 중 최종합격자가 아직 없는 기관'});
+      stageCounts.push({label:'합격자 배출',cnt:hired,cls:STAGE_CLS[6],hex:'#00a3c4',tip:'인재영입 완료 단계 중 최종합격자가 1명 이상 나온 기관'});
+    }else stageCounts.push({label:STAGES[s],cnt:metricOrgs.filter(o=>o.stage===s).length,cls:STAGE_CLS[s],hex:STAGE_COLORS[i]||'#94a3b8',tip:''});
+  });
   const stageNonZero=stageCounts.filter(s=>s.cnt>0);
   if(stageDonutChart)stageDonutChart.destroy();
   const stageDonutEl=document.getElementById('stage-donut-chart');
@@ -2882,7 +2892,7 @@ function renderDashboard(){
     });
   }
   document.getElementById('dash-stages-legend').innerHTML=stageNonZero.map(s=>`
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+    <div title="${s.tip||''}" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
       <span style="width:9px;height:9px;border-radius:2px;background:${s.hex};display:inline-block;flex-shrink:0;"></span>
       <span style="flex:1;">${s.label}</span>
       <span style="font-weight:700;">${s.cnt}</span>
