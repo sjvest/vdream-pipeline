@@ -2287,6 +2287,7 @@ async function loadTalents(){
   const {data,error}=await sb.from('talents').select('id,name,org_id,source_org_id,channel,referrer,job,member,date,status,memo,hire_company,phone,birth_date,disability_type,disability_grade,created_by,created_by_name,created_at,updated_at,updated_by_name,event_id,contract_end_date,is_test,status_history').order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] talents 조회 실패:', error);
   cache.talents=data||[];
+  cache.talents.forEach(t=>{if(t.status==='합격')t.status='최종합격';}); // 예전 상태값 '합격'은 '최종합격'과 같은 뜻 (공식 상태값만 쓰도록 보정)
   return {data,error};
 }
 async function loadTalentFiles(talentId){
@@ -2349,6 +2350,7 @@ async function loadApplications(){
   const {data,error}=await sb.from('candidate_applications').select('*').order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] candidate_applications 조회 실패:', error);
   cache.applications=data||[];
+  cache.applications.forEach(a=>{if(a.status==='합격')a.status='최종합격';});
   return {data,error};
 }
 
