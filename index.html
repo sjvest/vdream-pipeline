@@ -548,9 +548,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
   </div>
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="max-width:300px;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;"><i class="ti ti-x"></i> 초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
-  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-    <button onclick="exportOrgsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
-  </div>
   <!-- 일괄 빠른 접촉: 체크박스로 여러 기관을 골라 채용공고/자료 등을 한 번에 발송했다는 기록을 남긴다 (2026-08-22). -->
   <div id="bulk-quick-contact-bar" style="display:none;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
@@ -832,7 +829,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div style="display:flex;gap:8px;align-items:center;">
       <div style="position:relative;"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i><input id="talent-search" placeholder="이름 / 기관 / 기업명 / 직무 / 담당자" oninput="renderTalent()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:240px;"></div>
       <button class="btn btn-primary btn-sm" onclick="openAddTalent()"><i class="ti ti-plus"></i> 영입 등록</button>
-      <button onclick="exportTalentExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
     </div>
   </div>
   <div id="talent-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;"></div>
@@ -1438,7 +1434,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div style="display:flex;gap:8px;">
       <button onclick="openGoodsItemModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">품목 추가</button>
-      <button onclick="exportGoodsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
     </div>
   </div>
   <div class="card" style="margin-bottom:14px;"><div class="card-header">재고 현황</div>
@@ -1497,11 +1492,31 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <span style="font-size:11px;color:var(--text3);margin-left:8px;">주간은 월요일~일요일 기준 · 기간은 직접 바꿔도 돼요</span>
   </div>
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
-    <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">조건을 걸어서 받기</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="openRelExportModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">선물·초청 명단 (연도·월·구분·전달 상태·참석)</button>
-      <button onclick="nav('orgs')" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">기관 목록 (기관 화면의 필터 적용) →</button>
+    <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">기관 목록 받기 (메일 발송용)</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">기관명·메일·전화·상태·인재 영입수·합격자수 · 조건을 고르지 않으면 전체 기관</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="dx-org-cat" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select><select id="dx-org-stage" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select><select id="dx-org-region" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select>
+      <input id="dx-org-kw" placeholder="기관명·담당자·지역 검색" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+      <span style="font-size:11px;color:var(--text3);">등록일</span><input type="date" id="dx-org-start" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"><span style="color:var(--text3);">~</span><input type="date" id="dx-org-end" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+      <button class="data-dl-btn" onclick="downloadOrgMailList()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">기관 목록 받기</button>
     </div>
+  </div>
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">인재 명단 받기 (소개 기관별)</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">소개 기관별로 묶은 인재 명단 (이름·전화·직무·장애명·정도) · 조건을 고르지 않으면 전체</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="dx-tal-org" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select><select id="dx-tal-member" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select><select id="dx-tal-status" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select>
+      <input id="dx-tal-kw" placeholder="이름·직무·입사처 검색" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+      <button class="data-dl-btn" onclick="downloadTalentList()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">인재 명단 받기</button>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">기타</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="data-dl-btn" onclick="downloadGoodsLedger()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">물품 재고 대장 받기</button>
+      <button onclick="openRelExportModal()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">선물·초청 명단 (연도·월·구분·전달 상태·참석)</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;">특정 기관 하나의 인재 현황은 기관 상세 화면에서 받을 수 있어요.</div>
   </div>
   <div style="font-size:11px;color:var(--text3);line-height:1.6;margin:4px;">※ 명함 이미지와 인재 첨부파일(이미지·파일 원본)은 용량 때문에 엑셀에 포함되지 않아요. 전체 백업은 월 1회 정도, 큰 입력 작업 뒤에 받아서 드라이브에 보관해주세요.</div>
 </div>
@@ -3432,14 +3447,15 @@ function memberBadge(name){
 }
 function clearOrgsSearch(){document.getElementById('orgs-search-kw').value='';document.getElementById('orgs-search-start').value='';document.getElementById('orgs-search-end').value='';document.getElementById('filter-cat').value='';document.getElementById('filter-stage-orgs').value='';const fr=document.getElementById('filter-region');if(fr)fr.value='';renderOrgs();}
 // 기관 목록 화면에 적용된 검색/필터를 그대로 반영해서 지금 화면에 보이는 기관만 뽑는다 (renderOrgs()와 동일한 필터 로직).
-function getFilteredOrgsForExport(){
-  const fc=document.getElementById('filter-cat').value;
-  const fs=document.getElementById('filter-stage-orgs').value;
-  const fr=document.getElementById('filter-region')?.value||'';
-  const kw=(document.getElementById('orgs-search-kw')?.value||'').trim().toLowerCase();
-  const dateStart=document.getElementById('orgs-search-start')?.value;
-  const dateEnd=document.getElementById('orgs-search-end')?.value;
-  return cache.orgs.filter(o=>{
+function getFilteredOrgsForExport(f,list){
+  f=f||{};
+  const fc=f.cat!==undefined?f.cat:document.getElementById('filter-cat').value;
+  const fs=f.stage!==undefined?f.stage:document.getElementById('filter-stage-orgs').value;
+  const fr=f.region!==undefined?f.region:(document.getElementById('filter-region')?.value||'');
+  const kw=(f.kw!==undefined?f.kw:(document.getElementById('orgs-search-kw')?.value||'')).trim().toLowerCase();
+  const dateStart=f.start!==undefined?f.start:document.getElementById('orgs-search-start')?.value;
+  const dateEnd=f.end!==undefined?f.end:document.getElementById('orgs-search-end')?.value;
+  return (list||cache.orgs).filter(o=>{
     if(fc&&o.cat!==fc)return false;
     if(fs!==''&&String(o.stage)!==fs)return false;
     if(fr&&o.region!==fr)return false;
@@ -3674,6 +3690,41 @@ function exportGoodsExcel(){
   XLSX.writeFile(wb,`물품재고대장_${today().replace(/-/g,'')}.xlsx`);
   toast('물품 재고 대장을 내려받았어요');
 }
+// ── 데이터 관리: 조건 걸어서 받기 (기관 목록 / 인재 명단 / 물품 재고 대장) ──
+function renderDataFilters(){
+  const copy=(src,dst)=>{const a=document.getElementById(src),b=document.getElementById(dst);if(a&&b&&!b.options.length)b.innerHTML=a.innerHTML;};
+  copy('filter-cat','dx-org-cat');copy('filter-stage-orgs','dx-org-stage');copy('filter-region','dx-org-region');copy('talent-filter-status','dx-tal-status');
+  const org=document.getElementById('dx-tal-org');
+  if(org&&!org.options.length)org.innerHTML='<option value="">전체 소개 기관</option>'+[...new Set((cache.orgs||[]).filter(o=>!o.is_test).map(o=>o.name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')).map(n=>`<option value="${relEsc(n)}">${relEsc(n)}</option>`).join('');
+  const mem=document.getElementById('dx-tal-member');
+  if(mem&&!mem.options.length)mem.innerHTML='<option value="">전체 담당팀원</option>'+(cache.profiles||[]).map(p=>`<option value="${relEsc(p.name)}">${relEsc(p.name)}</option>`).join('');
+}
+async function downloadOrgMailList(){
+  if(_dataDownloading)return;
+  const g=id=>document.getElementById(id);
+  const btns=[...document.querySelectorAll('.data-dl-btn')];_dataDownloading=true;btns.forEach(b=>b.disabled=true);
+  try{
+    await ensureTalentDataLoaded();
+    const {data,error}=await sb.from('orgs').select('id,name,cat,stage,region,member,contact,address,email,phone,mobile,created_at,contact_tier,is_test').order('name');
+    if(error){console.error(error);toast('기관 목록을 불러오지 못했어요');return;}
+    const list=getFilteredOrgsForExport({cat:g('dx-org-cat').value,stage:g('dx-org-stage').value,region:g('dx-org-region').value,kw:g('dx-org-kw').value,start:g('dx-org-start').value,end:g('dx-org-end').value},(data||[]).filter(o=>!o.is_test));
+    exportOrgsExcel(list);
+  }finally{_dataDownloading=false;btns.forEach(b=>b.disabled=false);}
+}
+async function downloadTalentList(){
+  if(_dataDownloading)return;
+  const g=id=>document.getElementById(id);
+  const btns=[...document.querySelectorAll('.data-dl-btn')];_dataDownloading=true;btns.forEach(b=>b.disabled=true);
+  try{
+    await ensureTalentDataLoaded();
+    const list=getFilteredTalentsForExport({kw:g('dx-tal-kw').value,org:g('dx-tal-org').value,member:g('dx-tal-member').value,status:g('dx-tal-status').value}).filter(t=>!isTestTalent(t));
+    exportTalentExcel(list);
+  }finally{_dataDownloading=false;btns.forEach(b=>b.disabled=false);}
+}
+async function downloadGoodsLedger(){
+  if(!_goodsLoaded&&!(await loadGoods()))return;
+  exportGoodsExcel();
+}
 // ── 데이터 관리 (선택해서 엑셀로 내려받기) ──
 // 새 항목을 추가하려면 BACKUP_DATASETS 에 한 줄만 추가하면 데이터 관리 화면에 자동으로 체크박스가 생긴다.
 //  - table/cols: DB 테이블과 가져올 컬럼 (명함·첨부 등 용량 큰 컬럼은 제외)
@@ -3713,6 +3764,7 @@ function renderDataPage(){
       <span><span style="font-size:13px;font-weight:700;color:var(--text);">${d.sheet}</span><br><span style="font-size:11px;color:var(--text3);">${d.desc}</span></span></label>`).join('')}
     </div></div>`).join('');
   renderPeriodBox();
+  renderDataFilters();
   const last=backupLastTime();
   const el=document.getElementById('data-last');
   if(el)el.textContent=last?`마지막 전체 백업: ${last}`:'아직 이 브라우저에서 전체 백업을 받은 기록이 없어요';
@@ -3945,9 +3997,9 @@ async function runPeriodDownload(){
     _dataDownloading=false;btns.forEach(b=>b.disabled=false);
   }
 }
-function exportOrgsExcel(){
+function exportOrgsExcel(list){
   if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
-  const filtered=getFilteredOrgsForExport();
+  const filtered=list||getFilteredOrgsForExport();
   if(!filtered.length){toast('내보낼 기관이 없어요 (필터를 확인해주세요)');return;}
   const aoa=[['기관명','메일주소','전화번호','상태','인재 영입수','합격자수']];
   filtered.forEach(o=>{
@@ -4392,11 +4444,12 @@ function renderTalent(){
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderTalent();}
 // 인재영입 목록 화면에 적용된 검색/필터를 그대로 반영해서, 지금 화면에 보이는 인재만 뽑는다
 // (특정 기관만 필터해두고 내보내면 그 기관 소개 인재만 담긴 파일이 됨).
-function getFilteredTalentsForExport(){
-  const kw=(document.getElementById('talent-search')?.value||'').toLowerCase();
-  const fOrg=document.getElementById('talent-filter-org')?.value||'';
-  const fMem=document.getElementById('talent-filter-member')?.value||'';
-  const fStatus=document.getElementById('talent-filter-status')?.value||'';
+function getFilteredTalentsForExport(f){
+  f=f||{};
+  const kw=(f.kw!==undefined?f.kw:(document.getElementById('talent-search')?.value||'')).toLowerCase();
+  const fOrg=f.org!==undefined?f.org:(document.getElementById('talent-filter-org')?.value||'');
+  const fMem=f.member!==undefined?f.member:(document.getElementById('talent-filter-member')?.value||'');
+  const fStatus=f.status!==undefined?f.status:(document.getElementById('talent-filter-status')?.value||'');
   let filtered=[...cache.talents];
   if(kw)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const hireMatch=(t.hire_company||'').toLowerCase().includes(kw)||(cache.applications||[]).some(a=>a.talent_id===t.id&&(a.hire_company||'').toLowerCase().includes(kw));return(t.name||'').toLowerCase().includes(kw)||(t.phone||'').includes(kw)||(org?.name||'').toLowerCase().includes(kw)||(t.job||'').toLowerCase().includes(kw)||(t.member||'').toLowerCase().includes(kw)||hireMatch;});
   if(fOrg)filtered=filtered.filter(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));return org?.name===fOrg;});
@@ -4406,9 +4459,9 @@ function getFilteredTalentsForExport(){
 }
 // 소개 기관별로 묶어서 "소개기관 | 이름 | 전화번호 | 직무 | 장애명 | 장애정도 | 비고" 형식의
 // 엑셀로 내보낸다. 기관명 셀은 세로 병합해서 세세님이 쓰시던 수기 명단 양식과 맞춘다 (2026-07-30).
-function exportTalentExcel(){
+function exportTalentExcel(list){
   if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
-  const filtered=getFilteredTalentsForExport();
+  const filtered=list||getFilteredTalentsForExport();
   if(!filtered.length){toast('내보낼 인재가 없어요 (필터를 확인해주세요)');return;}
   const groupName=t=>{
     const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
