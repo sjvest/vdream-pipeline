@@ -1438,6 +1438,22 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div id="data-last" style="font-size:12px;color:var(--text3);margin:0 4px 12px;"></div>
   <div id="data-list"></div>
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">기간별 받기 (주간·월간 보고용)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+      <button onclick="setPeriodQuick('thisweek')" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">이번 주</button>
+      <button onclick="setPeriodQuick('lastweek')" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">지난 주</button>
+      <button onclick="setPeriodQuick('thismonth')" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">이번 달</button>
+      <button onclick="setPeriodQuick('lastmonth')" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">지난 달</button>
+      <span style="color:var(--text3);font-size:12px;margin-left:6px;">기간</span>
+      <input type="date" id="period-from" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+      <span style="color:var(--text3);">~</span>
+      <input type="date" id="period-to" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+    </div>
+    <div id="period-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 14px;margin-bottom:10px;"></div>
+    <button class="data-dl-btn" onclick="runPeriodDownload()" style="font-size:13px;padding:8px 16px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">기간 데이터 받기</button>
+    <span style="font-size:11px;color:var(--text3);margin-left:8px;">주간은 월요일~일요일 기준 · 기간은 직접 바꿔도 돼요</span>
+  </div>
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
     <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">조건을 걸어서 받기</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button onclick="openRelExportModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">선물·초청 명단 (연도·월·구분·전달 상태·참석)</button>
@@ -3341,6 +3357,7 @@ function renderDataPage(){
       <input type="checkbox" class="data-chk" value="${d.key}" style="margin-top:3px;">
       <span><span style="font-size:13px;font-weight:700;color:var(--text);">${d.sheet}</span><br><span style="font-size:11px;color:var(--text3);">${d.desc}</span></span></label>`).join('')}
     </div></div>`).join('');
+  renderPeriodBox();
   const last=backupLastTime();
   const el=document.getElementById('data-last');
   if(el)el.textContent=last?`마지막 전체 백업: ${last}`:'아직 이 브라우저에서 전체 백업을 받은 기록이 없어요';
@@ -3352,6 +3369,61 @@ function downloadSelectedData(){
   runDataDownload(keys);
 }
 function exportFullBackup(){return runDataDownload(BACKUP_DATASETS.map(d=>d.key));}
+// ── 공통 헬퍼: 테이블 조회 / ID→이름 컬럼 / 시트 변환 ──
+async function fetchBackupTables(tables,setProg){
+  const colsOf=t=>(BACKUP_DATASETS.find(d=>d.table===t)||{}).cols||'*';
+  const fetched={},failed=new Set();
+  for(let i=0;i<tables.length;i++){
+    const t=tables[i];
+    setProg(`불러오는 중 ${i+1}/${tables.length} (${t})…`);
+    let rows=[],from=0,ok=true;
+    while(true){
+      const {data,error}=await sb.from(t).select(colsOf(t)).order(t==='app_settings'?'key':'id',{ascending:true}).range(from,from+999);
+      if(error){ok=false;failed.add(t);console.error('데이터 불러오기 실패',t,error);break;}
+      rows=rows.concat(data||[]);
+      if(!data||data.length<1000)break;
+      from+=1000;
+    }
+    if(ok)fetched[t]=rows;
+  }
+  return {fetched,failed};
+}
+function buildNameCols(fetched){
+  const mk=(t,fn)=>{const m={};(fetched[t]||[]).forEach(r=>{m[r.id]=fn(r);});return m;};
+  const orgName=mk('orgs',r=>r.name),talentName=mk('talents',r=>r.name),eventName=mk('events',r=>r.name),
+        jobName=mk('jobs',r=>[r.company,r.job_title].filter(Boolean).join(' / ')),
+        asgOrg=mk('sourcing_assignments',r=>orgName[r.org_id]||'');
+  return {sourcing_assignment_id:['배정기관명',asgOrg],org_id:['기관명',orgName],source_org_id:['소개기관명',orgName],converted_org_id:['전환기관명',orgName],
+    talent_id:['인재명',talentName],event_id:['행사명',eventName],job_id:['공고명',jobName]};
+}
+function rowsToSheet(rows,NAME_COLS){
+  const flat=rows.map(r=>{const o={};Object.keys(r).forEach(k=>{
+    let v=r[k];
+    if(v!==null&&typeof v==='object')v=JSON.stringify(v);
+    if(typeof v==='string'&&v.length>32000)v=v.slice(0,32000)+'…(잘림)';
+    o[k]=v;
+    const nc=NAME_COLS[k];
+    if(nc)o[nc[0]]=(r[k]!=null?(nc[1][r[k]]||''):'');
+  });return o;});
+  return flat.length?XLSX.utils.json_to_sheet(flat):XLSX.utils.aoa_to_sheet([['(데이터 없음)']]);
+}
+// 기관별 성과 집계 (앱과 동일 기준: 인재 영입수=talents.source_org_id, 합격=지원현황 '최종합격', 테스트 데이터 제외)
+// talentFilter/appFilter: 기간 필터용 (없으면 전체)
+function buildOrgPerfRows(fetched,talentFilter,appFilter){
+  const testOrg=new Set(fetched.orgs.filter(o=>o.is_test).map(o=>o.id));
+  const allTals=fetched.talents.filter(t=>!t.is_test&&!testOrg.has(t.source_org_id||t.org_id));
+  const talOrg={};allTals.forEach(t=>{talOrg[t.id]=t.source_org_id||t.org_id;});
+  const agg={};const get=id=>agg[id]||(agg[id]={tal:0,apply:0,pass:0,fail:0,end:0});
+  allTals.filter(t=>!talentFilter||talentFilter(t)).forEach(t=>{const id=t.source_org_id||t.org_id;if(id!=null)get(id).tal++;});
+  fetched.candidate_applications.filter(a=>!appFilter||appFilter(a)).forEach(a=>{
+    const id=talOrg[a.talent_id];if(id==null)return;const g=get(id);
+    g.apply++;
+    if(a.status==='최종합격')g.pass++;
+    else if(a.status==='서류불합격'||a.status==='최종불합격')g.fail++;
+    else if(a.status==='계약종료')g.end++;
+  });
+  return {agg,get,testOrg};
+}
 async function runDataDownload(keys){
   if(typeof XLSX==='undefined'){toast('엑셀 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
   if(_dataDownloading)return;
@@ -3362,32 +3434,12 @@ async function runDataDownload(keys){
   const btns=[...document.querySelectorAll('.data-dl-btn')];
   _dataDownloading=true;btns.forEach(b=>b.disabled=true);
   const setProg=t=>{if(prog)prog.textContent=t;};
-  const colsOf=t=>(BACKUP_DATASETS.find(d=>d.table===t)||{}).cols||'*';
   const need=new Set();
   sel.forEach(d=>{if(d.table)need.add(d.table);(d.needs||[]).forEach(t=>need.add(t));});
   if(sel.some(d=>d.table))BACKUP_LOOKUP_TABLES.forEach(t=>need.add(t));
-  const tables=[...need];
-  const fetched={},failedT=new Set();
   try{
-    for(let i=0;i<tables.length;i++){
-      const t=tables[i];
-      setProg(`불러오는 중 ${i+1}/${tables.length} (${t})…`);
-      let rows=[],from=0,ok=true;
-      while(true){
-        const {data,error}=await sb.from(t).select(colsOf(t)).order(t==='app_settings'?'key':'id',{ascending:true}).range(from,from+999);
-        if(error){ok=false;failedT.add(t);console.error('데이터 불러오기 실패',t,error);break;}
-        rows=rows.concat(data||[]);
-        if(!data||data.length<1000)break;
-        from+=1000;
-      }
-      if(ok)fetched[t]=rows;
-    }
-    const mk=(t,fn)=>{const m={};(fetched[t]||[]).forEach(r=>{m[r.id]=fn(r);});return m;};
-    const orgName=mk('orgs',r=>r.name),talentName=mk('talents',r=>r.name),eventName=mk('events',r=>r.name),
-          jobName=mk('jobs',r=>[r.company,r.job_title].filter(Boolean).join(' / ')),
-          asgOrg=mk('sourcing_assignments',r=>orgName[r.org_id]||'');
-    const NAME_COLS={sourcing_assignment_id:['배정기관명',asgOrg],org_id:['기관명',orgName],source_org_id:['소개기관명',orgName],converted_org_id:['전환기관명',orgName],
-      talent_id:['인재명',talentName],event_id:['행사명',eventName],job_id:['공고명',jobName]};
+    const {fetched}=await fetchBackupTables([...need],setProg);
+    const NAME_COLS=buildNameCols(fetched);
     const wb=XLSX.utils.book_new();
     const summary=[['시트','건수']];
     const failedSheets=[];
@@ -3395,33 +3447,11 @@ async function runDataDownload(keys){
       setProg(`엑셀 만드는 중 (${d.sheet})…`);
       if(d.table){
         if(!(d.table in fetched)){failedSheets.push(d.sheet);continue;}
-        const rows=fetched[d.table];
-        const flat=rows.map(r=>{const o={};Object.keys(r).forEach(k=>{
-          let v=r[k];
-          if(v!==null&&typeof v==='object')v=JSON.stringify(v);
-          if(typeof v==='string'&&v.length>32000)v=v.slice(0,32000)+'…(잘림)';
-          o[k]=v;
-          const nc=NAME_COLS[k];
-          if(nc)o[nc[0]]=(r[k]!=null?(nc[1][r[k]]||''):'');
-        });return o;});
-        const ws=flat.length?XLSX.utils.json_to_sheet(flat):XLSX.utils.aoa_to_sheet([['(데이터 없음)']]);
-        XLSX.utils.book_append_sheet(wb,ws,d.sheet);
-        summary.push([d.sheet,rows.length]);
+        XLSX.utils.book_append_sheet(wb,rowsToSheet(fetched[d.table],NAME_COLS),d.sheet);
+        summary.push([d.sheet,fetched[d.table].length]);
       }else if(d.key==='org_perf'){
         if(d.needs.some(t=>!(t in fetched))){failedSheets.push(d.sheet);continue;}
-        // 앱과 동일 기준: 인재 영입수=talents.source_org_id, 합격=지원현황 '최종합격' (테스트 데이터 제외)
-        const testOrg=new Set(fetched.orgs.filter(o=>o.is_test).map(o=>o.id));
-        const tals=fetched.talents.filter(t=>!t.is_test&&!testOrg.has(t.source_org_id||t.org_id));
-        const talOrg={};tals.forEach(t=>{talOrg[t.id]=t.source_org_id||t.org_id;});
-        const agg={};const get=id=>agg[id]||(agg[id]={tal:0,apply:0,pass:0,fail:0,end:0});
-        tals.forEach(t=>{const id=t.source_org_id||t.org_id;if(id!=null)get(id).tal++;});
-        fetched.candidate_applications.forEach(a=>{
-          const id=talOrg[a.talent_id];if(id==null)return;const g=get(id);
-          g.apply++;
-          if(a.status==='최종합격')g.pass++;
-          else if(a.status==='서류불합격'||a.status==='최종불합격')g.fail++;
-          else if(a.status==='계약종료')g.end++;
-        });
+        const {agg,testOrg}=buildOrgPerfRows(fetched);
         const perf=[['기관ID','기관명','구분','인재 영입수','지원 건수','합격자수(최종합격)','불합격','계약종료']];
         fetched.orgs.filter(o=>!o.is_test).map(o=>({o,g:agg[o.id]||{tal:0,apply:0,pass:0,fail:0,end:0}}))
           .sort((x,y)=>y.g.tal-x.g.tal||y.g.pass-x.g.pass)
@@ -3442,6 +3472,117 @@ async function runDataDownload(keys){
     if(isAll&&!failedSheets.length){try{localStorage.setItem('vscout-last-backup',stamp);}catch(e){}const el=document.getElementById('data-last');if(el)el.textContent=`마지막 전체 백업: ${stamp}`;}
     setProg(failedSheets.length?`일부 실패: ${failedSheets.join(', ')} (나머지는 저장됨)`:`완료: ${wb.SheetNames.length-1}개 시트를 내려받았어요`);
     toast(failedSheets.length?`일부 시트 실패: ${failedSheets.join(', ')} (나머지는 저장됨)`:(isAll?'전체 백업 파일을 내려받았어요. 드라이브에 보관해주세요':'선택한 데이터를 내려받았어요'));
+  }catch(e){
+    console.error(e);toast('내려받기 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.');setProg('오류가 발생했어요');
+  }finally{
+    _dataDownloading=false;btns.forEach(b=>b.disabled=false);
+  }
+}
+
+// ── 기간별(주간·월간·직접 지정) 받기 ──
+// 날짜 문자열(YYYY-MM-DD)로 비교. timestamptz 는 한국 시간 기준 날짜로 변환.
+function kstDate(v){
+  if(!v)return '';
+  if(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v))return v;
+  const d=new Date(v);if(isNaN(d))return '';
+  return d.toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'});
+}
+function ymdAdd(ymd,days){const d=new Date(ymd+'T00:00:00');d.setDate(d.getDate()+days);return d.toLocaleDateString('sv-SE');}
+// 기간 안에 속하는 항목만 (pick: 행 → 기준 날짜(들))
+const PERIOD_DATASETS=[
+  {key:'p_contact',sheet:'컨택이력',table:'contact_logs',desc:'컨택 날짜가 기간 안인 기록',dates:r=>[r.date||kstDate(r.logged_at)]},
+  {key:'p_orgs',sheet:'신규기관',table:'orgs',desc:'기간 안에 등록된 기관',dates:r=>[r.date||kstDate(r.created_at)]},
+  {key:'p_talents',sheet:'인재유입',table:'talents',desc:'기간 안에 등록된 인재 (소개 기관 포함)',dates:r=>[r.date||kstDate(r.created_at)]},
+  {key:'p_apps',sheet:'지원합격현황',table:'candidate_applications',desc:'지원·면접·합격·입사·불합격·계약종료 날짜가 기간 안인 건',dates:r=>[r.applied_date,r.interview_at,r.pass_date,r.join_date,r.rejected_at,r.contract_end_date]},
+  {key:'p_events',sheet:'행사',table:'events',desc:'기간 안에 열린 행사',dates:r=>[r.date]},
+  {key:'p_relations',sheet:'선물초청이력',table:'org_relations',desc:'발송일(없으면 해당 연·월)이 기간 안인 이력',dates:r=>r.sent_date?[r.sent_date]:null,monthPick:r=>[r.year,r.month]},
+  {key:'p_actions',sheet:'후속액션',table:'actions',desc:'기한이 기간 안인 후속 액션',dates:r=>[r.due]}
+];
+function renderPeriodBox(){
+  const box=document.getElementById('period-list');if(!box)return;
+  box.innerHTML=PERIOD_DATASETS.map(d=>`<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;padding:4px 0;">
+    <input type="checkbox" class="period-chk" value="${d.key}" checked style="margin-top:3px;">
+    <span><span style="font-size:13px;font-weight:700;color:var(--text);">${d.sheet}</span><br><span style="font-size:11px;color:var(--text3);">${d.desc}</span></span></label>`).join('')+
+    `<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;padding:4px 0;">
+    <input type="checkbox" id="period-summary" checked style="margin-top:3px;">
+    <span><span style="font-size:13px;font-weight:700;color:var(--text);">기관별 요약</span><br><span style="font-size:11px;color:var(--text3);">기관별 컨택 건수·인재 유입·지원·합격 (보고용)</span></span></label>`;
+  if(!document.getElementById('period-from').value)setPeriodQuick('thisweek');
+}
+function setPeriodQuick(kind){
+  const t=today();const d=new Date(t+'T00:00:00');
+  const dow=(d.getDay()+6)%7; // 월=0
+  let from,to;
+  if(kind==='thisweek'){from=ymdAdd(t,-dow);to=ymdAdd(from,6);}
+  else if(kind==='lastweek'){from=ymdAdd(t,-dow-7);to=ymdAdd(from,6);}
+  else if(kind==='thismonth'){const f=new Date(d.getFullYear(),d.getMonth(),1),l=new Date(d.getFullYear(),d.getMonth()+1,0);from=f.toLocaleDateString('sv-SE');to=l.toLocaleDateString('sv-SE');}
+  else if(kind==='lastmonth'){const f=new Date(d.getFullYear(),d.getMonth()-1,1),l=new Date(d.getFullYear(),d.getMonth(),0);from=f.toLocaleDateString('sv-SE');to=l.toLocaleDateString('sv-SE');}
+  document.getElementById('period-from').value=from;
+  document.getElementById('period-to').value=to;
+}
+async function runPeriodDownload(){
+  if(typeof XLSX==='undefined'){toast('엑셀 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  if(_dataDownloading)return;
+  const from=document.getElementById('period-from').value,to=document.getElementById('period-to').value;
+  if(!from||!to){toast('시작일과 종료일을 선택해주세요');return;}
+  if(from>to){toast('시작일이 종료일보다 늦어요');return;}
+  const keys=[...document.querySelectorAll('.period-chk:checked')].map(c=>c.value);
+  const withSummary=!!document.getElementById('period-summary')?.checked;
+  if(!keys.length&&!withSummary){toast('받을 항목을 선택해주세요');return;}
+  const sel=PERIOD_DATASETS.filter(d=>keys.includes(d.key));
+  const prog=document.getElementById('data-progress');
+  const btns=[...document.querySelectorAll('.data-dl-btn')];
+  _dataDownloading=true;btns.forEach(b=>b.disabled=true);
+  const setProg=t=>{if(prog)prog.textContent=t;};
+  const need=new Set(BACKUP_LOOKUP_TABLES);
+  sel.forEach(d=>need.add(d.table));
+  if(withSummary)['orgs','talents','candidate_applications','contact_logs'].forEach(t=>need.add(t));
+  const inRange=v=>{const k=kstDate(v);return !!k&&k>=from&&k<=to;};
+  const [fy,fm]=from.split('-').map(Number),[ty,tm]=to.split('-').map(Number);
+  const monthInRange=(y,m)=>y!=null&&m!=null&&(y*12+m)>=(fy*12+fm)&&(y*12+m)<=(ty*12+tm);
+  try{
+    const {fetched}=await fetchBackupTables([...need],setProg);
+    const NAME_COLS=buildNameCols(fetched);
+    const wb=XLSX.utils.book_new();
+    const summary=[['시트','건수']];
+    const failedSheets=[];
+    const matchRow=(d,r)=>{
+      const ds=d.dates(r);
+      if(ds===null&&d.monthPick){const [y,m]=d.monthPick(r);return monthInRange(y,m);}
+      return (ds||[]).some(inRange);
+    };
+    for(const d of sel){
+      setProg(`엑셀 만드는 중 (${d.sheet})…`);
+      if(!(d.table in fetched)){failedSheets.push(d.sheet);continue;}
+      const rows=fetched[d.table].filter(r=>matchRow(d,r)&&!(d.table==='orgs'&&r.is_test)&&!(d.table==='talents'&&r.is_test));
+      XLSX.utils.book_append_sheet(wb,rowsToSheet(rows,NAME_COLS),d.sheet);
+      summary.push([d.sheet,rows.length]);
+    }
+    if(withSummary){
+      if(['orgs','talents','candidate_applications','contact_logs'].some(t=>!(t in fetched)))failedSheets.push('기관별 요약');
+      else{
+        const pd=PERIOD_DATASETS;
+        const appDs=pd.find(x=>x.key==='p_apps').dates, talDs=pd.find(x=>x.key==='p_talents').dates, conDs=pd.find(x=>x.key==='p_contact').dates;
+        const {agg,get}=buildOrgPerfRows(fetched,t=>talDs(t).some(inRange),a=>appDs(a).some(inRange));
+        const contactCnt={};
+        fetched.contact_logs.filter(r=>conDs(r).some(inRange)).forEach(r=>{contactCnt[r.org_id]=(contactCnt[r.org_id]||0)+1;});
+        const rows=[['기관ID','기관명','구분','컨택 건수','인재 유입','지원 건수','합격자수(최종합격)','불합격','계약종료']];
+        fetched.orgs.filter(o=>!o.is_test).map(o=>({o,g:agg[o.id]||{tal:0,apply:0,pass:0,fail:0,end:0},c:contactCnt[o.id]||0}))
+          .filter(x=>x.c||x.g.tal||x.g.apply)
+          .sort((x,y)=>y.c-x.c||y.g.tal-x.g.tal)
+          .forEach(({o,g,c})=>rows.push([o.id,o.name,o.cat||'',c,g.tal,g.apply,g.pass,g.fail,g.end]));
+        const ws=XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols']=[{wch:8},{wch:28},{wch:12},{wch:10},{wch:10},{wch:10},{wch:18},{wch:8},{wch:10}];
+        XLSX.utils.book_append_sheet(wb,ws,'기관별요약');
+        summary.push(['기관별요약 (활동 있는 기관만)',rows.length-1]);
+      }
+    }
+    if(!wb.SheetNames.length){toast('데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.');setProg('실패: 데이터를 불러오지 못했어요');return;}
+    summary.push([]);summary.push(['기간',`${from} ~ ${to}`]);summary.push(['받은 일시',new Date().toLocaleString('ko-KR')]);
+    if(failedSheets.length)summary.push(['실패 시트',failedSheets.join(', ')]);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),'받기정보');
+    XLSX.writeFile(wb,`vscout_기간별_${from.replace(/-/g,'')}-${to.replace(/-/g,'')}.xlsx`);
+    setProg(failedSheets.length?`일부 실패: ${failedSheets.join(', ')} (나머지는 저장됨)`:`완료: ${from} ~ ${to} · ${wb.SheetNames.length-1}개 시트`);
+    toast(failedSheets.length?`일부 시트 실패: ${failedSheets.join(', ')}`:'기간별 데이터를 내려받았어요');
   }catch(e){
     console.error(e);toast('내려받기 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.');setProg('오류가 발생했어요');
   }finally{
