@@ -4583,11 +4583,11 @@ function exportOrgTalentStatusExcel(orgId){
   const orgTals=cache.talents.filter(t=>(t.source_org_id||t.org_id)===orgId&&!isTestTalent(t));
   const orgApps=(cache.applications||[]).filter(a=>a.org_id===orgId);
   if(!orgTals.length){toast('내보낼 인재가 없어요');return;}
-  const aoa=[['이름','전화번호','직무','장애유형','장애정도','상태','기업명','입사일','비고']];
+  const aoa=[['이름','전화번호','직무','장애유형','장애정도','상태','기업명','입사일','충족입사','비고']];
   orgTals.forEach(t=>{
     const ap=orgApps.find(a=>a.talent_id===t.id);
     const status=ap?.status||t.status||'인재등록';
-    aoa.push([t.name||'',t.phone||'',t.job||'',t.disability_type||'',t.disability_grade||'',status,ap?.hire_company||t.hire_company||'',ap?.join_date?fDate(ap.join_date):'',t.memo||'']);
+    aoa.push([t.name||'',t.phone||'',t.job||'',t.disability_type||'',t.disability_grade||'',status,ap?.hire_company||t.hire_company||'',ap?.join_date?fDate(ap.join_date):'',ap?.join_date_is_fulfilled?'Y':'',t.memo||'']);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[{wch:10},{wch:15},{wch:18},{wch:10},{wch:8},{wch:12},{wch:22},{wch:12},{wch:30}];
@@ -4661,7 +4661,7 @@ function switchDrawerTab(tab){
       if(ap.applied_date)evs.push({date:ap.applied_date,label:`${ap.hire_company||''} 지원`,color:'var(--purple)',est:ap.applied_date_is_estimated,fallback:false});
       else if(isLatest&&t.created_at)evs.push({date:t.created_at,label:'지원',color:'var(--purple)',est:false,fallback:true});
       if(ap.pass_date)evs.push({date:ap.pass_date,label:'최종합격',color:'var(--green)',est:ap.pass_date_is_estimated,fallback:false});
-      if(ap.join_date)evs.push({date:ap.join_date,label:`${ap.hire_company||''} 입사`,color:'#059669',est:ap.join_date_is_estimated,fallback:false});
+      if(ap.join_date)evs.push({date:ap.join_date,label:`${ap.hire_company||''} 입사${ap.join_date_is_fulfilled?' (충족입사)':''}`,color:'#059669',est:false,fallback:false});
       if(ap.rejected_at)evs.push({date:ap.rejected_at,label:'불합격',color:'var(--red)',est:ap.rejected_date_is_estimated,fallback:false});
       if(ap.contract_end_date)evs.push({date:ap.contract_end_date,label:'계약 종료',color:'var(--text3)',est:false,fallback:false});
       evs.sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -4693,7 +4693,7 @@ function switchDrawerTab(tab){
         ${dateRow('지원일','app-applied',latestApp?.applied_date,latestApp?.applied_date_is_estimated)}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">회사명</span><input type="text" id="app-hirecompany" value="${latestApp?.hire_company||''}" placeholder="지원한 회사명" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         ${dateRow('합격일','app-pass',latestApp?.pass_date,latestApp?.pass_date_is_estimated)}
-        ${dateRow('입사일','app-join',latestApp?.join_date,latestApp?.join_date_is_estimated)}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">입사일</span><input type="date" id="app-join-date" value="${latestApp?.join_date||''}" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);white-space:nowrap;" title="워크데이 충족을 위해 근로시작일을 앞당겨 입사 처리한 경우"><input type="checkbox" id="app-join-fulfilled" ${latestApp?.join_date_is_fulfilled?'checked':''}> 충족입사</label></div>
         ${dateRow('불합격일','app-rejected',latestApp?.rejected_at,latestApp?.rejected_date_is_estimated)}
         <button onclick="saveApplicationDates()" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:6px;">날짜 저장</button>
       </div>`;
@@ -4911,7 +4911,7 @@ async function saveApplicationDates(){
     applied_date:val('app-applied-date'), applied_date_is_estimated:chk('app-applied-est'),
     hire_company:newCompany,
     pass_date:val('app-pass-date'), pass_date_is_estimated:chk('app-pass-est'),
-    join_date:val('app-join-date'), join_date_is_estimated:chk('app-join-est'),
+    join_date:val('app-join-date'), join_date_is_fulfilled:chk('app-join-fulfilled'),
     rejected_at:val('app-rejected-date'), rejected_date_is_estimated:chk('app-rejected-est'),
   };
   let autoStatus=null;
@@ -5063,7 +5063,7 @@ function renderTalentForms(){
         <div class="fg"><label>유입일 <span style="font-weight:400;color:var(--text3);">(파이프라인에 들어온 날 — 실제 지원일과 다를 수 있음)</span></label><div style="display:flex;gap:6px;align-items:center;"><input type="date" id="t-date-${i}" style="flex:1;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"><label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="t-date-est-${i}"> 추정일</label></div></div>
         <div class="fg"><label>상태</label><select id="t-status-${i}" onchange="syncTalentFormDates(${i})" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재등록</option><option>채용지원</option><option>서류합격</option><option>서류불합격</option><option>최종합격</option><option>최종불합격</option><option>지원취소</option><option>계약종료</option></select></div>
         <div class="fg"><label>지원 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="지원한 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
-        <div class="fg"><label>입사일 <span style="font-weight:400;color:var(--text3);">(최종합격·계약종료일 때만 입력)</span></label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>입사일 <span style="font-weight:400;color:var(--text3);">(최종합격·계약종료일 때만 입력)</span></label><div style="display:flex;gap:8px;align-items:center;"><input type="date" id="t-joindate-${i}" style="flex:1;min-width:0;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);white-space:nowrap;" title="워크데이 충족을 위해 근로시작일을 앞당겨 입사 처리한 경우"><input type="checkbox" id="t-joinfulfilled-${i}" style="width:15px;height:15px;"> 충족입사</label></div></div>
         <div class="fg"><label>대기자 여부</label><div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><input type="checkbox" id="t-waitlist-${i}" style="width:16px;height:16px;cursor:pointer;"><label for="t-waitlist-${i}" style="font-size:13px;cursor:pointer;color:var(--text2);">대기자로 등록</label></div></div>
         <div class="fg" style="grid-column:1/-1;"><label>메모</label><input type="text" id="t-memo-${i}" placeholder="메모" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
       </div>
@@ -5079,6 +5079,7 @@ function syncTalentFormDates(i){
   const ok=['최종합격','계약종료'].includes(st);
   jd.disabled=!ok;
   if(!ok)jd.value='';
+  const jf=document.getElementById(`t-joinfulfilled-${i}`);if(jf){jf.disabled=!ok;if(!ok)jf.checked=false;}
   jd.style.background=ok?'#fff':'var(--bg)';
   jd.style.opacity=ok?'1':'.55';
 }
@@ -5247,6 +5248,7 @@ async function saveTalent(){
         applied_date_is_estimated:document.getElementById(`t-date-est-${i}`)?.checked||false,
         hire_company:document.getElementById(`t-hirecompany-${i}`)?.value.trim()||null,
         join_date:['최종합격','계약종료'].includes(status)?(document.getElementById(`t-joindate-${i}`)?.value||null):null,
+        join_date_is_fulfilled:['최종합격','계약종료'].includes(status)?!!document.getElementById(`t-joinfulfilled-${i}`)?.checked:false,
       });
     }
   }
