@@ -1445,6 +1445,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="page-sub">입고·사용 수량만 넣으면 남은 재고가 자동으로 계산돼요</div>
     </div>
     <div style="display:flex;gap:8px;">
+      <button onclick="sendGoodsStockAlertNow()" title="안전재고 이하인 품목을 구글 챗으로 알려요" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">구글 챗으로 재고 알림</button>
       <button onclick="openGoodsItemModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">품목 추가</button>
     </div>
   </div>
@@ -3587,11 +3588,38 @@ async function saveGoodsEntry(){
       created_by:currentUser?.id||null,created_by_name:currentProfile?.name||currentUser?.email||null});
   });
   if(!rows.length){toast('수량을 1개 이상 입력해주세요');return;}
+  const beforeStock={};goodsItems.forEach(i=>{beforeStock[i.id]=st[i.id]?.stock;});
   if(over.length&&!confirm('현재 재고보다 많이 사용하는 품목이 있어요. 그래도 기록할까요?\n\n'+over.join('\n')))return;
   const {error}=await sb.from('goods_logs').insert(rows);
   if(error){console.error(error);toast('저장하지 못했어요. 잠시 후 다시 시도해주세요.');return;}
   toast(`${rows.length}개 품목을 기록했어요`);
   await loadGoods();await renderGoods();
+  if(kind==='사용')goodsStockAlertAfterUse(rows,beforeStock);
+}
+// 사용 기록으로 재고가 '정상 → 부족/소진' 또는 '부족 → 소진'으로 나빠진 품목만 구글 챗으로 알린다 (이미 부족한 품목은 반복 알림 안 함)
+function goodsStockAlertAfterUse(rows,beforeStock){
+  try{
+    const {st}=goodsCalc();const rank=l=>l==='소진'?2:l==='부족'?1:0;
+    const first=rows[0]||{};const lines=[];
+    [...new Set(rows.map(r=>r.item_id))].forEach(id=>{
+      const t=st[id];if(!t)return;
+      const prev=beforeStock[id];
+      const prevLabel=prev<=0?'소진':(t.item.safe_qty!=null&&prev<=t.item.safe_qty)?'부족':'정상';
+      const now=goodsStatus(t).label;
+      if(rank(now)>rank(prevLabel))lines.push(`• ${t.item.name}: 현재 ${t.stock.toLocaleString()}개${t.item.safe_qty!=null?` (안전재고 ${t.item.safe_qty.toLocaleString()}개)`:''} — ${now}`);
+    });
+    if(lines.length)sendGChat('[재고] *물품 재고 부족 알림*\n'+lines.join('\n')+'\n최근 사용: '+(first.place||'—')+' · '+(first.user_name||'—')+'\n발주가 필요한지 확인해주세요.');
+  }catch(e){console.warn('재고 알림 실패',e);}
+}
+// 수동: 지금 부족/소진인 품목 전체를 구글 챗으로 보낸다 (물품 관리 화면 상단 버튼)
+async function sendGoodsStockAlertNow(){
+  if(!_goodsLoaded&&!(await loadGoods()))return;
+  const {st}=goodsCalc();
+  const low=goodsItems.filter(i=>i.is_active!==false).map(i=>st[i.id]).filter(t=>t&&goodsStatus(t).label!=='정상');
+  if(!low.length){toast('재고가 부족한 품목이 없어요');return;}
+  const lines=low.map(t=>`• ${t.item.name}: 현재 ${t.stock.toLocaleString()}개${t.item.safe_qty!=null?` (안전재고 ${t.item.safe_qty.toLocaleString()}개)`:''} — ${goodsStatus(t).label}`);
+  await sendGChat('[재고] *물품 재고 현황 (부족·소진 품목)*\n'+lines.join('\n'));
+  toast(`부족·소진 ${low.length}개 품목을 구글 챗으로 보냈어요`);
 }
 function goodsFilteredLogs(){
   const item=document.getElementById('goods-f-item')?.value||'',kind=document.getElementById('goods-f-kind')?.value||'';
