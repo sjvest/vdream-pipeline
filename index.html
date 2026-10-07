@@ -1449,6 +1449,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">구분</div><select id="rel-exp-kind" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="명절 선물">명절 선물</option><option value="행사 초청">행사 초청</option><option value="">전체 구분</option></select></div>
         <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">항목 (설, 추석, 행사명)</div><input id="rel-exp-item" list="rel-item-list" placeholder="전체" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;"></div>
       </div>
+      <div><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">전달 상태</div><select id="rel-exp-dstatus" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체</option><option value="전달완료">전달완료</option><option value="미전달">미전달</option><option value="지급 제외">지급 제외</option><option value="미정">미정</option></select></div>
       <div><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">참석 여부 (행사 초청 건)</div><select id="rel-exp-attend" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 (초청 대상 전체)</option><option value="참석">참석</option><option value="불참">불참</option><option value="미확정">미확정</option></select></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
         <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);">취소</button>
@@ -7506,6 +7507,7 @@ function renderOrgRelations(orgId){
       ${(r.reasons||[]).length?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">${r.reasons.map(t=>`<span style="font-size:10px;font-weight:600;color:var(--text2);background:var(--bg);border:1px solid var(--border);padding:1px 7px;border-radius:10px;">${relEsc(t)}</span>`).join('')}</div>`:''}
       ${r.note?`<div style="margin-top:6px;font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.6;">${relEsc(r.note)}</div>`:''}
       ${r.next_reason?`<div style="margin-top:4px;font-size:11px;color:var(--text3);">다음해 사유: ${relEsc(r.next_reason)}</div>`:''}
+      ${(r.delivery_method||r.delivery_status||r.recipient_name)?`<div style="margin-top:6px;font-size:11px;color:var(--text2);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${r.delivery_method?`<span style="font-weight:700;">${relEsc(r.delivery_method)}</span>`:''}${r.delivery_status?`<span style="font-size:10px;font-weight:700;color:${r.delivery_status==='전달완료'?'var(--green)':r.delivery_status==='지급 제외'?'#dc2626':'#b54708'};border:1px solid currentColor;padding:1px 7px;border-radius:10px;">${relEsc(r.delivery_status)}</span>`:''}${r.recipient_name?`<span>수령인 ${relEsc(r.recipient_name)}</span>`:''}</div>`:''}
       <div style="margin-top:4px;font-size:10px;color:var(--text3);">${[r.sent_date?fDate(r.sent_date):'',r.handler?'담당 '+relEsc(r.handler):''].filter(Boolean).join(' · ')}</div>
     </div>`;
   }).join('');
@@ -7535,6 +7537,11 @@ async function openRelForm(orgId,relId,keepReasons){
       <div style="flex:1;min-width:140px;"><div style="${lbl}">선물명</div><input id="rel-gift" value="${relEsc(r.gift_name||'')}" placeholder="선물명" style="${inp}width:100%;"></div>
       <div><div style="${lbl}">수량</div><input id="rel-qty" type="number" min="0" value="${r.quantity==null?'':r.quantity}" style="${inp}width:80px;"></div>
       <div><div style="${lbl}">우리측 담당</div><input id="rel-handler" value="${relEsc(r.handler||(currentProfile&&currentProfile.name)||'')}" style="${inp}width:110px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div><div style="${lbl}">전달 방식</div><select id="rel-dmethod" style="${inp}"><option value="">미지정</option>${['택배 배송','직접 방문'].map(m=>`<option value="${m}"${r.delivery_method===m?' selected':''}>${m}</option>`).join('')}</select></div>
+      <div><div style="${lbl}">전달 상태</div><select id="rel-dstatus" style="${inp}"><option value="">미정</option>${['미전달','전달완료','지급 제외'].map(m=>`<option value="${m}"${r.delivery_status===m?' selected':''}>${m}</option>`).join('')}</select></div>
+      <div><div style="${lbl}">수령인</div><input id="rel-recipient" value="${relEsc(r.recipient_name||'')}" placeholder="수령인 성함" style="${inp}width:130px;"></div>
     </div>
     <div style="${lbl}">선정 사유 (복수 선택)</div>
     <div id="rel-reason-wrap" style="display:flex;gap:10px 14px;flex-wrap:wrap;margin-bottom:6px;">${reasons.map(t=>`<label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="rel-reason-cb" value="${relEsc(t)}"${selected.includes(t)?' checked':''}>${relEsc(t)}</label>`).join('')}</div>
@@ -7576,6 +7583,9 @@ async function saveOrgRelation(orgId,relId){
     gift_name:g('rel-gift').value.trim()||null,
     quantity:g('rel-qty').value===''?null:Number(g('rel-qty').value),
     handler:g('rel-handler').value.trim()||null,
+    delivery_method:g('rel-dmethod').value||null,
+    delivery_status:g('rel-dstatus').value||null,
+    recipient_name:g('rel-recipient').value.trim()||null,
     reasons:[...document.querySelectorAll('.rel-reason-cb:checked')].map(x=>x.value),
     note:g('rel-note').value.trim()||null,
     attendance:g('rel-attend').value||null,
@@ -7625,6 +7635,8 @@ async function exportOrgRelationsExcel(){
   let q=sb.from('org_relations').select('*').eq('year',year).order('month',{ascending:true,nullsFirst:false}).order('id',{ascending:true});
   if(month)q=q.eq('month',Number(month));
   if(kind)q=q.eq('kind',kind);
+  const dstat=document.getElementById('rel-exp-dstatus').value;
+  if(dstat==='미정')q=q.is('delivery_status',null);else if(dstat)q=q.eq('delivery_status',dstat);
   const attend=document.getElementById('rel-exp-attend').value;
   if(attend==='참석'||attend==='불참')q=q.eq('attendance',attend);
   else if(attend==='미확정')q=q.is('attendance',null);
@@ -7632,13 +7644,13 @@ async function exportOrgRelationsExcel(){
   const{data,error}=await q;
   if(error){toast('오류: '+error.message);return;}
   if(!data||!data.length){toast('조건에 맞는 이력이 없어요');return;}
-  const aoa=[['연도','월','구분','항목','기관명','기관유형','기관 담당자','직함','연락처','주소','선물명','수량','발송·초청일','우리측 담당','참석 여부','선정 사유','협력 내용 메모','다음해 대상','다음해 사유']];
+  const aoa=[['연도','월','구분','항목','기관명','기관유형','기관 담당자','직함','연락처','주소','선물명','수량','발송·초청일','우리측 담당','전달 방식','전달 상태','수령인','참석 여부','선정 사유','협력 내용 메모','다음해 대상','다음해 사유']];
   data.forEach(r=>{
     const o=cache.orgs.find(x=>x.id===r.org_id)||{};
-    aoa.push([r.year,r.month||'',r.kind,r.item||'',o.name||'(삭제된 기관)',o.cat||'',o.contact||'',o.contact_title||'',o.mobile||o.phone||'',o.address||'',r.gift_name||'',r.quantity==null?'':r.quantity,r.sent_date||'',r.handler||'',r.kind==='행사 초청'?(r.attendance||'미확정'):'',(r.reasons||[]).join(', '),r.note||'',r.next_status||'',r.next_reason||'']);
+    aoa.push([r.year,r.month||'',r.kind,r.item||'',o.name||'(삭제된 기관)',o.cat||'',o.contact||'',o.contact_title||'',o.mobile||o.phone||'',o.address||'',r.gift_name||'',r.quantity==null?'':r.quantity,r.sent_date||'',r.handler||'',r.delivery_method||'',r.delivery_status||'',r.recipient_name||'',r.kind==='행사 초청'?(r.attendance||'미확정'):'',(r.reasons||[]).join(', '),r.note||'',r.next_status||'',r.next_reason||'']);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:6},{wch:5},{wch:10},{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:16},{wch:34},{wch:18},{wch:6},{wch:12},{wch:10},{wch:10},{wch:26},{wch:36},{wch:10},{wch:20}];
+  ws['!cols']=[{wch:6},{wch:5},{wch:10},{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:16},{wch:34},{wch:18},{wch:6},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:26},{wch:36},{wch:10},{wch:20}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'선물초청명단');
   const label=[year+'년',month?month+'월':'',kind||'전체',item].filter(Boolean).join('_');
