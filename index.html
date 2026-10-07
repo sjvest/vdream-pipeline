@@ -143,7 +143,6 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 #tcf-pop .it:hover{background:#eef2ff;}
 #tcf-pop .it.on{background:var(--accent);color:#fff;font-weight:700;}
 #tcf-pop .it span+span{opacity:.6;}
-.qa-in{width:100%;box-sizing:border-box;font-size:11px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:#fff;font-family:inherit;}
 .tbl td:first-child{font-weight:600;color:var(--text);font-size:13px;}
 
 /* ── 폼 ── */
@@ -4430,47 +4429,6 @@ const TH_ORG='padding:10px 14px;font-size:11px;font-weight:700;color:#64748b;bor
 function orgTheadHTML(){
   return `<tr style="background:#f8faff;">${thf('기관명 · 종류','orgcat',170)}<th style="${TH_ORG}width:115px;">이름</th>${thf('직무','job',110)}${thf('담당자','member',90)}${thf('장애유형','dtype',100)}${thf('장애정도','grade',100)}${thf('현재상태','status',120)}${thf('기업명','company',170)}<th style="${TH_ORG}width:220px;">비고</th><th style="${TH_ORG}width:90px;">등록일</th></tr>`;
 }
-function qaId(orgId,f){return `qa-${orgId}-${f}`;}
-function orgQuickAddRow(orgId){
-  const me=currentProfile?.name||'';
-  const members=(cache.profiles||[]).filter(p=>p.name).map(p=>`<option ${p.name===me?'selected':''}>${relEsc(p.name)}</option>`).join('');
-  const dts=['지체','뇌병변','시각','청각','언어','지적','자폐성','정신','신장','심장','호흡기','간','안면','장루·요루','뇌전증'].map(x=>`<option>${x}</option>`).join('');
-  const k=e=>`onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddTalentRow(${orgId});}"`;
-  const f=(x)=>qaId(orgId,x);
-  return `<tr class="qa-row" style="background:#f7faff;" onclick="event.stopPropagation()">
-    <td style="padding:8px 14px;"><input id="${f('name')}" class="qa-in" placeholder="+ 이름 (필수)" ${k()}></td>
-    <td style="padding:8px 10px;"><input id="${f('job')}" class="qa-in" placeholder="직무" ${k()}></td>
-    <td style="padding:8px 10px;"><select id="${f('member')}" class="qa-in"><option value="">담당자</option>${members}</select></td>
-    <td style="padding:8px 10px;"><select id="${f('dtype')}" class="qa-in"><option value="">장애유형</option>${dts}</select></td>
-    <td style="padding:8px 10px;"><select id="${f('grade')}" class="qa-in"><option value="">정도</option><option>중증</option><option>경증</option></select></td>
-    <td style="padding:8px 10px;font-size:11px;color:var(--text3);">인재등록</td>
-    <td style="padding:8px 10px;"><input id="${f('company')}" class="qa-in" placeholder="기업명" ${k()}></td>
-    <td style="padding:8px 10px;"><input id="${f('memo')}" class="qa-in" placeholder="비고" ${k()}></td>
-    <td style="padding:8px 10px;"><button type="button" class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="quickAddTalentRow(${orgId})">추가</button></td>
-  </tr>`;
-}
-let _qaBusy=false;
-async function quickAddTalentRow(orgId){
-  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');return;}
-  if(_qaBusy)return;
-  const g=x=>(document.getElementById(qaId(orgId,x))?.value||'').trim();
-  const name=g('name');
-  if(!name){toast('이름을 입력하세요');document.getElementById(qaId(orgId,'name'))?.focus();return;}
-  const dup=(cache.talents||[]).find(t=>t.name===name&&(t.source_org_id||t.org_id)===orgId);
-  if(dup&&!confirm(`${name}님은 이 기관에 이미 등록돼 있어요. 그래도 새로 추가할까요?`))return;
-  _qaBusy=true;
-  const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
-  const row={name,org_id:orgId,source_org_id:orgId,channel:'기관연계',referrer:null,job:g('job'),member:g('member')||myName,
-    date:today(),status:'인재등록',memo:g('memo'),hire_company:g('company')||null,phone:null,birth_date:null,
-    disability_type:g('dtype')||null,disability_grade:g('grade')||null,created_by:currentUser?.id||null,created_by_name:myName};
-  const {data,error}=await sb.from('talents').insert(row).select().single();
-  _qaBusy=false;
-  if(error){toast('오류: '+error.message);return;}
-  cache.talents.unshift(data);
-  toast(`${name}님 추가됨`);
-  renderTalent();
-  setTimeout(()=>document.getElementById(qaId(orgId,'name'))?.focus(),0);
-}
 function tcfChip(key,val){
   if(!val)return '<span style="color:var(--text3);font-size:12px;">—</span>';
   const parts=key==='dtype'?String(val).split(/\s*[,，/]\s*/).filter(Boolean):[String(val)];
@@ -4511,7 +4469,7 @@ function renderTalent(){
     if(ks.length||talentViewMode==='org'){
       cfBar.style.display='flex';
       cfBar.innerHTML=ks.length?('<span style="color:var(--text3);font-weight:700;">표 필터</span>'+ks.map(k=>`<span class="tcf on" style="cursor:pointer;" onclick="clearTalentColFilter('${k}')" title="클릭하면 해제">${TCF_LABEL[k]}: ${relEsc(talentColFilter[k])} ×</span>`).join('')+'<button onclick="clearTalentColFilter()" style="font-size:11px;padding:3px 9px;border:1px solid var(--border);border-radius:10px;background:none;cursor:pointer;color:var(--text3);">전체 해제</button>')
-        :'<span style="color:var(--text3);">열 제목의 ▾ 를 누르면 그 항목만 골라 볼 수 있어요 · 각 기관 맨 아래 파란 줄에서 바로 인재를 추가할 수 있어요</span>';
+        :'<span style="color:var(--text3);">열 제목의 ▾ 를 누르면 그 항목만 골라 볼 수 있어요</span>';
     }else cfBar.style.display='none';
   }
   const TH='padding:10px 18px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;';
@@ -4550,7 +4508,7 @@ function renderTalent(){
     const groupSpacer='<tr><td colspan="10" style="padding:0;border:none;background:transparent;height:80px;"></td></tr>';
     tbody.innerHTML=orderedKeys.map((key,gi)=>{
       const g=groups[key];
-      const orgCell=`<td rowspan="${g.items.length+(g.id?1:0)}" style="padding:10px 20px;vertical-align:top;border-right:1px solid var(--border);background:#fafbff;">
+      const orgCell=`<td rowspan="${g.items.length}" style="padding:10px 20px;vertical-align:top;border-right:1px solid var(--border);background:#fafbff;">
         <div style="font-size:13px;font-weight:800;color:var(--text);${g.id?'cursor:pointer;':''}" ${g.id?`onclick="openOrg(${g.id})"`:''}>${g.name}</div>
         <div style="font-size:10px;color:var(--text3);margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${g.cat?`<span class="badge b-gray" style="font-size:9px;cursor:pointer;${talentColFilter.orgcat===g.cat?'outline:2px solid var(--accent);':''}" title="클릭하면 이 기관 종류만 모아서 봐요" onclick="event.stopPropagation();toggleTalentColFilter('orgcat',decodeURIComponent('${encodeURIComponent(g.cat)}'))">${g.cat}</span>`:''}<span>${g.items.length}명</span></div>
       </td>`;
@@ -4560,7 +4518,7 @@ function renderTalent(){
         const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
         return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">${idx===0?orgCell:''}<td style="padding:10px 18px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="padding:10px 14px;">${tcfChip('job',t.job)}</td><td style="padding:10px 18px;">${tcfChip('member',t.member)}</td><td style="padding:10px 14px;">${tcfChip('dtype',t.disability_type)}</td><td style="padding:10px 14px;">${tcfChip('grade',t.disability_grade)}</td><td style="padding:10px 18px;">${statusSelect(t,status)}</td><td style="padding:10px 14px;">${tcfChip('company',talApps[0]?.hire_company||t.hire_company||'')}</td><td style="padding:10px 18px;">${memoInput(t)}</td><td style="font-size:11px;color:var(--text3);padding:10px 18px;">${regDate}</td></tr>`;
       }).join('');
-      return groupHtml+(g.id?orgQuickAddRow(g.id):'')+(gi<orderedKeys.length-1?groupSpacer:'');
+      return groupHtml+(gi<orderedKeys.length-1?groupSpacer:'');
     }).join('');
     return;
   }
