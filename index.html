@@ -1260,7 +1260,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>장소</label><input id="ev-location" placeholder="예: 서울 올림픽공원 체조경기장"></div>
       </div>
       <div class="fg-row fg-2">
-        <div class="fg"><label>주최기관</label><input id="ev-host" placeholder="예: 한국장애인고용공단"></div>
+        <div class="fg"><label>주최기관</label>
+          <select id="ev-host-sel" onchange="onEvHostChange()"><option value="기타">직접 입력</option><option value="브이드림">브이드림</option></select>
+          <input id="ev-host" placeholder="예: 한국장애인고용공단" style="margin-top:6px;">
+        </div>
         <div class="fg"><label>행사 규모</label>
           <select id="ev-scale">
             <option>소규모 (50명 이하)</option>
@@ -1291,6 +1294,15 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>참여 팀원</label>
         <div id="ev-members-check" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
       </div>
+    </div>
+
+    <div class="form-section" id="ev-invite-section" style="display:none;">
+      <div class="fsec-title">초청 기관 <span id="ev-invite-count" style="font-size:12px;font-weight:700;color:var(--accent);margin-left:4px;"></span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">저장하면 선택한 기관의 '관계 이력'에 행사 초청 이력이 자동으로 등록돼요.</div>
+      <div id="ev-invite-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;"></div>
+      <input id="ev-invite-search" placeholder="기관명 검색..." oninput="renderEvInviteList()" style="width:100%;">
+      <div id="ev-invite-list" style="max-height:220px;overflow-y:auto;border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-top:6px;"></div>
+      <div id="ev-invite-attend" style="margin-top:12px;"></div>
     </div>
 
     <div class="form-section">
@@ -1432,7 +1444,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 </div>
 
-<datalist id="rel-item-list"><option value="설"><option value="추석"><option value="고용어워드"></datalist>
+<datalist id="rel-item-list"><option value="설"><option value="추석"></datalist>
 <!-- 관계 이력 엑셀 내보내기 모달 (명절 선물 / 행사 초청 명단) -->
 <div id="rel-export-modal" class="overlay" style="display:none;z-index:160;" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal" style="max-width:460px;width:100%;">
@@ -5155,7 +5167,7 @@ function applyDraft(type,data){
     if(data.name)document.getElementById('ev-name').value=data.name;
     if(data.date)document.getElementById('ev-date').value=data.date;
     if(data.location)document.getElementById('ev-location').value=data.location;
-    if(data.host)document.getElementById('ev-host').value=data.host;
+    if(data.host){document.getElementById('ev-host').value=data.host;setEvHostUI(data.host);}
     if(data.category)document.getElementById('ev-category').value=data.category;
     if(data.goal_cards)document.getElementById('ev-goal-cards').value=data.goal_cards;
     if(data.goal_meetings)document.getElementById('ev-goal-meetings').value=data.goal_meetings;
@@ -6461,6 +6473,9 @@ function openAddEvent(){
   document.getElementById('ev-revisit-headcount').value='';
   document.getElementById('ev-improvement').value='';
   document.getElementById('ev-linked-orgs-section').style.display='none';
+  evInviteSel=new Set();evInviteRows=[];
+  document.getElementById('ev-invite-search').value='';
+  setEvHostUI('');
   // 팀원 체크박스
   document.getElementById('ev-members-check').innerHTML=cache.profiles.map(p=>`
     <label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
@@ -6477,7 +6492,10 @@ function openEvent(id){
   document.getElementById('ev-name').value=e.name||'';
   document.getElementById('ev-date').value=e.date||'';
   document.getElementById('ev-location').value=e.location||'';
-  document.getElementById('ev-host').value=e.host||'';
+  evInviteSel=new Set();evInviteRows=[];
+  document.getElementById('ev-invite-search').value='';
+  setEvHostUI(e.host||'');
+  if((e.host||'')==='브이드림')loadEvInvite(e.id).then(()=>renderEvInvite());
   document.getElementById('ev-category').value=e.category||'전국 행사';
   document.getElementById('ev-scale').value=e.scale||'중규모 (50~200명)';
   document.getElementById('ev-discovery').value=e.discovery||'기관 초대';
@@ -6506,6 +6524,94 @@ function openEvent(id){
     </div>`).join(''):'<div class="empty" style="padding:12px 0;">연결된 기관 없음</div>';
   document.getElementById('event-modal').style.display='flex';
 }
+// ── 브이드림 주최 행사: 초청 기관 선택 → 기관 관계 이력 연동 ──
+let evInviteSel=new Set();   // 선택된 기관 id
+let evInviteRows=[];         // 이미 저장된 초청 이력(org_relations) 행
+function setEvHostUI(host){
+  document.getElementById('ev-host-sel').value=host==='브이드림'?'브이드림':'기타';
+  document.getElementById('ev-host').value=host||'';
+  applyEvHostUI();
+}
+function applyEvHostUI(){
+  const isV=document.getElementById('ev-host-sel').value==='브이드림';
+  document.getElementById('ev-host').style.display=isV?'none':'';
+  document.getElementById('ev-invite-section').style.display=isV?'':'none';
+  if(isV)renderEvInvite();
+}
+function onEvHostChange(){
+  const isV=document.getElementById('ev-host-sel').value==='브이드림';
+  const inp=document.getElementById('ev-host');
+  if(isV)inp.value='브이드림';
+  else if(inp.value==='브이드림')inp.value='';
+  applyEvHostUI();
+}
+async function loadEvInvite(eventId){
+  const{data,error}=await sb.from('org_relations').select('id,org_id,attendance').eq('event_id',eventId);
+  if(error){toast('초청 기관을 불러오지 못했어요: '+error.message);return;}
+  evInviteRows=data||[];
+  evInviteSel=new Set(evInviteRows.map(r=>Number(r.org_id)));
+}
+function renderEvInvite(){
+  renderEvInviteChips();
+  renderEvInviteList();
+}
+function renderEvInviteChips(){
+  const byId=new Map(cache.orgs.map(o=>[Number(o.id),o]));
+  const ids=[...evInviteSel].filter(id=>byId.has(id)).sort((a,b)=>(byId.get(a).name||'').localeCompare(byId.get(b).name||'','ko'));
+  document.getElementById('ev-invite-count').textContent=ids.length?`(${ids.length}곳 선택)`:'';
+  document.getElementById('ev-invite-chips').innerHTML=ids.length?ids.map(id=>`<span onclick="toggleEvInvite(${id},false);renderEvInviteList()" title="클릭하면 선택 해제" style="font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent);padding:3px 10px;border-radius:14px;cursor:pointer;">${relEsc(byId.get(id).name)} ×</span>`).join(''):'<span style="font-size:12px;color:var(--text3);">선택된 기관 없음</span>';
+  // 저장된 초청 이력이 있으면 참석 여부를 기관별로 바로 지정
+  const box=document.getElementById('ev-invite-attend');
+  const rows=evInviteRows.filter(r=>evInviteSel.has(Number(r.org_id)));
+  if(!currentEventId||!rows.length){box.innerHTML='';return;}
+  const att=rows.filter(r=>r.attendance==='참석').length;
+  box.innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:6px;">참석 여부 <span style="font-weight:600;color:var(--text3);">(참석 ${att} / 초청 ${rows.length})</span></div>`+rows.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:4px;"><span style="font-size:12px;font-weight:600;">${relEsc((byId.get(Number(r.org_id))||{}).name||'')}</span><select onchange="setEvAttendance(${r.id},this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;"><option value=""${!r.attendance?' selected':''}>미확정</option><option value="참석"${r.attendance==='참석'?' selected':''}>참석</option><option value="불참"${r.attendance==='불참'?' selected':''}>불참</option></select></div>`).join('');
+}
+function renderEvInviteList(){
+  const kw=(document.getElementById('ev-invite-search').value||'').trim().toLowerCase();
+  const orgs=cache.orgs.filter(o=>!o.is_test&&(!kw||(o.name||'').toLowerCase().includes(kw))).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
+  document.getElementById('ev-invite-list').innerHTML=orgs.length?orgs.map(o=>`<label style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;"><input type="checkbox" ${evInviteSel.has(Number(o.id))?'checked':''} onchange="toggleEvInvite(${o.id},this.checked)" style="width:15px;height:15px;"><span style="flex:1;font-weight:600;">${relEsc(o.name)}</span><span style="font-size:11px;color:var(--text3);">${relEsc(o.cat||'')}</span></label>`).join(''):'<div class="empty" style="padding:12px 0;">검색 결과가 없어요</div>';
+}
+function toggleEvInvite(orgId,on){
+  if(on)evInviteSel.add(Number(orgId));else evInviteSel.delete(Number(orgId));
+  renderEvInviteChips();
+}
+async function setEvAttendance(relId,val){
+  const{error}=await sb.from('org_relations').update({attendance:val||null}).eq('id',relId);
+  if(error){toast('오류: '+error.message);return;}
+  const r=evInviteRows.find(x=>x.id===relId);if(r)r.attendance=val||null;
+  renderEvInviteChips();
+  await loadRelLite();
+  toast('참석 여부를 저장했어요');
+}
+async function syncEventInvites(eventId,name,date){
+  const year=Number(date.slice(0,4)),month=Number(date.slice(5,7));
+  const{data:existing,error}=await sb.from('org_relations').select('id,org_id,attendance').eq('event_id',eventId);
+  if(error)throw error;
+  const have=new Map((existing||[]).map(r=>[Number(r.org_id),r]));
+  const toAdd=[...evInviteSel].filter(id=>!have.has(id));
+  let toDel=(existing||[]).filter(r=>!evInviteSel.has(Number(r.org_id)));
+  // 참석 여부가 이미 입력된 기관을 빼려는 경우 한 번 확인 (실수로 이력이 지워지는 것 방지)
+  const withAtt=toDel.filter(r=>r.attendance);
+  if(withAtt.length&&!confirm(`참석 여부가 입력된 기관 ${withAtt.length}곳이 초청 목록에서 빠집니다. 해당 기관의 이력도 삭제할까요?\n(취소하면 이 기관들은 목록에 그대로 둡니다)`)){
+    toDel=toDel.filter(r=>!r.attendance);
+  }
+  // 행사명/날짜가 바뀌었을 수 있으니 기존 이력도 맞춰 갱신
+  if(have.size){
+    const{error:e1}=await sb.from('org_relations').update({item:name,year,month}).eq('event_id',eventId);
+    if(e1)throw e1;
+  }
+  if(toAdd.length){
+    const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+    const rows=toAdd.map(oid=>({org_id:oid,year,month,kind:'행사 초청',item:name,event_id:eventId,handler:currentProfile?.name||null,created_by:currentUser?.id||null,created_by_name:myName}));
+    const{error:e2}=await sb.from('org_relations').insert(rows);
+    if(e2)throw e2;
+  }
+  if(toDel.length){
+    const{error:e3}=await sb.from('org_relations').delete().in('id',toDel.map(r=>r.id));
+    if(e3)throw e3;
+  }
+}
 async function saveEvent(){
   const name=document.getElementById('ev-name').value.trim();
   const date=document.getElementById('ev-date').value;
@@ -6530,12 +6636,20 @@ async function saveEvent(){
     improvement:document.getElementById('ev-improvement').value.trim(),
     created_by:currentUser?.id||null,created_by_name:myName
   };
+  let savedEventId=currentEventId;
   if(currentEventId){
     const{error}=await sb.from('events').update(row).eq('id',currentEventId);
     if(error){toast('오류: '+error.message);return;}
   } else {
-    const{error}=await sb.from('events').insert(row);
+    const{data:ins,error}=await sb.from('events').insert(row).select('id').single();
     if(error){toast('오류: '+error.message);return;}
+    savedEventId=ins&&ins.id;
+  }
+  // 브이드림 주최 행사: 선택한 초청 기관을 각 기관의 관계 이력(행사 초청)에 반영
+  if(row.host==='브이드림'&&savedEventId){
+    try{await syncEventInvites(savedEventId,name,date);}
+    catch(err){toast('행사는 저장됐지만 초청 기관 반영 중 오류: '+(err.message||err));}
+    await loadRelLite();
   }
   document.getElementById('event-modal').style.display='none';
   toast(currentEventId?'행사 수정 완료 ':'행사 등록 완료 ');
@@ -7422,24 +7536,28 @@ async function openOrg(id){
 // ── 관계 이력 (명절 선물 / 행사 초청) ──
 // 기관별로 "그 해 왜 선물을 보냈고 / 행사에 초대했는지"를 쌓는다. 선정 사유 태그는 app_settings.relation_reasons(JSON)에서 불러오며 화면에서 추가·비활성화할 수 있다.
 const REL_REASONS_DEFAULT=['지원자 유입','타 행사 초청·소개','유의미한 정보 제공','네트워크 연결','관계 유지 필요','기타'];
-const REL_AWARD_ITEM='고용어워드'; // 11월 브이드림 주관 행사 — 초청 기관은 관계 이력에 항목명으로 기록
 let relReasons=null;
 const relRowsByOrg={};
 // 목록·상세 배지용 경량 캐시 (org_id, year, kind, item만). 커넥션 풀이 작아 컬럼을 최소로 가져온다.
 let relLite=[];
 async function loadRelLite(){
   try{
-    const{data,error}=await sb.from('org_relations').select('org_id,year,kind,item,attendance');
+    const{data,error}=await sb.from('org_relations').select('org_id,year,month,kind,item,attendance');
     if(!error)relLite=data||[];
   }catch(e){}
 }
 function awardBadge(orgId){
+  // 올해 행사 초청 이력이 있는 기관에 표시. 초청 대상(이력 존재) → 참석 / 불참은 attendance로 구분
   const y=new Date().getFullYear();
-  const hit=relLite.find(r=>Number(r.org_id)===Number(orgId)&&r.item===REL_AWARD_ITEM&&r.year===y);
-  if(!hit)return'';
-  // 초청 대상(이력 존재) → 실제 참석 여부는 attendance로 구분: 참석 / 불참 / 미확정
-  const st=hit.attendance==='참석'?{t:'참석',c:'#059669',bg:'#ecfdf5',bd:'#6ee7b7'}:hit.attendance==='불참'?{t:'불참',c:'#6b7280',bg:'#f3f4f6',bd:'#d1d5db'}:{t:'초청',c:'#7c3aed',bg:'#f5f3ff',bd:'#c4b5fd'};
-  return`<span style="font-size:10px;font-weight:700;color:${st.c};background:${st.bg};border:1px solid ${st.bd};padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${REL_AWARD_ITEM} ${y} ${st.t}</span>`;
+  const hits=relLite.filter(r=>Number(r.org_id)===Number(orgId)&&r.kind==='행사 초청'&&r.year===y);
+  if(!hits.length)return'';
+  hits.sort((a,b)=>(b.month||0)-(a.month||0));
+  const h=hits[0];
+  const st=h.attendance==='참석'?{t:'참석',c:'#059669',bg:'#ecfdf5',bd:'#6ee7b7'}:h.attendance==='불참'?{t:'불참',c:'#6b7280',bg:'#f3f4f6',bd:'#d1d5db'}:{t:'초청',c:'#7c3aed',bg:'#f5f3ff',bd:'#c4b5fd'};
+  const full=h.item||'행사';
+  const nm=full.length>12?full.slice(0,12)+'…':full;
+  const more=hits.length>1?' 외 '+(hits.length-1):'';
+  return`<span title="${relEsc(full)}" style="font-size:10px;font-weight:700;color:${st.c};background:${st.bg};border:1px solid ${st.bd};padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${relEsc(nm)} ${st.t}${more}</span>`;
 }
 function relEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function getRelReasons(){
@@ -7477,7 +7595,7 @@ async function loadOrgRelations(orgId){
   const{data,error}=await sb.from('org_relations').select('*').eq('org_id',orgId).order('year',{ascending:false}).order('month',{ascending:false,nullsFirst:false}).order('id',{ascending:false});
   if(error){box.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:12px;">관계 이력을 불러오지 못했어요: '+relEsc(error.message)+'</div>';return;}
   relRowsByOrg[orgId]=data||[];
-  relLite=relLite.filter(r=>Number(r.org_id)!==Number(orgId)).concat((data||[]).map(r=>({org_id:r.org_id,year:r.year,kind:r.kind,item:r.item,attendance:r.attendance})));
+  relLite=relLite.filter(r=>Number(r.org_id)!==Number(orgId)).concat((data||[]).map(r=>({org_id:r.org_id,year:r.year,month:r.month,kind:r.kind,item:r.item,attendance:r.attendance})));
   renderOrgRelations(orgId);
 }
 function renderOrgRelations(orgId){
@@ -7530,7 +7648,6 @@ async function openRelForm(orgId,relId,keepReasons){
       <div><div style="${lbl}">연도</div><select id="rel-year" style="${inp}">${years.map(y=>`<option value="${y}"${y===yearVal?' selected':''}>${y}</option>`).join('')}</select></div>
       <div><div style="${lbl}">월</div><select id="rel-month" style="${inp}"><option value="">월 선택</option>${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}"${r.month===m?' selected':''}>${m}월</option>`).join('')}</select></div>
       <div><div style="${lbl}">항목 (설, 추석, 행사명)</div><input id="rel-item" list="rel-item-list" value="${relEsc(r.item||'')}" placeholder="추석" style="${inp}width:150px;"></div>
-      <div style="align-self:flex-end;"><button type="button" onclick="relPresetAward()" style="font-size:11px;padding:6px 10px;border:1.5px solid #c4b5fd;border-radius:6px;background:#f5f3ff;color:#7c3aed;font-weight:700;cursor:pointer;">${REL_AWARD_ITEM} 초청</button></div>
       <div><div style="${lbl}">발송·초청일</div><input id="rel-date" type="date" value="${r.sent_date||''}" onchange="relSyncMonth()" style="${inp}"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
@@ -7558,12 +7675,6 @@ async function openRelForm(orgId,relId,keepReasons){
       <button id="rel-save-btn" onclick="saveOrgRelation(${orgId},${relId||'null'})" style="font-size:12px;padding:6px 14px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;">저장</button>
     </div>
   </div>`;
-}
-// 고용어워드(11월 행사) 초청 기록 빠른 입력: 구분=행사 초청, 항목=고용어워드, 월=11
-function relPresetAward(){
-  document.getElementById('rel-kind').value='행사 초청';
-  document.getElementById('rel-item').value=REL_AWARD_ITEM;
-  document.getElementById('rel-month').value='11';
 }
 function relSyncMonth(){
   const d=document.getElementById('rel-date').value;
