@@ -4794,6 +4794,7 @@ async function saveTalentBasicInfo(){
 const DATE_FIELD_BY_STATUS={
   채용지원:{date:'applied_date',est:'applied_date_is_estimated'},
   합격:{date:'pass_date',est:'pass_date_is_estimated'},
+  최종합격:{date:'pass_date',est:'pass_date_is_estimated'},
   '서류불합격':{date:'rejected_at',est:'rejected_date_is_estimated'},
   '최종불합격':{date:'rejected_at',est:'rejected_date_is_estimated'},
 };
@@ -5058,14 +5059,26 @@ function renderTalentForms(){
         <div class="fg"><label>장애등급</label><select id="t-disgrade-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">선택</option><option>중증</option><option>경증</option></select></div>
         <div class="fg"><label>직무</label><input type="text" id="t-job-${i}" placeholder="사무보조" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>유입일 <span style="font-weight:400;color:var(--text3);">(파이프라인에 들어온 날 — 실제 지원일과 다를 수 있음)</span></label><div style="display:flex;gap:6px;align-items:center;"><input type="date" id="t-date-${i}" style="flex:1;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"><label style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);white-space:nowrap;"><input type="checkbox" id="t-date-est-${i}"> 추정일</label></div></div>
-        <div class="fg"><label>상태</label><select id="t-status-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재등록</option><option>채용지원</option><option>서류합격</option><option>서류불합격</option><option>최종합격</option><option>최종불합격</option><option>지원취소</option><option>계약종료</option></select></div>
+        <div class="fg"><label>상태</label><select id="t-status-${i}" onchange="syncTalentFormDates(${i})" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option>인재등록</option><option>채용지원</option><option>서류합격</option><option>서류불합격</option><option>최종합격</option><option>최종불합격</option><option>지원취소</option><option>계약종료</option></select></div>
         <div class="fg"><label>지원 회사명</label><input type="text" id="t-hirecompany-${i}" placeholder="지원한 회사명" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
-        <div class="fg"><label>입사일</label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
+        <div class="fg"><label>입사일 <span style="font-weight:400;color:var(--text3);">(최종합격·계약종료일 때만 입력)</span></label><input type="date" id="t-joindate-${i}" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
         <div class="fg"><label>대기자 여부</label><div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><input type="checkbox" id="t-waitlist-${i}" style="width:16px;height:16px;cursor:pointer;"><label for="t-waitlist-${i}" style="font-size:13px;cursor:pointer;color:var(--text2);">대기자로 등록</label></div></div>
         <div class="fg" style="grid-column:1/-1;"><label>메모</label><input type="text" id="t-memo-${i}" placeholder="메모" style="width:100%;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
       </div>
     </div>
   `).join('');
+  for(let i=0;i<count;i++)syncTalentFormDates(i);
+}
+// 상태에 맞지 않는 날짜 칸은 잠가서 같이 선택/저장되지 않게 한다 (인재등록·채용지원 등록 시 입사일이 같이 들어가던 문제)
+function syncTalentFormDates(i){
+  const st=document.getElementById(`t-status-${i}`)?.value||'인재등록';
+  const jd=document.getElementById(`t-joindate-${i}`);
+  if(!jd)return;
+  const ok=['최종합격','계약종료'].includes(st);
+  jd.disabled=!ok;
+  if(!ok)jd.value='';
+  jd.style.background=ok?'#fff':'var(--bg)';
+  jd.style.opacity=ok?'1':'.55';
 }
 // 지원자명 입력 시 기존 talents를 검색해서 목록으로 보여주고, 선택하면 새로 등록하지 않고
 // 그 기존 인재에 지원이력만 추가한다 (재지원/동명이인 중복등록 방지). 목록에서 고르지 않으면 그냥 새 사람으로 등록된다.
@@ -5231,7 +5244,7 @@ async function saveTalent(){
         applied_date:document.getElementById(`t-date-${i}`)?.value||null, // 미입력 시 오늘 자동입력 안 하고 null
         applied_date_is_estimated:document.getElementById(`t-date-est-${i}`)?.checked||false,
         hire_company:document.getElementById(`t-hirecompany-${i}`)?.value.trim()||null,
-        join_date:document.getElementById(`t-joindate-${i}`)?.value||null,
+        join_date:['최종합격','계약종료'].includes(status)?(document.getElementById(`t-joindate-${i}`)?.value||null):null,
       });
     }
   }
