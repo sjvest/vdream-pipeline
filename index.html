@@ -1432,6 +1432,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 </div>
 
+<datalist id="rel-item-list"><option value="설"><option value="추석"><option value="고용어워드"></datalist>
 <!-- 관계 이력 엑셀 내보내기 모달 (명절 선물 / 행사 초청 명단) -->
 <div id="rel-export-modal" class="overlay" style="display:none;z-index:160;" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal" style="max-width:460px;width:100%;">
@@ -1446,7 +1447,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
       <div style="display:flex;gap:8px;">
         <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">구분</div><select id="rel-exp-kind" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="명절 선물">명절 선물</option><option value="행사 초청">행사 초청</option><option value="">전체 구분</option></select></div>
-        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">항목 (설, 추석, 행사명)</div><input id="rel-exp-item" placeholder="전체" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;"></div>
+        <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">항목 (설, 추석, 행사명)</div><input id="rel-exp-item" list="rel-item-list" placeholder="전체" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
         <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);">취소</button>
@@ -2229,7 +2230,8 @@ async function loadAll(){
     ]);
     await Promise.all([
       loadJobs(), loadCold(), loadTeamTasks(),
-      loadSourcingAssignments(), loadSourcingCandidates()
+      loadSourcingAssignments(), loadSourcingCandidates(),
+      loadRelLite()
     ]);
     if(!liteOrgsRes.error)cache.orgs=liteOrgsRes.data;
     updateMemberSelects();
@@ -3476,7 +3478,7 @@ function renderPinnedOrgsSection(pinnedRows){
   listEl.style.display=pinnedSectionCollapsed?'none':'block';
   listEl.innerHTML=pinnedRows.map(o=>`
     <div onclick="openOrg(${o.id})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid #f5c451;" onmouseover="this.style.background='#fffdf5'" onmouseout="this.style.background=''">
-      <span style="font-weight:700;font-size:13px;color:#0d1b2a;flex-shrink:0;">${o.name}</span>
+      <span style="font-weight:700;font-size:13px;color:#0d1b2a;flex-shrink:0;">${o.name}</span>${awardBadge(o.id)}
       <span style="font-size:10px;font-weight:700;color:#92600a;background:#fef3c7;padding:1px 8px;border-radius:10px;flex-shrink:0;">고정</span>
       <span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
       <span style="font-size:11px;color:var(--text3);flex:1;">${o.cat||''}</span>
@@ -3517,7 +3519,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
             <input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onclick="event.stopPropagation();" onchange="toggleSelectOrg(${o.id},this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
-                <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${o.name}</span>${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
+                <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${o.name}</span>${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
                 <span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
                 ${o.region?`<span style="font-size:11px;color:var(--text3);background:#f1f4f9;padding:1px 6px;border-radius:4px;">${o.region}</span>`:''}
                 ${urgent?`<span style="font-size:11px;color:#dc2626;font-weight:700;"> ${urgent}건</span>`:''}
@@ -3549,7 +3551,7 @@ function renderOrgs(){const fc=document.getElementById('filter-cat').value;const
       <td style="padding:14px 16px;max-width:280px;overflow:hidden;">
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
-          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
+          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
         </div>
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
@@ -7109,7 +7111,7 @@ async function openOrg(id){
   const oa=actionsForOrg(id);
   const tals=cache.talents.filter(t=>t.org_id===id);
   const linkedEvent=o.event_id?(cache.events||[]).find(e=>Number(e.id)===Number(o.event_id)):null;
-  document.getElementById('m-title').innerHTML=`${o.name}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
+  document.getElementById('m-title').innerHTML=`${o.name}${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
@@ -7418,8 +7420,22 @@ async function openOrg(id){
 // ── 관계 이력 (명절 선물 / 행사 초청) ──
 // 기관별로 "그 해 왜 선물을 보냈고 / 행사에 초대했는지"를 쌓는다. 선정 사유 태그는 app_settings.relation_reasons(JSON)에서 불러오며 화면에서 추가·비활성화할 수 있다.
 const REL_REASONS_DEFAULT=['지원자 유입','타 행사 초청·소개','유의미한 정보 제공','네트워크 연결','관계 유지 필요','기타'];
+const REL_AWARD_ITEM='고용어워드'; // 11월 브이드림 주관 행사 — 초청 기관은 관계 이력에 항목명으로 기록
 let relReasons=null;
 const relRowsByOrg={};
+// 목록·상세 배지용 경량 캐시 (org_id, year, kind, item만). 커넥션 풀이 작아 컬럼을 최소로 가져온다.
+let relLite=[];
+async function loadRelLite(){
+  try{
+    const{data,error}=await sb.from('org_relations').select('org_id,year,kind,item');
+    if(!error)relLite=data||[];
+  }catch(e){}
+}
+function awardBadge(orgId){
+  const y=new Date().getFullYear();
+  const hit=relLite.some(r=>Number(r.org_id)===Number(orgId)&&r.item===REL_AWARD_ITEM&&r.year===y);
+  return hit?`<span style="font-size:10px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #c4b5fd;padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${REL_AWARD_ITEM} ${y} 초청</span>`:'';
+}
 function relEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function getRelReasons(){
   if(relReasons)return relReasons;
@@ -7456,6 +7472,7 @@ async function loadOrgRelations(orgId){
   const{data,error}=await sb.from('org_relations').select('*').eq('org_id',orgId).order('year',{ascending:false}).order('month',{ascending:false,nullsFirst:false}).order('id',{ascending:false});
   if(error){box.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:12px;">관계 이력을 불러오지 못했어요: '+relEsc(error.message)+'</div>';return;}
   relRowsByOrg[orgId]=data||[];
+  relLite=relLite.filter(r=>Number(r.org_id)!==Number(orgId)).concat((data||[]).map(r=>({org_id:r.org_id,year:r.year,kind:r.kind,item:r.item})));
   renderOrgRelations(orgId);
 }
 function renderOrgRelations(orgId){
@@ -7505,7 +7522,8 @@ async function openRelForm(orgId,relId,keepReasons){
       <div><div style="${lbl}">구분</div><select id="rel-kind" style="${inp}"><option value="명절 선물"${r.kind==='명절 선물'||!r.kind?' selected':''}>명절 선물</option><option value="행사 초청"${r.kind==='행사 초청'?' selected':''}>행사 초청</option></select></div>
       <div><div style="${lbl}">연도</div><select id="rel-year" style="${inp}">${years.map(y=>`<option value="${y}"${y===yearVal?' selected':''}>${y}</option>`).join('')}</select></div>
       <div><div style="${lbl}">월</div><select id="rel-month" style="${inp}"><option value="">월 선택</option>${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}"${r.month===m?' selected':''}>${m}월</option>`).join('')}</select></div>
-      <div><div style="${lbl}">항목 (설, 추석, 행사명)</div><input id="rel-item" value="${relEsc(r.item||'')}" placeholder="추석" style="${inp}width:150px;"></div>
+      <div><div style="${lbl}">항목 (설, 추석, 행사명)</div><input id="rel-item" list="rel-item-list" value="${relEsc(r.item||'')}" placeholder="추석" style="${inp}width:150px;"></div>
+      <div style="align-self:flex-end;"><button type="button" onclick="relPresetAward()" style="font-size:11px;padding:6px 10px;border:1.5px solid #c4b5fd;border-radius:6px;background:#f5f3ff;color:#7c3aed;font-weight:700;cursor:pointer;">${REL_AWARD_ITEM} 초청</button></div>
       <div><div style="${lbl}">발송·초청일</div><input id="rel-date" type="date" value="${r.sent_date||''}" onchange="relSyncMonth()" style="${inp}"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
@@ -7527,6 +7545,12 @@ async function openRelForm(orgId,relId,keepReasons){
       <button id="rel-save-btn" onclick="saveOrgRelation(${orgId},${relId||'null'})" style="font-size:12px;padding:6px 14px;border:none;border-radius:6px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;">저장</button>
     </div>
   </div>`;
+}
+// 고용어워드(11월 행사) 초청 기록 빠른 입력: 구분=행사 초청, 항목=고용어워드, 월=11
+function relPresetAward(){
+  document.getElementById('rel-kind').value='행사 초청';
+  document.getElementById('rel-item').value=REL_AWARD_ITEM;
+  document.getElementById('rel-month').value='11';
 }
 function relSyncMonth(){
   const d=document.getElementById('rel-date').value;
