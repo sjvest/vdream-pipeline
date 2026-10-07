@@ -4899,6 +4899,8 @@ async function updateDrawerStatus(){
 // 드로어를 열지 않고 목록에서 바로 상태를 바꿀 수 있게 하되, 가드/동기화 로직은 위 공통 함수를 그대로 탄다.
 async function quickUpdateTalentStatus(talentId,status){
   await applyTalentStatusChange(talentId,status);
+  // 상세 패널이 열려 있으면 그쪽 '현재 단계'도 실제 저장된 값으로 맞춘다
+  if(currentDrawerTalentId===talentId){const t=cache.talents.find(x=>x.id===talentId);const ap=(cache.applications||[]).find(x=>x.talent_id===talentId);const ds=document.getElementById('drawer-status');if(ds&&t)ds.value=ap?.status||t.status||'인재등록';}
   renderTalent(); // 실패했을 때도 select가 실제 저장된 상태로 되돌아가도록 다시 그린다
 }
 // 인재영입 페이지 '기관별 보기'의 인라인 비고 입력에서 호출 (2026-10-06 추가). talents.memo를 바로 저장한다.
