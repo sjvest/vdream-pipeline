@@ -4800,11 +4800,29 @@ const DATE_FIELD_BY_STATUS={
 // 상태값 변경 공통 로직 (드로어의 상태 select와 인재영입 '기관별 보기'의 인라인 select가 공유한다).
 // 재지원 가드 / 최초지원 job_id 연결 가드 / 날짜 자동입력 / talents.status 동기화를 한 곳에서만 처리해서
 // 두 UI의 상태 변경 동작이 서로 어긋나지 않도록 한다 (2026-10-06 리팩터, updateDrawerStatus에서 분리).
+// 상태가 바뀔 때 talents.status_history에 이력 한 줄을 덧붙인다 (이전 상태는 화면에 보이던 최신 지원이력 기준)
+function talentStatusHistoryWith(t,status){
+  const ap=(cache.applications||[]).find(a=>a.talent_id===t.id);
+  const prev=ap?.status||t.status||'인재등록';
+  return [...(t.status_history||[]),{from:prev,to:status,date:new Date().toISOString(),by:currentProfile?.name||currentUser?.email||'—'}];
+}
+// 상태 변경 후 같이 맞춰야 하는 화면들을 한 번에 갱신 (기관별 보기/목록, 열려 있는 상세 패널·모달, 대시보드 알림 수)
+function refreshAfterTalentChange(talentId){
+  try{
+    const t=cache.talents.find(x=>x.id===talentId);
+    const ap=(cache.applications||[]).find(x=>x.talent_id===talentId);
+    const eff=ap?.status||t?.status||'인재등록';
+    if(currentDrawerTalentId===talentId){const ds=document.getElementById('drawer-status');if(ds)ds.value=eff;}
+    renderTalent();
+    updateUrgentCount();renderActions();
+  }catch(e){console.error('refreshAfterTalentChange',e);}
+}
 async function applyTalentStatusChange(talentId,status){
   const t=cache.talents.find(x=>x.id===talentId);if(!t)return false;
   const apps=(cache.applications||[]).filter(a=>a.talent_id===talentId);
   const dateField=DATE_FIELD_BY_STATUS[status];
   const todayStr=today();
+  const hist=talentStatusHistoryWith(t,status); // 이전 상태는 변경 전에 읽어둔다
 
   if(apps.length){
     const latestApp=apps[0];
@@ -4826,9 +4844,9 @@ async function applyTalentStatusChange(talentId,status){
     Object.assign(latestApp,payload);
     // talents.status도 함께 동기화 (2026-07-08 결정: DB 정합성 목적, 화면 표시 우선순위엔 영향 없음)
     // 다건 지원 기능 도입 시 이 동기화 정책은 재검토 필요 (V:Scout 데이터 표준 v1.0 참고)
-    const{error:tErr}=await sb.from('talents').update({status}).eq('id',talentId);
+    const{error:tErr}=await sb.from('talents').update({status,status_history:hist}).eq('id',talentId);
     if(tErr)console.error('[Supabase Error] talents.status 동기화 실패:',tErr);
-    else t.status=status;
+    else{t.status=status;t.status_history=hist;}
   }else if(status!=='인재등록'){
     // 2) 지원이력이 없고 새 상태가 '인재등록'이 아닌 경우: 예전엔 여기서 candidate_applications를 job_id 없이
     // 새로 만들었지만, 2026-07-21부터는 job_id 자동 연결 원칙에 따라 여기서 만들지 않고
@@ -4837,11 +4855,12 @@ async function applyTalentStatusChange(talentId,status){
     return false;
   }else{
     // 3) 지원이력이 없고 새 상태가 '인재등록'이면 talents.status만 갱신 (candidate_applications 생성 안 함)
-    const{error}=await sb.from('talents').update({status}).eq('id',talentId);
+    const{error}=await sb.from('talents').update({status,status_history:hist}).eq('id',talentId);
     if(error){toast('오류: '+error.message);return false;}
-    t.status=status;
+    t.status=status;t.status_history=hist;
   }
   toast('상태 변경됨: '+status);
+  refreshAfterTalentChange(talentId);
   return true;
 }
 async function updateDrawerStatus(){
@@ -4914,7 +4933,7 @@ async function saveApplicationDates(){
     const insertRow={talent_id:currentDrawerTalentId,org_id:t?.source_org_id||t?.org_id||null,...payload};
     const{data,error}=await sb.from('candidate_applications').insert(insertRow).select().single();
     if(error){toast('오류: '+error.message);return;}
-    cache.applications.push(data);
+    cache.applications.unshift(data);
   }
   toast(autoStatus?'날짜 저장됨 · 현재 단계를 최종합격으로 변경했어요':'날짜 저장됨');
   switchDrawerTab('history');
@@ -5220,7 +5239,7 @@ async function saveTalent(){
     const{data:apps,error:appErr}=await sb.from('candidate_applications').insert(appRows).select();
     if(appErr){console.error('[Supabase Error] candidate_applications 자동생성 실패:',appErr);toast('일부 지원이력 생성 중 오류가 발생했습니다.');}
     else{
-      apps.forEach(a=>cache.applications.push(a));
+      apps.forEach(a=>cache.applications.unshift(a));
       // "확보 인원"은 화면(renderJobs)에서 매번 candidate_applications를 실시간으로 세어 보여주므로
       // 화면 자체는 이 코드가 없어도 정확하다. 다만 구글챗 알림(job-alert-*)은 DB의 jobs.current_count
       // 컬럼 값을 그대로 읽어가는 구조라, 알림 문구도 어긋나지 않도록 실제 건수로 동기화해둔다
@@ -6736,7 +6755,8 @@ async function deleteTalentFile(idx){
 async function openTalentDetail(id){
   currentTalentId=id;
   const t=cache.talents.find(x=>x.id===id);if(!t)return;
-  const org=cache.orgs.find(o=>o.id===t.org_id);
+  const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
+  const effStatusNow=((cache.applications||[]).find(a=>a.talent_id===t.id)?.status)||t.status||'인재등록';
   document.getElementById('td-title').textContent=t.name;
   document.getElementById('td-memo').value=t.memo||'';
   document.getElementById('td-info').innerHTML=`
@@ -6747,12 +6767,15 @@ async function openTalentDetail(id){
     <div class="info-row"><span class="info-key">지원일</span><span>${fDate(t.date)}</span></div>
     <div class="info-row"><span class="info-key">등록자</span><span style="color:var(--accent);font-weight:600;">${t.created_by_name||'—'}</span></div>
     ${t.updated_at?`<div class="info-row"><span class="info-key">마지막 수정</span><span style="color:var(--text2);">${relEsc(t.updated_by_name||'—')} · ${shortDT(t.updated_at)}</span></div>`:''}
-    <div class="info-row"><span class="info-key">현재 상태</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></div>
+    <div class="info-row"><span class="info-key">현재 상태</span><span class="badge ${STATUS_CLS[effStatusNow]||'b-gray'}">${effStatusNow}</span></div>
   `;
-  const statuses=['지원서등록','지원중','면접','최종합격','불합격','포기'];
-  const STATUS_COLOR={지원서등록:'b-purple',지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
+  // 인재영입 목록/상세 패널과 같은 공식 상태값·같은 저장 로직을 쓴다 (예전엔 별도 상태값 + talents.status만 저장해서 서로 어긋났음)
+  const statuses=OFFICIAL_STATUSES;
+  const effNow=((cache.applications||[]).find(a=>a.talent_id===t.id)?.status)||t.status||'인재등록';
+  detailPendingStatus=null;
+  const STATUS_COLOR=Object.fromEntries(OFFICIAL_STATUSES.map(x=>[x,STATUS_CLS[x]||'b-gray']));
   document.getElementById('td-status-btns').innerHTML=statuses.map(s=>`
-    <button onclick="setTalentStatus('${s}')" class="badge ${STATUS_COLOR[s]}" style="padding:8px 16px;cursor:pointer;border:2px solid ${t.status===s?'var(--accent)':'transparent'};font-size:12px;">${s}</button>
+    <button onclick="setTalentStatus('${s}')" class="badge ${STATUS_COLOR[s]}" style="padding:8px 16px;cursor:pointer;border:2px solid ${effNow===s?'var(--accent)':'transparent'};font-size:12px;">${s}</button>
   `).join('');
   const contractSection=document.getElementById('td-contract-section');
   if(contractSection){
@@ -6792,18 +6815,11 @@ async function saveContractEndDate(){
   toast('계약 만료일 저장 완료 ');
   renderTalent();
 }
+let detailPendingStatus=null;
 function setTalentStatus(status){
   const t=cache.talents.find(x=>x.id===currentTalentId);
   if(!t)return;
-  const prev=t.status;
-  t.status=status;
-  // 상태 변경 이력 기록
-  const history=[...(t.status_history||[]),{
-    from:prev,to:status,
-    date:new Date().toISOString(),
-    by:currentProfile?.name||currentUser?.email||'—'
-  }];
-  t.status_history=history;
+  detailPendingStatus=status; // 저장 버튼을 눌러야 실제 반영 (취소하면 그대로)
   // 버튼 강조 업데이트
   const STATUS_COLOR={지원중:'b-blue',면접:'b-amber',합격:'b-green',불합격:'b-red',포기:'b-gray'};
   document.getElementById('td-status-btns').querySelectorAll('button').forEach(btn=>{
@@ -6815,15 +6831,18 @@ function setTalentStatus(status){
 async function saveTalentDetail(){
   const t=cache.talents.find(x=>x.id===currentTalentId);if(!t)return;
   const memo=document.getElementById('td-memo').value.trim();
-  const{error}=await sb.from('talents').update({
-    status:t.status,memo,
-    status_history:t.status_history||[]
-  }).eq('id',currentTalentId);
+  const{error}=await sb.from('talents').update({memo}).eq('id',currentTalentId);
   if(error){toast('오류: '+error.message);return;}
   t.memo=memo;
+  let hireChanged=false;
+  if(detailPendingStatus){
+    const curEff=((cache.applications||[]).find(a=>a.talent_id===currentTalentId)?.status)||t.status||'인재등록';
+    if(detailPendingStatus!==curEff){const ok=await applyTalentStatusChange(currentTalentId,detailPendingStatus);if(!ok){detailPendingStatus=null;renderTalent();return;}hireChanged=detailPendingStatus==='최종합격';}
+    detailPendingStatus=null;
+  }
   document.getElementById('talent-detail-modal').style.display='none';
   toast('저장 완료 ');renderTalent();
-  if(document.getElementById('td-status-btns')&&currentTalentId){const t=cache.talents.find(x=>x.id===currentTalentId);if(t&&t.status==='최종합격'){const org=cache.orgs.find(o=>o.id===t.org_id);sendGChatHireAlert(t.name,org?.name||'');} }
+  if(document.getElementById('td-status-btns')&&currentTalentId){const t=cache.talents.find(x=>x.id===currentTalentId);if(t&&t.status==='최종합격'&&hireChanged){const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));sendGChatHireAlert(t.name,org?.name||'');} }
 }
 // ===== 서칭 배정 (sourcing_assignments/sourcing_candidates, 2026-07-21 Phase 2 1차) =====
 // 채용건 하나에 담당자별로 여러 배정이 붙을 수 있다(같은 job을 여러 명이 나눠서 서칭하는 경우 대비).
@@ -9508,12 +9527,10 @@ async function confirmBulhapgyeok(){
   await updateTalentStatus(statusTargetId,'불합격',{memo});
 }
 async function updateTalentStatus(id,status,extra){
-  const {error}=await sb.from('talents').update({status,...extra}).eq('id',id);
-  if(error){toast('오류: '+error.message);return;}
-  const t=cache.talents.find(x=>x.id===id);
-  if(t){t.status=status;Object.assign(t,extra);}
-  toast('상태 변경: '+status);
-  renderTalent();
+  // 예전 상태 드롭다운 경로 — 이제 모든 상태 변경은 공통 로직(applyTalentStatusChange)을 탄다
+  const st=status==='불합격'?'최종불합격':status;
+  const ok=await applyTalentStatusChange(id,st);
+  if(ok&&extra?.memo){const t=cache.talents.find(x=>x.id===id);const{error}=await sb.from('talents').update({memo:extra.memo}).eq('id',id);if(!error&&t)t.memo=extra.memo;}
 }
 
 // ── 채용 투입 모달 ──
