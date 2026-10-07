@@ -1449,6 +1449,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">구분</div><select id="rel-exp-kind" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="명절 선물">명절 선물</option><option value="행사 초청">행사 초청</option><option value="">전체 구분</option></select></div>
         <div style="flex:1;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">항목 (설, 추석, 행사명)</div><input id="rel-exp-item" list="rel-item-list" placeholder="전체" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;"></div>
       </div>
+      <div><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">참석 여부 (행사 초청 건)</div><select id="rel-exp-attend" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 (초청 대상 전체)</option><option value="참석">참석</option><option value="불참">불참</option><option value="미확정">미확정</option></select></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
         <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);">취소</button>
         <button onclick="exportOrgRelationsExcel()" style="font-size:12px;padding:8px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
@@ -7427,14 +7428,17 @@ const relRowsByOrg={};
 let relLite=[];
 async function loadRelLite(){
   try{
-    const{data,error}=await sb.from('org_relations').select('org_id,year,kind,item');
+    const{data,error}=await sb.from('org_relations').select('org_id,year,kind,item,attendance');
     if(!error)relLite=data||[];
   }catch(e){}
 }
 function awardBadge(orgId){
   const y=new Date().getFullYear();
-  const hit=relLite.some(r=>Number(r.org_id)===Number(orgId)&&r.item===REL_AWARD_ITEM&&r.year===y);
-  return hit?`<span style="font-size:10px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #c4b5fd;padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${REL_AWARD_ITEM} ${y} 초청</span>`:'';
+  const hit=relLite.find(r=>Number(r.org_id)===Number(orgId)&&r.item===REL_AWARD_ITEM&&r.year===y);
+  if(!hit)return'';
+  // 초청 대상(이력 존재) → 실제 참석 여부는 attendance로 구분: 참석 / 불참 / 미확정
+  const st=hit.attendance==='참석'?{t:'참석',c:'#059669',bg:'#ecfdf5',bd:'#6ee7b7'}:hit.attendance==='불참'?{t:'불참',c:'#6b7280',bg:'#f3f4f6',bd:'#d1d5db'}:{t:'초청',c:'#7c3aed',bg:'#f5f3ff',bd:'#c4b5fd'};
+  return`<span style="font-size:10px;font-weight:700;color:${st.c};background:${st.bg};border:1px solid ${st.bd};padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${REL_AWARD_ITEM} ${y} ${st.t}</span>`;
 }
 function relEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function getRelReasons(){
@@ -7472,7 +7476,7 @@ async function loadOrgRelations(orgId){
   const{data,error}=await sb.from('org_relations').select('*').eq('org_id',orgId).order('year',{ascending:false}).order('month',{ascending:false,nullsFirst:false}).order('id',{ascending:false});
   if(error){box.innerHTML='<div class="empty" style="padding:.5rem 0;font-size:12px;">관계 이력을 불러오지 못했어요: '+relEsc(error.message)+'</div>';return;}
   relRowsByOrg[orgId]=data||[];
-  relLite=relLite.filter(r=>Number(r.org_id)!==Number(orgId)).concat((data||[]).map(r=>({org_id:r.org_id,year:r.year,kind:r.kind,item:r.item})));
+  relLite=relLite.filter(r=>Number(r.org_id)!==Number(orgId)).concat((data||[]).map(r=>({org_id:r.org_id,year:r.year,kind:r.kind,item:r.item,attendance:r.attendance})));
   renderOrgRelations(orgId);
 }
 function renderOrgRelations(orgId){
@@ -7492,6 +7496,7 @@ function renderOrgRelations(orgId){
         <span style="font-size:12px;font-weight:800;">${relEsc(when)}</span>
         <span style="font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-bg);padding:1px 7px;border-radius:4px;">${relEsc(r.kind)}${r.item?' · '+relEsc(r.item):''}</span>
         ${gift?`<span style="font-size:12px;color:var(--text2);">${relEsc(gift)}</span>`:''}
+        ${r.kind==='행사 초청'?`<span style="font-size:10px;font-weight:700;color:${r.attendance==='참석'?'var(--green)':r.attendance==='불참'?'var(--text3)':'#b54708'};border:1px solid currentColor;padding:1px 7px;border-radius:10px;">${r.attendance||'참석 미확정'}</span>`:''}
         ${r.next_status?`<span style="font-size:10px;font-weight:700;color:${NEXT_COLOR[r.next_status]||'var(--text3)'};border:1px solid currentColor;padding:1px 7px;border-radius:10px;">다음해 ${relEsc(r.next_status)}</span>`:''}
         <span style="margin-left:auto;display:flex;gap:8px;">
           <button onclick="openRelForm(${orgId},${r.id})" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-weight:700;">수정</button>
@@ -7537,6 +7542,7 @@ async function openRelForm(orgId,relId,keepReasons){
     <div style="${lbl}">협력 내용 메모</div>
     <textarea id="rel-note" placeholder="예: 지원자는 없었지만 OO 행사에 초청해 줌" style="${inp}width:100%;min-height:54px;resize:vertical;margin-bottom:8px;">${relEsc(r.note||'')}</textarea>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div><div style="${lbl}">참석 여부 (행사 초청)</div><select id="rel-attend" style="${inp}"><option value="">미확정</option>${['참석','불참'].map(s=>`<option value="${s}"${r.attendance===s?' selected':''}>${s}</option>`).join('')}</select></div>
       <div><div style="${lbl}">다음 해 대상 여부</div><select id="rel-next" style="${inp}"><option value="">미정</option>${['유지','보류','제외'].map(s=>`<option value="${s}"${r.next_status===s?' selected':''}>${s}</option>`).join('')}</select></div>
       <div style="flex:1;min-width:160px;"><div style="${lbl}">사유</div><input id="rel-next-reason" value="${relEsc(r.next_reason||'')}" style="${inp}width:100%;"></div>
     </div>
@@ -7572,6 +7578,7 @@ async function saveOrgRelation(orgId,relId){
     handler:g('rel-handler').value.trim()||null,
     reasons:[...document.querySelectorAll('.rel-reason-cb:checked')].map(x=>x.value),
     note:g('rel-note').value.trim()||null,
+    attendance:g('rel-attend').value||null,
     next_status:g('rel-next').value||null,
     next_reason:g('rel-next-reason').value.trim()||null
   };
@@ -7618,17 +7625,20 @@ async function exportOrgRelationsExcel(){
   let q=sb.from('org_relations').select('*').eq('year',year).order('month',{ascending:true,nullsFirst:false}).order('id',{ascending:true});
   if(month)q=q.eq('month',Number(month));
   if(kind)q=q.eq('kind',kind);
+  const attend=document.getElementById('rel-exp-attend').value;
+  if(attend==='참석'||attend==='불참')q=q.eq('attendance',attend);
+  else if(attend==='미확정')q=q.is('attendance',null);
   if(item)q=q.ilike('item','%'+item.replace(/[%_]/g,'')+'%');
   const{data,error}=await q;
   if(error){toast('오류: '+error.message);return;}
   if(!data||!data.length){toast('조건에 맞는 이력이 없어요');return;}
-  const aoa=[['연도','월','구분','항목','기관명','기관유형','기관 담당자','직함','연락처','주소','선물명','수량','발송·초청일','우리측 담당','선정 사유','협력 내용 메모','다음해 대상','다음해 사유']];
+  const aoa=[['연도','월','구분','항목','기관명','기관유형','기관 담당자','직함','연락처','주소','선물명','수량','발송·초청일','우리측 담당','참석 여부','선정 사유','협력 내용 메모','다음해 대상','다음해 사유']];
   data.forEach(r=>{
     const o=cache.orgs.find(x=>x.id===r.org_id)||{};
-    aoa.push([r.year,r.month||'',r.kind,r.item||'',o.name||'(삭제된 기관)',o.cat||'',o.contact||'',o.contact_title||'',o.mobile||o.phone||'',o.address||'',r.gift_name||'',r.quantity==null?'':r.quantity,r.sent_date||'',r.handler||'',(r.reasons||[]).join(', '),r.note||'',r.next_status||'',r.next_reason||'']);
+    aoa.push([r.year,r.month||'',r.kind,r.item||'',o.name||'(삭제된 기관)',o.cat||'',o.contact||'',o.contact_title||'',o.mobile||o.phone||'',o.address||'',r.gift_name||'',r.quantity==null?'':r.quantity,r.sent_date||'',r.handler||'',r.kind==='행사 초청'?(r.attendance||'미확정'):'',(r.reasons||[]).join(', '),r.note||'',r.next_status||'',r.next_reason||'']);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:6},{wch:5},{wch:10},{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:16},{wch:34},{wch:18},{wch:6},{wch:12},{wch:10},{wch:26},{wch:36},{wch:10},{wch:20}];
+  ws['!cols']=[{wch:6},{wch:5},{wch:10},{wch:12},{wch:26},{wch:16},{wch:12},{wch:10},{wch:16},{wch:34},{wch:18},{wch:6},{wch:12},{wch:10},{wch:10},{wch:26},{wch:36},{wch:10},{wch:20}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'선물초청명단');
   const label=[year+'년',month?month+'월':'',kind||'전체',item].filter(Boolean).join('_');
