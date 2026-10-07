@@ -3340,6 +3340,29 @@ async function exportFullBackup(){
       XLSX.utils.book_append_sheet(wb,ws,sheet);
       summary.push([sheet,rows.length]);
     }
+    // 기관별 성과 요약 (앱과 동일 기준: 인재 영입수=talents.source_org_id, 합격=지원현황 '최종합격')
+    if(fetched.orgs&&fetched.talents&&fetched.candidate_applications){
+      const testOrg=new Set(fetched.orgs.filter(o=>o.is_test).map(o=>o.id));
+      const tals=fetched.talents.filter(t=>!t.is_test&&!testOrg.has(t.source_org_id||t.org_id));
+      const talOrg={};tals.forEach(t=>{talOrg[t.id]=t.source_org_id||t.org_id;});
+      const agg={};const get=id=>agg[id]||(agg[id]={tal:0,apply:0,pass:0,fail:0,end:0});
+      tals.forEach(t=>{const id=t.source_org_id||t.org_id;if(id!=null)get(id).tal++;});
+      fetched.candidate_applications.forEach(a=>{
+        const id=talOrg[a.talent_id];if(id==null)return;const g=get(id);
+        g.apply++;
+        if(a.status==='최종합격')g.pass++;
+        else if(a.status==='서류불합격'||a.status==='최종불합격')g.fail++;
+        else if(a.status==='계약종료')g.end++;
+      });
+      const perf=[['기관ID','기관명','구분','인재 영입수','지원 건수','합격자수(최종합격)','불합격','계약종료']];
+      fetched.orgs.filter(o=>!o.is_test).map(o=>({o,g:agg[o.id]||{tal:0,apply:0,pass:0,fail:0,end:0}}))
+        .sort((a,b)=>b.g.tal-a.g.tal||b.g.pass-a.g.pass)
+        .forEach(({o,g})=>perf.push([o.id,o.name,o.cat||'',g.tal,g.apply,g.pass,g.fail,g.end]));
+      const wsp=XLSX.utils.aoa_to_sheet(perf);
+      wsp['!cols']=[{wch:8},{wch:28},{wch:12},{wch:12},{wch:10},{wch:18},{wch:8},{wch:10}];
+      XLSX.utils.book_append_sheet(wb,wsp,'기관별성과');
+      summary.push(['기관별성과',perf.length-1]);
+    }
     summary.push([]);summary.push(['백업 일시',new Date().toLocaleString('ko-KR')]);
     summary.push(['제외 항목','명함 이미지, 인재 첨부파일(이미지·파일 원본)']);
     if(failed.length)summary.push(['실패 시트',failed.join(', ')]);
@@ -3356,12 +3379,13 @@ function exportOrgsExcel(){
   if(typeof XLSX==='undefined'){toast('엑셀 내보내기 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
   const filtered=getFilteredOrgsForExport();
   if(!filtered.length){toast('내보낼 기관이 없어요 (필터를 확인해주세요)');return;}
-  const aoa=[['기관명','메일주소','전화번호','상태']];
+  const aoa=[['기관명','메일주소','전화번호','상태','인재 영입수','합격자수']];
   filtered.forEach(o=>{
-    aoa.push([o.name||'',o.email||'',o.phone||o.mobile||'',o.contact_tier||'미분류']);
+    const m=calcOrgRevenue(o.id);
+    aoa.push([o.name||'',o.email||'',o.phone||o.mobile||'',o.contact_tier||'미분류',m.inflowCount,m.passedCount]);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:28},{wch:26},{wch:16},{wch:10}];
+  ws['!cols']=[{wch:28},{wch:26},{wch:16},{wch:10},{wch:12},{wch:10}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'기관목록');
   const fname=`기관목록_${today().replace(/-/g,'')}.xlsx`;
