@@ -4892,11 +4892,22 @@ async function saveApplicationDates(){
     join_date:val('app-join-date'), join_date_is_estimated:chk('app-join-est'),
     rejected_at:val('app-rejected-date'), rejected_date_is_estimated:chk('app-rejected-est'),
   };
+  let autoStatus=null;
   if(apps.length){
     const latestApp=apps[0];
+    // 합격일(또는 입사일)을 새로 입력했는데 현재 단계가 아직 합격 이전이면, 단계도 '최종합격'으로 같이 바꾼다
+    // (날짜만 넣고 단계는 그대로여서 합격이 집계/표시에서 빠지던 문제, 2026-10-07).
+    const newlyPassed=(payload.pass_date&&!latestApp.pass_date)||(payload.join_date&&!latestApp.join_date);
+    if(newlyPassed&&['인재등록','채용지원','서류합격'].includes(latestApp.status)){payload.status='최종합격';autoStatus='최종합격';}
     const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
     if(error){toast('오류: '+error.message);return;}
     Object.assign(latestApp,payload);
+    if(autoStatus){
+      const{error:tErr}=await sb.from('talents').update({status:autoStatus}).eq('id',currentDrawerTalentId);
+      const tt=cache.talents.find(x=>x.id===currentDrawerTalentId);
+      if(!tErr&&tt)tt.status=autoStatus;
+      const ds=document.getElementById('drawer-status');if(ds)ds.value=autoStatus;
+    }
   }else{
     // 지원이력이 아직 없는 인재 — 날짜 입력 시 새로 생성 (job_id/org_id는 비워두고 추후 매칭)
     const t=cache.talents.find(x=>x.id===currentDrawerTalentId);
@@ -4905,7 +4916,7 @@ async function saveApplicationDates(){
     if(error){toast('오류: '+error.message);return;}
     cache.applications.push(data);
   }
-  toast('날짜 저장됨');
+  toast(autoStatus?'날짜 저장됨 · 현재 단계를 최종합격으로 변경했어요':'날짜 저장됨');
   switchDrawerTab('history');
   renderTalent();
 }
