@@ -9867,6 +9867,7 @@ async function deleteTeamTask(){
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
   const modals=[
+    {id:'talent-drawer',fn:()=>closeTalentDrawer()},
     {id:'contact-alert-modal',fn:()=>closeContactAlert()},
     {id:'confirm-modal',fn:()=>closeConfirm()},
     {id:'modal',fn:()=>closeModal()},
@@ -9888,7 +9889,13 @@ document.addEventListener('keydown',function(e){
   ];
   for(const m of modals){
     const el=document.getElementById(m.id);
-    if(el&&(el.style.display==='flex'||el.style.display==='block')){m.fn();break;}
+    if(el&&(el.style.display==='flex'||el.style.display==='block')){m.fn();return;}
+  }
+  // 위 목록에 없는 팝업(물품 관리·프로필·관계 내보내기 등 .overlay 계열 전부)도 ESC로 닫는다 — 가장 위(z-index 높은) 것부터 하나씩
+  const open=[...document.querySelectorAll('.overlay')].filter(el=>el.style.display==='flex'||el.style.display==='block');
+  if(open.length){
+    open.sort((a,b)=>(parseInt(getComputedStyle(b).zIndex)||0)-(parseInt(getComputedStyle(a).zIndex)||0));
+    open[0].style.display='none';
   }
 });
 (function init(){
