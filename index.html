@@ -1523,6 +1523,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
     <div style="font-size:12px;font-weight:800;color:var(--text2);margin-bottom:8px;">기타</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="data-dl-btn" onclick="downloadNoHireOrgs()" title="운영 인사이트의 '지원자 있지만 입사 없는 기관'과 같은 기준" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">입사 없는 기관 · 지원자 명단 받기</button>
       <button class="data-dl-btn" onclick="downloadGoodsLedger()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:800;">물품 재고 대장 받기</button>
       <button onclick="openRelExportModal()" style="font-size:12px;padding:7px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">선물·초청 명단 (연도·월·구분·전달 상태·참석)</button>
     </div>
@@ -3731,6 +3732,35 @@ async function downloadTalentList(){
     await ensureTalentDataLoaded();
     const list=getFilteredTalentsForExport({kw:g('dx-tal-kw').value,org:g('dx-tal-org').value,member:g('dx-tal-member').value,status:g('dx-tal-status').value}).filter(t=>!isTestTalent(t));
     exportTalentExcel(list);
+  }finally{_dataDownloading=false;btns.forEach(b=>b.disabled=false);}
+}
+// 운영 인사이트 "지원자 있지만 입사 없는 기관"과 같은 조건(인재 3명 이상 + 최종합격 0)으로 기관·지원자 명단을 내려받는다
+async function downloadNoHireOrgs(){
+  if(_dataDownloading)return;
+  const btns=[...document.querySelectorAll('.data-dl-btn')];_dataDownloading=true;btns.forEach(b=>b.disabled=true);
+  try{
+    await ensureTalentDataLoaded();
+    const orgs=getMetricOrgs(),apps=getMetricApplications(),tals=getMetricTalents();
+    const orgOf=t=>t.source_org_id||t.org_id;
+    const targets=orgs.filter(o=>tals.filter(t=>orgOf(t)===o.id).length>2&&apps.filter(a=>a.org_id===o.id&&a.status==='최종합격').length===0)
+      .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
+    if(!targets.length){toast('해당하는 기관이 없어요');return;}
+    const sum=[['기관명','기관 종류','지역','담당자','인재 영입수','지원 건수','최종합격']];
+    const det=[['기관명','이름','전화번호','직무','장애유형','장애정도','현재상태','지원 회사','담당자','등록일']];
+    targets.forEach(o=>{
+      const ot=tals.filter(t=>orgOf(t)===o.id);
+      sum.push([o.name||'',o.cat||'',o.region||'',o.member||'',ot.length,apps.filter(a=>a.org_id===o.id).length,0]);
+      ot.forEach(t=>{
+        const ap=apps.find(a=>a.talent_id===t.id);
+        det.push([o.name||'',t.name||'',t.phone||'',t.job||'',t.disability_type||'',t.disability_grade||'',ap?.status||t.status||'인재등록',ap?.hire_company||t.hire_company||'',t.member||'',t.created_at?fDate(t.created_at.slice(0,10)):'']);
+      });
+    });
+    const wb=XLSX.utils.book_new();
+    const w1=XLSX.utils.aoa_to_sheet(sum);w1['!cols']=[{wch:26},{wch:12},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10}];
+    const w2=XLSX.utils.aoa_to_sheet(det);w2['!cols']=[{wch:26},{wch:12},{wch:15},{wch:14},{wch:12},{wch:10},{wch:12},{wch:20},{wch:10},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,w1,'기관 요약');XLSX.utils.book_append_sheet(wb,w2,'지원자 명단');
+    XLSX.writeFile(wb,`입사없는기관_지원자명단_${today().replace(/-/g,'')}.xlsx`);
+    toast(`${targets.length}개 기관 · 지원자 ${det.length-1}명을 내려받았어요`);
   }finally{_dataDownloading=false;btns.forEach(b=>b.disabled=false);}
 }
 async function downloadGoodsLedger(){
