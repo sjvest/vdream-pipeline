@@ -1242,7 +1242,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="event-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
   <div class="modal-head">
-    <div class="modal-title" id="event-modal-title">행사 등록</div>
+    <div><div class="modal-title" id="event-modal-title">행사 등록</div><div id="ev-modified" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('event-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
@@ -1824,11 +1824,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="audit-modal" class="overlay" style="display:none;position:fixed;inset:0;background:rgba(10,18,35,.55);z-index:500;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide" style="max-width:700px;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
-    <div class="modal-title"> 수정/삭제 로그</div>
+    <div class="modal-title">변경 이력</div>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('audit-modal').style.display='none'"><i class="ti ti-x"></i></button>
   </div>
   <div class="modal-body">
-    <div id="audit-list"><div class="loading"><div class="spin"></div></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button id="audit-tab-recent" onclick="switchAuditTab('recent')" style="font-size:12px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-weight:700;"></button>
+      <button id="audit-tab-log" onclick="switchAuditTab('log')" style="font-size:12px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-weight:700;"></button>
+    </div>
+    <div id="audit-recent"></div>
+    <div id="audit-list" style="display:none;"><div class="loading"><div class="spin"></div></div></div>
   </div>
 </div>
 </div>
@@ -2252,7 +2257,7 @@ async function loadTalents(){
   // orgs/인재영입/Analytics 목록에 진입할 때마다 전체 인재의 파일 내용까지 통째로
   // 다시 다운로드되던 게 Supabase egress 초과(5GB 한도 133% 사용)의 주 원인이었음.
   // 파일 내용은 openTalentDetail()에서 해당 인재를 열 때만 별도로 불러온다(loadTalentFiles).
-  const {data,error}=await sb.from('talents').select('id,name,org_id,source_org_id,channel,referrer,job,member,date,status,memo,hire_company,phone,birth_date,disability_type,disability_grade,created_by,created_by_name,created_at,event_id,contract_end_date,is_test,status_history').order('created_at',{ascending:false});
+  const {data,error}=await sb.from('talents').select('id,name,org_id,source_org_id,channel,referrer,job,member,date,status,memo,hire_company,phone,birth_date,disability_type,disability_grade,created_by,created_by_name,created_at,updated_at,updated_by_name,event_id,contract_end_date,is_test,status_history').order('created_at',{ascending:false});
   if(error) console.error('[Supabase Error] talents 조회 실패:', error);
   cache.talents=data||[];
   return {data,error};
@@ -2348,7 +2353,7 @@ async function loadRecentLogs(){
 }
 async function loadOrgDetail(orgId){
   const [orgRes,logsRes,talentsRes,appsRes]=await Promise.all([
-    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier').eq('id',orgId).single(),
+    sb.from('orgs').select('id,name,cat,source,event_id,contact,contact_title,phone,mobile,fax,email,member,accompany,stage,premeil,school,date,mou_date,memo,website,region,address,business_card_url,card_image,lastcontact,created_by,created_by_name,created_at,updated_at,updated_by_name,is_starred,mou_checklist,contacts,member_history,is_test,contact_tier').eq('id',orgId).single(),
     sb.from('contact_logs').select('*').eq('org_id',orgId).order('logged_at',{ascending:false}),
     sb.from('talents').select('*').eq('source_org_id',orgId).order('created_at',{ascending:false}),
     sb.from('candidate_applications').select('*').eq('org_id',orgId).order('created_at',{ascending:false}),
@@ -3485,8 +3490,8 @@ function renderGoodsSummary(){
   if(!goodsItems.length){el.innerHTML='<div class="empty" style="padding:1.2rem;">등록된 품목이 없어요. 우측 위 "품목 추가"로 시작해보세요.</div>';return;}
   const th='style="padding:10px 14px;text-align:left;font-size:11px;color:var(--text3);white-space:nowrap;border-bottom:2px solid var(--border);background:#f8f9fc;"';
   const thr=th.replace('text-align:left','text-align:right');
-  el.innerHTML=`<table class="tbl" style="min-width:760px;"><thead><tr>
-    <th ${th}>품목</th><th ${th}>구분</th><th ${thr}>기초 수량</th><th ${thr}>입고</th><th ${thr}>누적 사용</th><th ${thr}>현재 재고</th><th ${th}>상태</th><th ${th}>위치</th><th ${th}>비고</th><th ${th}></th></tr></thead><tbody>`+
+  el.innerHTML=`<table class="tbl" style="min-width:860px;"><thead><tr>
+    <th ${th}>품목</th><th ${th}>구분</th><th ${thr}>기초 수량</th><th ${thr}>입고</th><th ${thr}>누적 사용</th><th ${thr}>현재 재고</th><th ${th}>상태</th><th ${th}>위치</th><th ${th}>비고</th><th ${th}>마지막 수정</th><th ${th}></th></tr></thead><tbody>`+
   goodsItems.map(i=>{
     const t=st[i.id];const s=goodsStatus(t);const total=(i.initial_qty||0)+t.inQty;const pct=total>0?Math.max(0,Math.min(100,Math.round(t.stock/total*100))):0;
     return `<tr style="${i.is_active===false?'opacity:.55;':''}">
@@ -3500,6 +3505,7 @@ function renderGoodsSummary(){
       <td><span style="font-size:11px;font-weight:700;color:${s.color};">${s.label}</span></td>
       <td>${relEsc(i.location||'')}</td>
       <td style="color:var(--text3);">${relEsc(i.note||'')}</td>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${i.updated_at?relEsc(i.updated_by_name||'—')+'<br>'+shortDT(i.updated_at):''}</td>
       <td><button onclick="openGoodsItemModal(${i.id})" style="font-size:11px;padding:4px 9px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">수정</button></td>
     </tr>`;}).join('')+'</tbody></table>';
 }
@@ -3572,7 +3578,7 @@ function renderGoodsLogs(){
   if(!rows.length){el.innerHTML='<div class="empty" style="padding:1.2rem;">내역이 없어요</div>';return;}
   const th='style="padding:10px 14px;text-align:left;font-size:11px;color:var(--text3);white-space:nowrap;border-bottom:2px solid var(--border);background:#f8f9fc;"';
   const thr=th.replace('text-align:left','text-align:right');
-  el.innerHTML=`<table class="tbl" style="min-width:820px;"><thead><tr><th ${th}>일자</th><th ${th}>구분</th><th ${th}>품목</th><th ${thr}>수량</th><th ${th}>사용처</th><th ${th}>사용자</th><th ${th}>비고</th><th ${thr}>그 시점 재고</th><th ${th}></th></tr></thead><tbody>`+
+  el.innerHTML=`<table class="tbl" style="min-width:900px;"><thead><tr><th ${th}>일자</th><th ${th}>구분</th><th ${th}>품목</th><th ${thr}>수량</th><th ${th}>사용처</th><th ${th}>사용자</th><th ${th}>비고</th><th ${thr}>그 시점 재고</th><th ${th}>마지막 수정</th><th ${th}></th></tr></thead><tbody>`+
   rows.map(l=>`<tr>
     <td>${l.log_date||''}</td>
     <td><span style="font-size:11px;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text2)'};">${l.kind}</span></td>
@@ -3580,6 +3586,7 @@ function renderGoodsLogs(){
     <td style="text-align:right;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text)'};">${l.kind==='입고'?'+':'-'}${l.qty.toLocaleString()}</td>
     <td>${relEsc(l.place||'')}</td><td>${relEsc(l.user_name||'')}</td><td style="color:var(--text3);">${relEsc(l.note||'')}</td>
     <td style="text-align:right;">${bal[l.id]!=null?bal[l.id].toLocaleString():''}</td>
+    <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${l.updated_at?relEsc(l.updated_by_name||'—')+'<br>'+shortDT(l.updated_at):''}</td>
     <td><button onclick="openGoodsLogModal(${l.id})" style="font-size:11px;padding:4px 9px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">수정</button></td>
   </tr>`).join('')+'</tbody></table>';
 }
@@ -5933,8 +5940,34 @@ async function writeAuditLog(action,targetType,targetName,detail={}){
     detail,created_by:currentUser?.id||null,created_by_name:myName
   });
 }
-async function openAuditLog(){
+function openAuditLog(){
   document.getElementById('audit-modal').style.display='flex';
+  switchAuditTab('recent');
+}
+function switchAuditTab(tab){
+  const rec=tab==='recent';
+  document.getElementById('audit-recent').style.display=rec?'':'none';
+  document.getElementById('audit-list').style.display=rec?'none':'';
+  const on='background:var(--accent);color:#fff;border-color:var(--accent);',off='background:var(--surface);color:var(--text2);';
+  const b1=document.getElementById('audit-tab-recent'),b2=document.getElementById('audit-tab-log');
+  b1.textContent='최근 수정 활동';b2.textContent='수정·삭제 로그';
+  b1.style.cssText+=rec?on:off;b2.style.cssText+=rec?off:on;
+  if(rec)loadAuditRecent();else loadAuditLogList();
+}
+async function loadAuditRecent(){
+  const box=document.getElementById('audit-recent');
+  box.innerHTML='<div class="loading"><div class="spin"></div>불러오는 중...</div>';
+  const {data,error}=await sb.from('v_recent_changes').select('kind,id,org_id,title,updated_at,updated_by_name').order('updated_at',{ascending:false}).limit(120);
+  if(error){console.error(error);box.innerHTML='<div class="empty">불러오지 못했어요</div>';return;}
+  box.innerHTML=(data&&data.length)?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">기관·인재·관계 이력·행사·물품의 최근 저장·수정 기록이에요 (최근 120건). 기관을 누르면 상세가 열려요.</div>`+
+    data.map(r=>`<div ${r.org_id?`onclick="document.getElementById('audit-modal').style.display='none';openOrg(${r.org_id})" style="cursor:pointer;`:`style="`}display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);">
+      <span class="badge b-gray" style="font-size:10px;flex-shrink:0;">${relEsc(r.kind)}</span>
+      <span style="flex:1;font-size:12px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${relEsc(r.title||'—')}</span>
+      <span style="font-size:11px;color:var(--accent);font-weight:700;flex-shrink:0;">${relEsc(r.updated_by_name||'—')}</span>
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0;">${shortDT(r.updated_at)}</span>
+    </div>`).join(''):'<div class="empty">기록 없음</div>';
+}
+async function loadAuditLogList(){
   document.getElementById('audit-list').innerHTML='<div class="loading"><div class="spin"></div>불러오는 중...</div>';
   const{data,error}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(100);
   if(error){document.getElementById('audit-list').innerHTML='<div class="empty">오류 발생</div>';return;}
@@ -6545,6 +6578,7 @@ async function openTalentDetail(id){
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${t.member||'—'}</span></div>
     <div class="info-row"><span class="info-key">지원일</span><span>${fDate(t.date)}</span></div>
     <div class="info-row"><span class="info-key">등록자</span><span style="color:var(--accent);font-weight:600;">${t.created_by_name||'—'}</span></div>
+    ${t.updated_at?`<div class="info-row"><span class="info-key">마지막 수정</span><span style="color:var(--text2);">${relEsc(t.updated_by_name||'—')} · ${shortDT(t.updated_at)}</span></div>`:''}
     <div class="info-row"><span class="info-key">현재 상태</span><span class="badge ${STATUS_CLS[t.status]||'b-gray'}">${t.status}</span></div>
   `;
   const statuses=['지원서등록','지원중','면접','최종합격','불합격','포기'];
@@ -7124,6 +7158,7 @@ async function renderEvents(){
 function openAddEvent(){
   currentEventId=null;
   document.getElementById('event-modal-title').textContent='행사 등록';
+  document.getElementById('ev-modified').textContent='';
   document.getElementById('ev-delete-btn').style.display='none';
   document.getElementById('ev-add-org-btn').style.display='none';
   ['ev-name','ev-location','ev-host','ev-notes'].forEach(id=>document.getElementById(id).value='');
@@ -7173,6 +7208,7 @@ function openEvent(id){
   currentEventId=id;
   const e=cache.events.find(x=>x.id===id);if(!e)return;
   document.getElementById('event-modal-title').textContent=e.name;
+  document.getElementById('ev-modified').textContent=modifiedText(e);
   document.getElementById('ev-delete-btn').style.display=currentUser?.email==='sjvest@vdream.co.kr'?'':'none';
   document.getElementById('ev-add-org-btn').style.display='';
   document.getElementById('ev-name').value=e.name||'';
@@ -7919,6 +7955,7 @@ async function openOrg(id){
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
+    ${modifiedHTML(o)}
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8faff;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:12px;cursor:pointer;" onclick="showHealthDetail(${id},event)">
       <span style="font-size:12px;font-weight:700;color:#6b7280;"> Health Score</span>
       ${healthBadge(calcHealthScore(id).score,true)}
@@ -8248,6 +8285,10 @@ function awardBadge(orgId){
   return`<span title="${relEsc(full)}" style="font-size:10px;font-weight:700;color:${st.c};background:${st.bg};border:1px solid ${st.bd};padding:1px 7px;border-radius:10px;margin-left:6px;white-space:nowrap;">${relEsc(nm)} ${st.t}${more}</span>`;
 }
 function relEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// 마지막 수정자·시각 표시 (DB 트리거가 자동 기록하는 updated_at / updated_by_name)
+function shortDT(v){if(!v)return '';const d=new Date(v);return isNaN(d)?'':d.toLocaleString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,16);}
+function modifiedText(r){return r&&r.updated_at?`마지막 수정 ${r.updated_by_name||'—'} · ${shortDT(r.updated_at)}`:'';}
+function modifiedHTML(r){const t=modifiedText(r);return t?`<div style="font-size:11px;color:var(--text3);margin:0 0 8px 2px;">${relEsc(t)}</div>`:'';}
 async function getRelReasons(){
   if(relReasons)return relReasons;
   try{
@@ -8314,7 +8355,7 @@ function renderOrgRelations(orgId){
       ${r.note?`<div style="margin-top:6px;font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.6;">${relEsc(r.note)}</div>`:''}
       ${r.next_reason?`<div style="margin-top:4px;font-size:11px;color:var(--text3);">다음해 사유: ${relEsc(r.next_reason)}</div>`:''}
       ${(r.delivery_method||r.delivery_status||r.recipient_name)?`<div style="margin-top:6px;font-size:11px;color:var(--text2);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${r.delivery_method?`<span style="font-weight:700;">${relEsc(r.delivery_method)}</span>`:''}${r.delivery_status?`<span style="font-size:10px;font-weight:700;color:${r.delivery_status==='전달완료'?'var(--green)':r.delivery_status==='지급 제외'?'#dc2626':'#b54708'};border:1px solid currentColor;padding:1px 7px;border-radius:10px;">${relEsc(r.delivery_status)}</span>`:''}${r.recipient_name?`<span>수령인 ${relEsc(r.recipient_name)}</span>`:''}</div>`:''}
-      <div style="margin-top:4px;font-size:10px;color:var(--text3);">${[r.sent_date?fDate(r.sent_date):'',r.handler?'담당 '+relEsc(r.handler):''].filter(Boolean).join(' · ')}</div>
+      <div style="margin-top:4px;font-size:10px;color:var(--text3);">${[r.sent_date?fDate(r.sent_date):'',r.handler?'담당 '+relEsc(r.handler):'',r.updated_at?('수정 '+relEsc(r.updated_by_name||'—')+' '+shortDT(r.updated_at)):''].filter(Boolean).join(' · ')}</div>
     </div>`;
   }).join('');
 }
