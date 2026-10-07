@@ -409,6 +409,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
   <div class="nav-divider"></div>
   <div class="nav-section">관리</div>
+  <button class="nav-item" id="nav-goods" onclick="nav('goods')"><i class="ti ti-package"></i>물품 관리</button>
   <button class="nav-item" id="nav-data" onclick="nav('data')"><i class="ti ti-database-export"></i>데이터 관리</button>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">
@@ -1428,6 +1429,40 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 </div>
 
+<!-- 물품 관리 (굿즈·기념품 재고 대장) -->
+<div id="p-goods" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">물품 관리</div>
+      <div class="page-sub">입고·사용 수량만 넣으면 남은 재고가 자동으로 계산돼요</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="openGoodsItemModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">품목 추가</button>
+      <button onclick="exportGoodsExcel()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--green);border-radius:var(--radius-sm);background:var(--green-bg);cursor:pointer;color:var(--green);font-weight:700;">엑셀로 내보내기</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px;"><div class="card-header">재고 현황</div>
+    <div class="card-body" style="padding:0;overflow-x:auto;" id="goods-summary"></div>
+  </div>
+  <div class="card" style="margin-bottom:14px;"><div class="card-header">사용·입고 기록하기</div>
+    <div class="card-body" id="goods-form"></div>
+  </div>
+  <div class="card"><div class="card-header">입고·사용 내역</div>
+    <div class="card-body" style="padding:14px 16px 0;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <select id="goods-f-item" onchange="renderGoodsLogs()" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></select>
+        <select id="goods-f-kind" onchange="renderGoodsLogs()" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"><option value="">입고+사용</option><option value="사용">사용만</option><option value="입고">입고만</option></select>
+        <input type="date" id="goods-f-from" onchange="renderGoodsLogs()" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="color:var(--text3);">~</span>
+        <input type="date" id="goods-f-to" onchange="renderGoodsLogs()" style="font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+        <input id="goods-f-kw" oninput="renderGoodsLogs()" placeholder="사용처·사용자·비고 검색" style="font-size:12px;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);min-width:180px;">
+        <span id="goods-log-count" style="font-size:12px;color:var(--text3);"></span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;" id="goods-logs"></div>
+  </div>
+</div>
+
 <!-- 데이터 관리 -->
 <div id="p-data" class="page">
   <div class="page-header">
@@ -1471,6 +1506,59 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div style="font-size:11px;color:var(--text3);line-height:1.6;margin:4px;">※ 명함 이미지와 인재 첨부파일(이미지·파일 원본)은 용량 때문에 엑셀에 포함되지 않아요. 전체 백업은 월 1회 정도, 큰 입력 작업 뒤에 받아서 드라이브에 보관해주세요.</div>
 </div>
 
+</div></div>
+
+<!-- 물품 품목 모달 -->
+<div id="goods-item-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+  <div class="modal-head"><div class="modal-title" id="goods-item-title">품목 추가</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('goods-item-modal').style.display='none'">닫기</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="gi-id">
+    <div class="fg-row fg-2">
+      <div class="fg"><label>품목명 *</label><input id="gi-name" placeholder="예: 파우치 (검정)"></div>
+      <div class="fg"><label>구분</label><input id="gi-cat" list="gi-cat-list" placeholder="예: 기관 선물용"><datalist id="gi-cat-list"><option value="기관 선물용"><option value="구직자 등 간편 사용"></datalist></div>
+    </div>
+    <div class="fg-row fg-3">
+      <div class="fg"><label>기초 수량 *</label><input id="gi-initial" type="number" min="0" placeholder="0"></div>
+      <div class="fg"><label>안전 재고 (선택)</label><input id="gi-safe" type="number" min="0" placeholder="이하면 부족 표시"></div>
+      <div class="fg"><label>보관 위치</label><input id="gi-loc" placeholder="예: 창고"></div>
+    </div>
+    <div class="fg"><label>비고</label><input id="gi-note"></div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:14px;cursor:pointer;"><input type="checkbox" id="gi-inactive"> 사용 중단 (기록 입력 목록에서 숨김)</label>
+    <div style="display:flex;justify-content:space-between;gap:8px;">
+      <button id="gi-del" class="btn btn-ghost" style="color:var(--red);display:none;" onclick="deleteGoodsItem()">삭제</button>
+      <span style="flex:1;"></span>
+      <button class="btn btn-ghost" onclick="document.getElementById('goods-item-modal').style.display='none'">취소</button>
+      <button class="btn btn-primary" onclick="saveGoodsItem()">저장</button>
+    </div>
+  </div>
+</div></div>
+<!-- 물품 입출고 기록 수정 모달 -->
+<div id="goods-log-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+  <div class="modal-head"><div class="modal-title">기록 수정</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('goods-log-modal').style.display='none'">닫기</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="gl-id">
+    <div class="fg-row fg-3">
+      <div class="fg"><label>구분</label><select id="gl-kind"><option>사용</option><option>입고</option></select></div>
+      <div class="fg"><label>품목</label><select id="gl-item"></select></div>
+      <div class="fg"><label>수량 *</label><input id="gl-qty" type="number" min="1"></div>
+    </div>
+    <div class="fg-row fg-3">
+      <div class="fg"><label>일자</label><input id="gl-date" type="date"></div>
+      <div class="fg"><label>사용처 (행사명)</label><input id="gl-place"></div>
+      <div class="fg"><label>사용자</label><input id="gl-user"></div>
+    </div>
+    <div class="fg"><label>비고</label><input id="gl-note"></div>
+    <div style="display:flex;justify-content:space-between;gap:8px;">
+      <button class="btn btn-ghost" style="color:var(--red);" onclick="deleteGoodsLog()">삭제</button>
+      <span style="flex:1;"></span>
+      <button class="btn btn-ghost" onclick="document.getElementById('goods-log-modal').style.display='none'">취소</button>
+      <button class="btn btn-primary" onclick="saveGoodsLog()">저장</button>
+    </div>
+  </div>
 </div></div>
 
 <!-- 팀 할일 상세/수정 모달 -->
@@ -2520,7 +2608,8 @@ async function nav(page, pushState=true){
   const nm={dashboard:0,pipeline:1,'add-org':2,orgs:3,actions:4,talent:5,team:6,'team-tasks':7};
   document.querySelectorAll('.nav-item')[nm[page]]?.classList.add('active');
   if(page==='data')document.getElementById('nav-data')?.classList.add('active');
-  const r={data:renderDataPage,dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg,'team-tasks':renderTeamTasks};
+  if(page==='goods')document.getElementById('nav-goods')?.classList.add('active');
+  const r={goods:renderGoods,data:renderDataPage,dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg,'team-tasks':renderTeamTasks};
   // 인재영입/Analytics/기관목록은 talents/applications가 필요 (기관목록은 Health Score 배지 정확도 때문)
   // 지연로딩이라 이미 로드됐으면 재조회 안 함
   if(page==='talent'||page==='analytics'||page==='orgs')await ensureTalentDataLoaded();
@@ -3356,6 +3445,228 @@ function getFilteredOrgsForExport(){
   });
 }
 // 기관명 / 메일주소 / 전화번호 / 상태(관계등급) 형식으로 엑셀 내보내기 (2026-08-03 요청).
+// ── 물품 관리 (굿즈·기념품 재고 대장) ──
+// 재고 = 기초 수량 + 입고 합계 − 사용 합계. 내역의 '그 시점 재고'는 일자·입력순으로 누적 계산한다.
+let goodsItems=[],goodsLogs=[],_goodsLoaded=false;
+async function loadGoods(){
+  const [ri,rl]=await Promise.all([
+    sb.from('goods_items').select('*').order('sort_order').order('id'),
+    sb.from('goods_logs').select('*').order('log_date').order('id')
+  ]);
+  if(ri.error||rl.error){console.error(ri.error||rl.error);toast('물품 데이터를 불러오지 못했어요');return false;}
+  goodsItems=ri.data||[];goodsLogs=rl.data||[];_goodsLoaded=true;return true;
+}
+function goodsCalc(){
+  const st={};goodsItems.forEach(i=>{st[i.id]={item:i,inQty:0,used:0,stock:i.initial_qty||0};});
+  const bal={};const run={};goodsItems.forEach(i=>{run[i.id]=i.initial_qty||0;});
+  goodsLogs.slice().sort((a,b)=>(a.log_date||'').localeCompare(b.log_date||'')||a.id-b.id).forEach(l=>{
+    const t=st[l.item_id];if(!t)return;
+    if(l.kind==='입고'){t.inQty+=l.qty;t.stock+=l.qty;run[l.item_id]+=l.qty;}
+    else{t.used+=l.qty;t.stock-=l.qty;run[l.item_id]-=l.qty;}
+    bal[l.id]=run[l.item_id];
+  });
+  return {st,bal};
+}
+function goodsStatus(t){
+  if(t.stock<=0)return {label:'소진',color:'var(--red)'};
+  if(t.item.safe_qty!=null&&t.stock<=t.item.safe_qty)return {label:'부족',color:'var(--amber)'};
+  return {label:'정상',color:'var(--green)'};
+}
+async function renderGoods(){
+  if(!_goodsLoaded)await loadGoods();
+  renderGoodsSummary();renderGoodsForm();
+  const sel=document.getElementById('goods-f-item');
+  if(sel){const cur=sel.value;sel.innerHTML='<option value="">전체 품목</option>'+goodsItems.map(i=>`<option value="${i.id}">${relEsc(i.name)}</option>`).join('');sel.value=cur;}
+  renderGoodsLogs();
+}
+function renderGoodsSummary(){
+  const el=document.getElementById('goods-summary');if(!el)return;
+  const {st}=goodsCalc();
+  if(!goodsItems.length){el.innerHTML='<div class="empty" style="padding:1.2rem;">등록된 품목이 없어요. 우측 위 "품목 추가"로 시작해보세요.</div>';return;}
+  const th='style="padding:10px 14px;text-align:left;font-size:11px;color:var(--text3);white-space:nowrap;border-bottom:2px solid var(--border);background:#f8f9fc;"';
+  const thr=th.replace('text-align:left','text-align:right');
+  el.innerHTML=`<table class="tbl" style="min-width:760px;"><thead><tr>
+    <th ${th}>품목</th><th ${th}>구분</th><th ${thr}>기초 수량</th><th ${thr}>입고</th><th ${thr}>누적 사용</th><th ${thr}>현재 재고</th><th ${th}>상태</th><th ${th}>위치</th><th ${th}>비고</th><th ${th}></th></tr></thead><tbody>`+
+  goodsItems.map(i=>{
+    const t=st[i.id];const s=goodsStatus(t);const total=(i.initial_qty||0)+t.inQty;const pct=total>0?Math.max(0,Math.min(100,Math.round(t.stock/total*100))):0;
+    return `<tr style="${i.is_active===false?'opacity:.55;':''}">
+      <td>${relEsc(i.name)}${i.is_active===false?' <span style="font-size:10px;color:var(--text3);">(사용 중단)</span>':''}</td>
+      <td>${relEsc(i.category||'')}</td>
+      <td style="text-align:right;">${(i.initial_qty||0).toLocaleString()}</td>
+      <td style="text-align:right;">${t.inQty.toLocaleString()}</td>
+      <td style="text-align:right;">${t.used.toLocaleString()}</td>
+      <td style="text-align:right;min-width:150px;"><b style="font-size:15px;color:${s.color};">${t.stock.toLocaleString()}</b>
+        <div style="height:5px;background:var(--bg);border-radius:3px;margin-top:4px;"><div style="height:5px;width:${pct}%;background:${s.color};border-radius:3px;"></div></div></td>
+      <td><span style="font-size:11px;font-weight:700;color:${s.color};">${s.label}</span></td>
+      <td>${relEsc(i.location||'')}</td>
+      <td style="color:var(--text3);">${relEsc(i.note||'')}</td>
+      <td><button onclick="openGoodsItemModal(${i.id})" style="font-size:11px;padding:4px 9px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">수정</button></td>
+    </tr>`;}).join('')+'</tbody></table>';
+}
+function goodsKindUI(){
+  const k=document.querySelector('input[name="goods-kind"]:checked')?.value||'사용';
+  const lbl=document.getElementById('goods-place-label');if(lbl)lbl.textContent=k==='사용'?'사용처 (행사명)':'입고처 (구매처)';
+  const un=document.getElementById('goods-user-label');if(un)un.textContent=k==='사용'?'사용자':'담당자';
+}
+function renderGoodsForm(){
+  const el=document.getElementById('goods-form');if(!el)return;
+  const {st}=goodsCalc();
+  const active=goodsItems.filter(i=>i.is_active!==false);
+  if(!active.length){el.innerHTML='<div class="empty">입력할 품목이 없어요</div>';return;}
+  const myName=currentProfile?.name||'';
+  el.innerHTML=`
+    <div style="display:flex;gap:16px;margin-bottom:12px;font-size:13px;font-weight:700;">
+      <label style="cursor:pointer;"><input type="radio" name="goods-kind" value="사용" checked onchange="goodsKindUI()"> 사용</label>
+      <label style="cursor:pointer;"><input type="radio" name="goods-kind" value="입고" onchange="goodsKindUI()"> 입고 (재고 추가)</label>
+    </div>
+    <div class="fg-row fg-3">
+      <div class="fg"><label>일자</label><input type="date" id="goods-date" value="${new Date().toLocaleDateString('sv-SE')}"></div>
+      <div class="fg"><label id="goods-place-label">사용처 (행사명)</label><input id="goods-place" placeholder="예: 국회, 일자리솔루션팀"></div>
+      <div class="fg"><label id="goods-user-label">사용자</label><input id="goods-user" value="${relEsc(myName)}"></div>
+    </div>
+    <div class="fg"><label>비고</label><input id="goods-note"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;">수량 (해당하는 품목에만 입력)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:14px;">
+      ${active.map(i=>`<div style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+        <div style="font-size:12px;font-weight:700;">${relEsc(i.name)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">현재 재고 ${st[i.id].stock.toLocaleString()}</div>
+        <input type="number" min="0" id="goods-qty-${i.id}" placeholder="수량" style="width:100%;font-size:14px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);box-sizing:border-box;">
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="saveGoodsEntry()">기록 저장</button>`;
+}
+async function saveGoodsEntry(){
+  const g=id=>document.getElementById(id);
+  const kind=document.querySelector('input[name="goods-kind"]:checked')?.value||'사용';
+  const date=g('goods-date').value;
+  if(!date){toast('일자를 선택해주세요');return;}
+  const {st}=goodsCalc();
+  const rows=[];const over=[];
+  goodsItems.filter(i=>i.is_active!==false).forEach(i=>{
+    const v=g('goods-qty-'+i.id)?.value;const q=Number(v);
+    if(!v||!(q>0)||!Number.isInteger(q))return;
+    if(kind==='사용'&&q>st[i.id].stock)over.push(`${i.name} (재고 ${st[i.id].stock}, 사용 ${q})`);
+    rows.push({item_id:i.id,kind,qty:q,log_date:date,place:g('goods-place').value.trim()||null,user_name:g('goods-user').value.trim()||null,note:g('goods-note').value.trim()||null,
+      created_by:currentUser?.id||null,created_by_name:currentProfile?.name||currentUser?.email||null});
+  });
+  if(!rows.length){toast('수량을 1개 이상 입력해주세요');return;}
+  if(over.length&&!confirm('현재 재고보다 많이 사용하는 품목이 있어요. 그래도 기록할까요?\n\n'+over.join('\n')))return;
+  const {error}=await sb.from('goods_logs').insert(rows);
+  if(error){console.error(error);toast('저장하지 못했어요. 잠시 후 다시 시도해주세요.');return;}
+  toast(`${rows.length}개 품목을 기록했어요`);
+  await loadGoods();await renderGoods();
+}
+function goodsFilteredLogs(){
+  const item=document.getElementById('goods-f-item')?.value||'',kind=document.getElementById('goods-f-kind')?.value||'';
+  const from=document.getElementById('goods-f-from')?.value||'',to=document.getElementById('goods-f-to')?.value||'';
+  const kw=(document.getElementById('goods-f-kw')?.value||'').trim().toLowerCase();
+  return goodsLogs.filter(l=>(!item||String(l.item_id)===item)&&(!kind||l.kind===kind)&&(!from||(l.log_date||'')>=from)&&(!to||(l.log_date||'')<=to)&&
+    (!kw||[l.place,l.user_name,l.note].some(v=>(v||'').toLowerCase().includes(kw))))
+    .sort((a,b)=>(b.log_date||'').localeCompare(a.log_date||'')||b.id-a.id);
+}
+function renderGoodsLogs(){
+  const el=document.getElementById('goods-logs');if(!el)return;
+  const {bal}=goodsCalc();const nameOf={};goodsItems.forEach(i=>{nameOf[i.id]=i.name;});
+  const rows=goodsFilteredLogs();
+  const cnt=document.getElementById('goods-log-count');if(cnt)cnt.textContent=`${rows.length}건`;
+  if(!rows.length){el.innerHTML='<div class="empty" style="padding:1.2rem;">내역이 없어요</div>';return;}
+  const th='style="padding:10px 14px;text-align:left;font-size:11px;color:var(--text3);white-space:nowrap;border-bottom:2px solid var(--border);background:#f8f9fc;"';
+  const thr=th.replace('text-align:left','text-align:right');
+  el.innerHTML=`<table class="tbl" style="min-width:820px;"><thead><tr><th ${th}>일자</th><th ${th}>구분</th><th ${th}>품목</th><th ${thr}>수량</th><th ${th}>사용처</th><th ${th}>사용자</th><th ${th}>비고</th><th ${thr}>그 시점 재고</th><th ${th}></th></tr></thead><tbody>`+
+  rows.map(l=>`<tr>
+    <td>${l.log_date||''}</td>
+    <td><span style="font-size:11px;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text2)'};">${l.kind}</span></td>
+    <td>${relEsc(nameOf[l.item_id]||'(삭제된 품목)')}</td>
+    <td style="text-align:right;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text)'};">${l.kind==='입고'?'+':'-'}${l.qty.toLocaleString()}</td>
+    <td>${relEsc(l.place||'')}</td><td>${relEsc(l.user_name||'')}</td><td style="color:var(--text3);">${relEsc(l.note||'')}</td>
+    <td style="text-align:right;">${bal[l.id]!=null?bal[l.id].toLocaleString():''}</td>
+    <td><button onclick="openGoodsLogModal(${l.id})" style="font-size:11px;padding:4px 9px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">수정</button></td>
+  </tr>`).join('')+'</tbody></table>';
+}
+function openGoodsItemModal(id){
+  const g=x=>document.getElementById(x);
+  const i=id?goodsItems.find(x=>x.id===id):null;
+  g('goods-item-title').textContent=i?'품목 수정':'품목 추가';
+  g('gi-id').value=i?i.id:'';g('gi-name').value=i?.name||'';g('gi-cat').value=i?.category||'';
+  g('gi-initial').value=i?(i.initial_qty??''):'';g('gi-safe').value=i?.safe_qty??'';
+  g('gi-loc').value=i?.location||'';g('gi-note').value=i?.note||'';g('gi-inactive').checked=i?i.is_active===false:false;
+  g('gi-del').style.display=i?'':'none';
+  g('goods-item-modal').style.display='flex';
+}
+async function saveGoodsItem(){
+  const g=x=>document.getElementById(x);
+  const name=g('gi-name').value.trim();
+  if(!name){toast('품목명을 입력해주세요');return;}
+  const init=Number(g('gi-initial').value);
+  if(g('gi-initial').value===''||!Number.isInteger(init)||init<0){toast('기초 수량을 0 이상의 숫자로 입력해주세요');return;}
+  const safeV=g('gi-safe').value;
+  const id=g('gi-id').value;
+  const row={name,category:g('gi-cat').value.trim()||null,initial_qty:init,safe_qty:safeV===''?null:Number(safeV),
+    location:g('gi-loc').value.trim()||null,note:g('gi-note').value.trim()||null,is_active:!g('gi-inactive').checked};
+  let error;
+  if(id){({error}=await sb.from('goods_items').update(row).eq('id',Number(id)));}
+  else{
+    row.sort_order=(goodsItems.reduce((m,x)=>Math.max(m,x.sort_order||0),0))+1;
+    row.created_by=currentUser?.id||null;row.created_by_name=currentProfile?.name||currentUser?.email||null;
+    ({error}=await sb.from('goods_items').insert(row));
+  }
+  if(error){console.error(error);toast('저장하지 못했어요. 잠시 후 다시 시도해주세요.');return;}
+  g('goods-item-modal').style.display='none';toast(id?'품목을 수정했어요':'품목을 추가했어요');
+  await loadGoods();await renderGoods();
+}
+async function deleteGoodsItem(){
+  const id=Number(document.getElementById('gi-id').value);if(!id)return;
+  const n=goodsLogs.filter(l=>l.item_id===id).length;
+  if(!confirm(`이 품목을 삭제할까요?${n?`\n이 품목의 입고·사용 내역 ${n}건도 함께 삭제돼요.`:''}\n(되돌릴 수 없어요. 더 이상 쓰지 않는 품목이라면 "사용 중단"을 권장해요.)`))return;
+  const {error}=await sb.from('goods_items').delete().eq('id',id);
+  if(error){console.error(error);toast('삭제하지 못했어요');return;}
+  document.getElementById('goods-item-modal').style.display='none';toast('품목을 삭제했어요');
+  await loadGoods();await renderGoods();
+}
+function openGoodsLogModal(id){
+  const l=goodsLogs.find(x=>x.id===id);if(!l)return;
+  const g=x=>document.getElementById(x);
+  g('gl-id').value=l.id;g('gl-kind').value=l.kind;
+  g('gl-item').innerHTML=goodsItems.map(i=>`<option value="${i.id}">${relEsc(i.name)}</option>`).join('');
+  g('gl-item').value=l.item_id;g('gl-qty').value=l.qty;g('gl-date').value=l.log_date||'';
+  g('gl-place').value=l.place||'';g('gl-user').value=l.user_name||'';g('gl-note').value=l.note||'';
+  g('goods-log-modal').style.display='flex';
+}
+async function saveGoodsLog(){
+  const g=x=>document.getElementById(x);
+  const id=Number(g('gl-id').value);const q=Number(g('gl-qty').value);
+  if(!(q>0)||!Number.isInteger(q)){toast('수량을 1 이상의 정수로 입력해주세요');return;}
+  if(!g('gl-date').value){toast('일자를 선택해주세요');return;}
+  const {error}=await sb.from('goods_logs').update({kind:g('gl-kind').value,item_id:Number(g('gl-item').value),qty:q,log_date:g('gl-date').value,
+    place:g('gl-place').value.trim()||null,user_name:g('gl-user').value.trim()||null,note:g('gl-note').value.trim()||null}).eq('id',id);
+  if(error){console.error(error);toast('저장하지 못했어요. 잠시 후 다시 시도해주세요.');return;}
+  g('goods-log-modal').style.display='none';toast('기록을 수정했어요');
+  await loadGoods();await renderGoods();
+}
+async function deleteGoodsLog(){
+  const id=Number(document.getElementById('gl-id').value);if(!id)return;
+  if(!confirm('이 기록을 삭제할까요? 재고가 다시 계산돼요.'))return;
+  const {error}=await sb.from('goods_logs').delete().eq('id',id);
+  if(error){console.error(error);toast('삭제하지 못했어요');return;}
+  document.getElementById('goods-log-modal').style.display='none';toast('기록을 삭제했어요');
+  await loadGoods();await renderGoods();
+}
+function exportGoodsExcel(){
+  if(typeof XLSX==='undefined'){toast('엑셀 라이브러리 로드에 실패했어요. 새로고침 후 다시 시도해주세요.');return;}
+  if(!goodsItems.length){toast('내보낼 물품 데이터가 없어요');return;}
+  const {st,bal}=goodsCalc();const nameOf={};goodsItems.forEach(i=>{nameOf[i.id]=i.name;});
+  const a1=[['품목','구분','기초 수량','입고','누적 사용','현재 재고','상태','위치','비고']];
+  goodsItems.forEach(i=>{const t=st[i.id];a1.push([i.name,i.category||'',i.initial_qty||0,t.inQty,t.used,t.stock,goodsStatus(t).label,i.location||'',i.note||'']);});
+  const a2=[['일자','구분','품목','수량','사용처(입고처)','사용자(담당자)','비고','그 시점 재고']];
+  goodsLogs.slice().sort((a,b)=>(a.log_date||'').localeCompare(b.log_date||'')||a.id-b.id)
+    .forEach(l=>a2.push([l.log_date||'',l.kind,nameOf[l.item_id]||'',l.kind==='입고'?l.qty:-l.qty,l.place||'',l.user_name||'',l.note||'',bal[l.id]??'']));
+  const wb=XLSX.utils.book_new();
+  const w1=XLSX.utils.aoa_to_sheet(a1);w1['!cols']=[{wch:22},{wch:18},{wch:10},{wch:8},{wch:10},{wch:10},{wch:8},{wch:22},{wch:24}];
+  const w2=XLSX.utils.aoa_to_sheet(a2);w2['!cols']=[{wch:12},{wch:6},{wch:22},{wch:8},{wch:20},{wch:12},{wch:30},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,w1,'재고현황');XLSX.utils.book_append_sheet(wb,w2,'입고사용내역');
+  XLSX.writeFile(wb,`물품재고대장_${today().replace(/-/g,'')}.xlsx`);
+  toast('물품 재고 대장을 내려받았어요');
+}
 // ── 데이터 관리 (선택해서 엑셀로 내려받기) ──
 // 새 항목을 추가하려면 BACKUP_DATASETS 에 한 줄만 추가하면 데이터 관리 화면에 자동으로 체크박스가 생긴다.
 //  - table/cols: DB 테이블과 가져올 컬럼 (명함·첨부 등 용량 큰 컬럼은 제외)
@@ -3373,6 +3684,8 @@ const BACKUP_DATASETS=[
   {key:'jobs',group:'인재·채용',sheet:'공고',table:'jobs',desc:'채용 건(공고)',cols:'*'},
   {key:'sourcing_assignments',group:'인재·채용',sheet:'소싱배정',table:'sourcing_assignments',desc:'담당자별 소싱 배정',cols:'*'},
   {key:'sourcing_candidates',group:'인재·채용',sheet:'소싱후보',table:'sourcing_candidates',desc:'소싱 후보 인재',cols:'*'},
+  {key:'goods_items',group:'행사·업무',sheet:'물품품목',table:'goods_items',desc:'굿즈·기념품 품목과 기초 수량',cols:'*'},
+  {key:'goods_logs',group:'행사·업무',sheet:'물품입출고',table:'goods_logs',desc:'물품 입고·사용 내역',cols:'*',needs:['goods_items']},
   {key:'events',group:'행사·업무',sheet:'행사',table:'events',desc:'행사 관리',cols:'*'},
   {key:'actions',group:'행사·업무',sheet:'할일',table:'actions',desc:'후속 액션',cols:'*'},
   {key:'team_tasks',group:'행사·업무',sheet:'팀업무',table:'team_tasks',desc:'팀 할일',cols:'*'},
@@ -3427,9 +3740,10 @@ function buildNameCols(fetched){
   const mk=(t,fn)=>{const m={};(fetched[t]||[]).forEach(r=>{m[r.id]=fn(r);});return m;};
   const orgName=mk('orgs',r=>r.name),talentName=mk('talents',r=>r.name),eventName=mk('events',r=>r.name),
         jobName=mk('jobs',r=>[r.company,r.job_title].filter(Boolean).join(' / ')),
-        asgOrg=mk('sourcing_assignments',r=>orgName[r.org_id]||'');
+        asgOrg=mk('sourcing_assignments',r=>orgName[r.org_id]||''),
+        goodsName=mk('goods_items',r=>r.name);
   return {sourcing_assignment_id:['배정기관명',asgOrg],org_id:['기관명',orgName],source_org_id:['소개기관명',orgName],converted_org_id:['전환기관명',orgName],
-    talent_id:['인재명',talentName],event_id:['행사명',eventName],job_id:['공고명',jobName]};
+    talent_id:['인재명',talentName],event_id:['행사명',eventName],job_id:['공고명',jobName],item_id:['품목명',goodsName]};
 }
 function rowsToSheet(rows,NAME_COLS){
   const flat=rows.map(r=>{const o={};Object.keys(r).forEach(k=>{
