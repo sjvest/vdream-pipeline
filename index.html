@@ -90,6 +90,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .ac-seg button.on{background:var(--accent);color:#fff;font-weight:700;}
 .ac-reset{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;cursor:pointer;color:var(--text2);}
 .ac-hint{font-size:12px;color:var(--text3);margin:-4px 0 10px;}
+.cpy{cursor:copy;border-radius:3px;transition:background .12s;}
+.cpy:hover{background:#fef3c7;text-decoration:underline dotted;text-underline-offset:3px;}
 .urgent-count{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
 .new-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--accent);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;margin-left:auto;}
 .sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--sidebar-text);opacity:.6;}
@@ -2497,6 +2499,9 @@ function toLocalDateStr(d){
   return `${y}-${m}-${day}`;
 }
 function today(){return new Date().toISOString().slice(0,10);}
+function cpv(v,show){if(v==null||v===''||v==='—')return show==null?'—':show;const a=String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');return `<span class="cpy" data-copy="${a}" title="클릭하면 복사">${show==null?String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;'):show}</span>`;}
+async function copyToClipboard(txt){try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(_){}ta.remove();}toast('복사됨: '+(txt.length>30?txt.slice(0,30)+'…':txt));}
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('.cpy');if(!c)return;e.stopPropagation();e.preventDefault();copyToClipboard(c.dataset.copy||'');},true);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function dueClass(d){return d<0?'due-over':d<=3?'due-soon':'due-ok';}
 function dueLabel(d,due){return d<0?`D+${Math.abs(d)}`:d===0?'오늘':d<=3?`D-${d}`:fDate(due);}
@@ -4311,7 +4316,7 @@ function renderPinnedOrgsSection(pinnedRows){
   listEl.style.display=pinnedSectionCollapsed?'none':'block';
   listEl.innerHTML=pinnedRows.map(o=>`
     <div onclick="openOrg(${o.id})" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid #f5c451;" onmouseover="this.style.background='#fffdf5'" onmouseout="this.style.background=''">
-      <span style="font-weight:700;font-size:13px;color:#0d1b2a;flex-shrink:0;">${o.name}</span>${awardBadge(o.id)}
+      <span style="font-weight:700;font-size:13px;color:#0d1b2a;flex-shrink:0;">${cpv(o.name)}</span>${awardBadge(o.id)}
       <span style="font-size:10px;font-weight:700;color:#92600a;background:#fef3c7;padding:1px 8px;border-radius:10px;flex-shrink:0;">고정</span>
       <span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
       <span style="font-size:11px;color:var(--text3);flex:1;">${o.cat||''}</span>
@@ -4355,7 +4360,7 @@ function renderOrgs(){try{updateOrgSortInd();}catch(e){}const fc=document.getEle
             <input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onclick="event.stopPropagation();" onchange="toggleSelectOrg(${o.id},this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
             <div style="flex:1;min-width:0;">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
-                <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${o.name}</span>${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
+                <span style="font-weight:700;font-size:14px;color:#0d1b2a;">${cpv(o.name)}</span>${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}
                 <span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
                 ${o.region?`<span style="font-size:11px;color:var(--text3);background:#f1f4f9;padding:1px 6px;border-radius:4px;">${o.region}</span>`:''}
                 ${urgent?`<span style="font-size:11px;color:#dc2626;font-weight:700;"> ${urgent}건</span>`:''}
@@ -4387,7 +4392,7 @@ function renderOrgs(){try{updateOrgSortInd();}catch(e){}const fc=document.getEle
       <td style="padding:14px 16px;max-width:280px;overflow:hidden;">
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
-          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
+          <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${o.name}">${cpv(o.name)}</span><span style="flex-shrink:0;">${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}<span onclick="showHealthDetail(${o.id},event)" style="margin-left:6px;">${healthBadge(calcHealthScore(o.id).score,true)}</span>${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span>
         </div>
       </td>
       <td style="padding:14px 16px;"><span class="badge b-gray" style="font-size:11px;">${o.cat||'—'}</span></td>
@@ -4617,14 +4622,14 @@ function renderTalent(){
         const talApps=apps.filter(a=>a.talent_id===t.id);
         const status=talApps[0]?.status||t.status||'인재등록';
         const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';
-        return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">${idx===0?orgCell:''}<td style="padding:10px 18px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="padding:10px 14px;">${tcfChip('job',t.job)}</td><td style="padding:10px 18px;">${tcfChip('member',t.member)}</td><td style="padding:10px 14px;">${tcfChip('dtype',t.disability_type)}</td><td style="padding:10px 14px;">${tcfChip('grade',t.disability_grade)}</td><td style="padding:10px 18px;">${statusSelect(t,status)}</td><td style="padding:10px 14px;">${tcfChip('company',talApps[0]?.hire_company||t.hire_company||'')}</td><td style="padding:10px 18px;">${memoInput(t)}</td><td style="font-size:11px;color:var(--text3);padding:10px 18px;">${regDate}</td></tr>`;
+        return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">${idx===0?orgCell:''}<td style="padding:10px 18px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${cpv(t.name)}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${cpv(t.phone)}</div>`:''}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="padding:10px 14px;">${tcfChip('job',t.job)}</td><td style="padding:10px 18px;">${tcfChip('member',t.member)}</td><td style="padding:10px 14px;">${tcfChip('dtype',t.disability_type)}</td><td style="padding:10px 14px;">${tcfChip('grade',t.disability_grade)}</td><td style="padding:10px 18px;">${statusSelect(t,status)}</td><td style="padding:10px 14px;">${tcfChip('company',talApps[0]?.hire_company||t.hire_company||'')}</td><td style="padding:10px 18px;">${memoInput(t)}</td><td style="font-size:11px;color:var(--text3);padding:10px 18px;">${regDate}</td></tr>`;
       }).join('');
       return groupHtml+(gi<orderedKeys.length-1?groupSpacer:'');
     }).join('');
     return;
   }
   if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
-  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${t.name}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.phone}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${org?.name||'—'}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${talApps[0]?.hire_company||t.hire_company||'—'}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');}
+  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${cpv(t.name)}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${cpv(t.phone)}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${cpv(org?.name)}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${cpv(talApps[0]?.hire_company||t.hire_company||'—')}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');}
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});talentColFilter={};renderTalent();}
 // 인재영입 목록 화면에 적용된 검색/필터를 그대로 반영해서, 지금 화면에 보이는 인재만 뽑는다
 // (특정 기관만 필터해두고 내보내면 그 기관 소개 인재만 담긴 파일이 됨).
@@ -4705,7 +4710,7 @@ function openTalentDrawer(talentId){
   const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));
   const apps=(cache.applications||[]).filter(a=>a.talent_id===talentId);
   const status=apps[0]?.status||t.status||'인재등록';
-  document.getElementById('drawer-name').innerHTML=`${t.name}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
+  document.getElementById('drawer-name').innerHTML=`${cpv(t.name)}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
   document.getElementById('drawer-sub').textContent=`${org?.name||'—'} · ${t.job||'직무 미입력'} · ${t.member||'담당자 미배정'}`;
   document.getElementById('drawer-status').value=status;
   document.getElementById('talent-drawer').style.display='block';
@@ -4721,7 +4726,7 @@ function switchDrawerTab(tab){
   const el=document.getElementById('drawer-content');
   if(tab==='info'){
     if(!drawerInfoEditMode){
-      el.innerHTML=`<div style="display:grid;gap:0;">${[{l:'이름',v:t.name},{l:'전화번호',v:t.phone||'—'},{l:'생년월일',v:t.birth_date?fDate(t.birth_date):'—'},{l:'장애유형',v:t.disability_type||'—'},{l:'장애등급',v:t.disability_grade||'—'},{l:'가용여부',v:t.availability_status||'가용'},{l:'유입기관',v:org?.name||'—'},{l:'채널',v:t.channel||'—'},{l:'직무',v:t.job||'—'},{l:'기업명',v:(apps[0]?.hire_company||t.hire_company||'—')},{l:'비고',v:t.memo||'—'},{l:'유입일',v:t.date?fDate(t.date):'미입력'},{l:'담당자',v:t.member||'—'},{l:'등록일(시스템)',v:t.created_at?fDate(t.created_at.slice(0,10)):'—'}].map(r=>`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);min-width:80px;flex-shrink:0;">${r.l}</span><span style="font-size:12px;color:var(--text);font-weight:500;">${r.v}</span></div>`).join('')}</div>`;
+      el.innerHTML=`<div style="display:grid;gap:0;">${[{l:'이름',v:cpv(t.name)},{l:'전화번호',v:cpv(t.phone)},{l:'생년월일',v:t.birth_date?fDate(t.birth_date):'—'},{l:'장애유형',v:t.disability_type||'—'},{l:'장애등급',v:t.disability_grade||'—'},{l:'가용여부',v:t.availability_status||'가용'},{l:'유입기관',v:cpv(org?.name)},{l:'채널',v:t.channel||'—'},{l:'직무',v:t.job||'—'},{l:'기업명',v:cpv(apps[0]?.hire_company||t.hire_company||'—')},{l:'비고',v:t.memo||'—'},{l:'유입일',v:t.date?fDate(t.date):'미입력'},{l:'담당자',v:t.member||'—'},{l:'등록일(시스템)',v:t.created_at?fDate(t.created_at.slice(0,10)):'—'}].map(r=>`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;color:var(--text3);min-width:80px;flex-shrink:0;">${r.l}</span><span style="font-size:12px;color:var(--text);font-weight:500;">${r.v}</span></div>`).join('')}</div>`;
     }else{
       const disTypes=['','지체','뇌병변','시각','청각','언어','지적','자폐성','정신','신장','심장','호흡기','간','안면','장루·요루','뇌전증'];
       const memberOpts='<option value="">선택</option>'+cache.profiles.map(p=>`<option ${p.name===t.member?'selected':''}>${p.name}</option>`).join('');
@@ -8260,7 +8265,7 @@ async function openOrg(id){
   const oa=actionsForOrg(id);
   const tals=cache.talents.filter(t=>t.org_id===id);
   const linkedEvent=o.event_id?(cache.events||[]).find(e=>Number(e.id)===Number(o.event_id)):null;
-  document.getElementById('m-title').innerHTML=`${o.name}${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
+  document.getElementById('m-title').innerHTML=`${cpv(o.name)}${awardBadge(o.id)}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}`;
   document.getElementById('m-body').innerHTML=`
   <div style="display:grid;grid-template-columns:minmax(420px,1fr) minmax(380px,1fr);gap:20px;align-items:start;">
   <div>
@@ -8331,18 +8336,18 @@ async function openOrg(id){
       <div style="flex:1;">
         ${(o.contacts&&o.contacts.length)?o.contacts.filter(c=>c.status!=='변경됨').map(c=>`
           <div style="margin-bottom:4px;">
-            <span style="font-weight:600;">${c.name}</span>
-            ${c.phone?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${c.phone}</span>`:''}
-            ${c.email?`<span style="font-size:11px;color:var(--accent);margin-left:6px;">${c.email}</span>`:''}
+            <span style="font-weight:600;">${cpv(c.name)}</span>
+            ${c.phone?`<span style="font-size:11px;color:var(--text3);margin-left:6px;">${cpv(c.phone)}</span>`:''}
+            ${c.email?`<span style="font-size:11px;color:var(--accent);margin-left:6px;">${cpv(c.email)}</span>`:''}
           </div>`).join('')
-        :`<span>${o.contact||'—'}</span>`}
+        :`<span>${cpv(o.contact)}</span>`}
       </div>
     </div>
     ${o.contact_title?`<div class="info-row"><span class="info-key">직책</span><span>${o.contact_title}</span></div>`:''}
-    <div class="info-row"><span class="info-key">연락처</span><span>${o.phone||'—'}</span></div>
-    ${o.mobile?`<div class="info-row"><span class="info-key">모바일</span><span>${o.mobile}</span></div>`:''}
+    <div class="info-row"><span class="info-key">연락처</span><span>${cpv(o.phone)}</span></div>
+    ${o.mobile?`<div class="info-row"><span class="info-key">모바일</span><span>${cpv(o.mobile)}</span></div>`:''}
     ${o.fax?`<div class="info-row"><span class="info-key">팩스</span><span>${o.fax}</span></div>`:''}
-    <div class="info-row"><span class="info-key">이메일</span><span>${o.email||'—'}</span></div>
+    <div class="info-row"><span class="info-key">이메일</span><span>${cpv(o.email)}</span></div>
     ${o.region||o.address?`<div class="info-row"><span class="info-key">지역/주소</span><span>${[o.region,o.address].filter(Boolean).join(' · ')}</span></div>`:''}
     <div class="info-row"><span class="info-key">웹사이트</span><span>${o.website?`<a href="${o.website}" target="_blank" style="color:var(--accent);text-decoration:none;">${o.website} <i class="ti ti-external-link"></i></a>`:'—'}</span></div>
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
