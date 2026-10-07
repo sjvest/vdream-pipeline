@@ -4692,8 +4692,8 @@ function switchDrawerTab(tab){
         <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">날짜 입력/수정 (최신 지원 건 기준)</div>
         ${dateRow('지원일','app-applied',latestApp?.applied_date,latestApp?.applied_date_is_estimated)}
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">회사명</span><input type="text" id="app-hirecompany" value="${latestApp?.hire_company||''}" placeholder="지원한 회사명" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;box-sizing:border-box;"></div>
-        ${dateRow('합격일','app-pass',latestApp?.pass_date,latestApp?.pass_date_is_estimated)}
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">입사일</span><input type="date" id="app-join-date" value="${latestApp?.join_date||''}" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);white-space:nowrap;" title="워크데이 충족을 위해 근로시작일을 앞당겨 입사 처리한 경우"><input type="checkbox" id="app-join-fulfilled" ${latestApp?.join_date_is_fulfilled?'checked':''}> 충족입사</label></div>
+        ${dateRow('합격일','app-pass',latestApp?.pass_date,latestApp?.pass_date_is_estimated).replace('<input type="date" id="app-pass-date"','<input type="date" id="app-pass-date" onchange="autoFulfilledJoin()"')}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:12px;color:var(--text3);min-width:56px;">입사일</span><input type="date" id="app-join-date" onchange="autoFulfilledJoin()" value="${latestApp?.join_date||''}" style="flex:1;font-size:12px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);white-space:nowrap;" title="워크데이 충족을 위해 근로시작일을 앞당겨 입사 처리한 경우"><input type="checkbox" id="app-join-fulfilled" ${latestApp?.join_date_is_fulfilled?'checked':''}> 충족입사</label></div>
         ${dateRow('불합격일','app-rejected',latestApp?.rejected_at,latestApp?.rejected_date_is_estimated)}
         <button onclick="saveApplicationDates()" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:6px;">날짜 저장</button>
       </div>`;
@@ -4892,6 +4892,12 @@ async function quickUpdateTalentMemo(talentId,memo){
   toast('비고 저장됨');
 }
 // 지원일/합격일/입사일/불합격일 + 추정여부 저장. 지원이력(candidate_applications)이 없으면 새로 생성한다(job_id는 비워둠).
+// 입사일이 합격일보다 빠르면 '충족입사'를 자동으로 체크한다 (워크데이 충족용으로 근로시작일을 앞당긴 경우)
+function autoFulfilledJoin(){
+  const j=document.getElementById('app-join-date')?.value,p=document.getElementById('app-pass-date')?.value;
+  const cb=document.getElementById('app-join-fulfilled');
+  if(cb&&j&&p&&j<p)cb.checked=true;
+}
 async function saveApplicationDates(){
   if(!currentDrawerTalentId)return;
   const val=id=>document.getElementById(id)?.value||null;
@@ -4911,7 +4917,7 @@ async function saveApplicationDates(){
     applied_date:val('app-applied-date'), applied_date_is_estimated:chk('app-applied-est'),
     hire_company:newCompany,
     pass_date:val('app-pass-date'), pass_date_is_estimated:chk('app-pass-est'),
-    join_date:val('app-join-date'), join_date_is_fulfilled:chk('app-join-fulfilled'),
+    join_date:val('app-join-date'), join_date_is_fulfilled:chk('app-join-fulfilled')||!!(val('app-join-date')&&val('app-pass-date')&&val('app-join-date')<val('app-pass-date')),
     rejected_at:val('app-rejected-date'), rejected_date_is_estimated:chk('app-rejected-est'),
   };
   let autoStatus=null;
