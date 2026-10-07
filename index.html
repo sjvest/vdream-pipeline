@@ -200,8 +200,8 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px;}
 
 /* ── 토스트 ── */
-.toast{position:fixed;bottom:28px;right:28px;background:#0d1b2a;color:#fff;padding:13px 22px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;z-index:300;opacity:0;transform:translateY(12px);transition:all .22s;pointer-events:none;box-shadow:var(--shadow-lg);}
-.toast.show{opacity:1;transform:none;}
+.toast{position:fixed;top:24px;left:50%;margin-left:0;background:#0d1b2a;color:#fff;padding:13px 22px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;z-index:300;opacity:0;transform:translate(-50%,-12px);transition:all .22s;pointer-events:none;box-shadow:var(--shadow-lg);max-width:calc(100vw - 32px);text-align:center;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
 
 /* ── 팀 그리드 ── */
 .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
