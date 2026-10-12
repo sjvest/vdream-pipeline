@@ -245,7 +245,7 @@ html,body{height:100%;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,
 .card-upload-area p{font-size:12px;color:var(--text3);}
 .card-preview{position:relative;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border);max-width:360px;aspect-ratio:9/5;background:#fff;display:flex;align-items:center;justify-content:center;}
 .card-preview img{width:100%;height:100%;object-fit:contain;display:block;}
-.card-preview-del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.card-preview-del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:14px;padding:0 10px;height:28px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
 /* 명함 목록의 삭제 버튼: 평소엔 숨겨져 있다가 카드에 마우스를 올렸을 때만 나타난다 (실수 클릭 방지, 2026-08-19).
    터치 환경(호버 개념 없음)에서는 첫 탭에서 살짝 보였다가 두 번째 탭에서 클릭되는 정도로 자연스럽게 동작한다. */
 .biz-card-item .biz-card-del{opacity:0;pointer-events:none;transition:opacity .15s;cursor:pointer;}
@@ -283,7 +283,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   .logo{display:none!important;}
   #mobile-header{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:50px;background:#1E293B;position:sticky;top:0;z-index:200;flex-shrink:0;}
   #mobile-header .m-logo{font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;}
-  #mobile-header .m-menu{background:none;border:none;cursor:pointer;padding:8px;color:#fff;font-size:20px;line-height:1;}
+  #mobile-header .m-menu{background:none;border:none;cursor:pointer;padding:8px;color:#fff;font-size:14px;font-weight:700;line-height:1;}
   #mobile-header .m-alarm{background:none;border:none;cursor:pointer;padding:8px;color:rgba(255,255,255,.7);font-size:18px;line-height:1;}
   .main{flex:1;overflow-y:auto;}
   .page{padding:14px 12px 60px!important;}
@@ -408,7 +408,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 </div>
 <div id="app-wrap" style="display:flex;flex-direction:column;height:100vh;">
 <div id="mobile-header">
-  <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn"><i class="ti ti-menu-2"></i></button>
+  <button class="m-menu" onclick="toggleMobileNav()" id="m-menu-btn">메뉴</button>
   <span class="m-logo">V:Dream 파이프라인</span>
   <button onclick="openMobileMeeting()" style="background:var(--accent);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;">+ 미팅</button>
 </div>
@@ -420,32 +420,32 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div class="logo-sub" style="margin-top:8px;">기관 인재영입 파이프라인</div>
   </div>
-  <button class="nav-item active" onclick="nav('dashboard')"><i class="ti ti-layout-dashboard"></i>대시보드</button>
-  <button class="nav-item" onclick="nav('pipeline')"><i class="ti ti-layout-kanban"></i>파이프라인</button>
+  <button class="nav-item active" onclick="nav('dashboard')">대시보드</button>
+  <button class="nav-item" onclick="nav('pipeline')">파이프라인</button>
   <div class="nav-divider"></div>
   <div class="ng" style="--gc:#8B7FD4">
   <div class="nav-section">기관 관리</div>
-  <button class="nav-item" onclick="nav('add-org')"><i class="ti ti-plus"></i>기관 등록</button>
-  <button class="nav-item" id="nav-orgs" onclick="nav('orgs')"><i class="ti ti-building"></i>기관 목록<span class="new-badge" id="badge-orgs" style="display:none;">0</span></button>
+  <button class="nav-item" onclick="nav('add-org')">기관 등록</button>
+  <button class="nav-item" id="nav-orgs" onclick="nav('orgs')">기관 목록<span class="new-badge" id="badge-orgs" style="display:none;">0</span></button>
   </div>
   <div class="ng" style="--gc:#2BB5A8">
   <div class="nav-section">인재 영입</div>
-  <button class="nav-item" onclick="nav('actions')"><i class="ti ti-checkbox"></i>후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
-  <button class="nav-item" id="nav-talent" onclick="nav('talent')"><i class="ti ti-users"></i>인재 영입<span class="new-badge" id="badge-talent" style="display:none;">0</span></button>
-  <button class="nav-item" id="nav-jobs" onclick="nav('jobs')"><i class="ti ti-briefcase"></i>채용 건 관리<span class="new-badge" id="badge-jobs" style="display:none;">0</span></button>
-  <button class="nav-item" id="nav-cold" onclick="nav('cold')"><i class="ti ti-phone-call"></i>신규 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
+  <button class="nav-item" onclick="nav('actions')">후속 액션 <span class="urgent-count" id="urgent-cnt" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-talent" onclick="nav('talent')">인재 영입<span class="new-badge" id="badge-talent" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-jobs" onclick="nav('jobs')">채용 건 관리<span class="new-badge" id="badge-jobs" style="display:none;">0</span></button>
+  <button class="nav-item" id="nav-cold" onclick="nav('cold')">신규 컨택 로그<span class="new-badge" id="badge-cold" style="display:none;">0</span></button>
   </div>
   <div class="ng" style="--gc:#E0953A">
   <div class="nav-section">성과</div>
-  <button class="nav-item" onclick="nav('analytics')"><i class="ti ti-chart-dots"></i>데이터 분석</button>
-  <button class="nav-item" id="nav-events" onclick="nav('events')"><i class="ti ti-calendar-event"></i>행사 관리<span class="new-badge" id="badge-events" style="display:none;">0</span></button>
-  <button class="nav-item" onclick="nav('team')"><i class="ti ti-chart-bar"></i>팀원 실적</button>
-  <button class="nav-item" onclick="nav('team-tasks')"><i class="ti ti-checklist"></i>팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
+  <button class="nav-item" onclick="nav('analytics')">데이터 분석</button>
+  <button class="nav-item" id="nav-events" onclick="nav('events')">행사 관리<span class="new-badge" id="badge-events" style="display:none;">0</span></button>
+  <button class="nav-item" onclick="nav('team')">팀원 실적</button>
+  <button class="nav-item" onclick="nav('team-tasks')">팀 할일<span id="team-tasks-badge" class="urgent-count" style="display:none;"></span></button>
   </div>
   <div class="ng" style="--gc:#94A3B8">
   <div class="nav-section">관리</div>
-  <button class="nav-item" id="nav-goods" onclick="nav('goods')"><i class="ti ti-package"></i>물품 관리</button>
-  <button class="nav-item" id="nav-data" onclick="nav('data')"><i class="ti ti-database-export"></i>데이터 관리</button>
+  <button class="nav-item" id="nav-goods" onclick="nav('goods')">물품 관리</button>
+  <button class="nav-item" id="nav-data" onclick="nav('data')">데이터 관리</button>
   </div>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">
@@ -457,7 +457,6 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="user-name">로그인 필요</div>
         <div style="font-size:10px;color:var(--sidebar-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.6;" id="user-status-label">프로필 설정</div>
       </div>
-      <i class="ti ti-settings" style="font-size:12px;color:var(--sidebar-text);opacity:.4;flex-shrink:0;"></i>
     </div>
     <button onclick="openAuditLog()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;margin-bottom:3px;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"> 수정/삭제 로그</button>
     <button onclick="doLogout()" style="width:100%;padding:3px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:none;color:var(--sidebar-text);font-size:10px;cursor:pointer;text-align:center;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">로그아웃</button>
@@ -473,7 +472,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="page-title" id="dash-greeting">안녕하세요 </div>
       <div class="page-sub" id="today-date"></div>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="checkAlertsAndSendGChat()"><i class="ti ti-bell"></i> 알림 확인</button>
+    <button class="btn btn-ghost btn-sm" onclick="checkAlertsAndSendGChat()">알림 확인</button>
   </div>
   <div id="alert-banner" style="display:none;margin-bottom:16px;"></div>
   <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
@@ -481,13 +480,13 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <!-- 인재영입 전환 현황: 기관발굴 → 지원자 유입 → 취업성공까지의 최종 전환율이 팀의 핵심 성과 지표라는
        요청(2026-09-23)으로, 6개 미니 지표 중 하나로 묻혀있던 걸 빼서 별도의 큰 카드로 노출함. -->
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-header"><i class="ti ti-trophy" style="color:var(--purple)"></i>인재영입 전환 현황</div>
+    <div class="card-header">인재영입 전환 현황</div>
     <div class="card-body" id="dash-talent-conversion"></div>
   </div>
 
   <!-- 기간별 성과 현황(주간/월별 차트): 팀원별 이번달 현황 자리로 이동 (2026-09-18 요청) -->
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-header"><i class="ti ti-chart-line" style="color:var(--accent)"></i>기간별 성과 현황</div>
+    <div class="card-header">기간별 성과 현황</div>
     <div class="card-body">
       <div class="chart-tabs">
         <button class="chart-tab active" id="chart-tab-week" onclick="switchChart('week',this)">주간</button>
@@ -505,7 +504,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <!-- 기간별 보고 섹션 -->
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-header"><i class="ti ti-report-analytics" style="color:var(--accent)"></i>기간별 보고</div>
+    <div class="card-header">기간별 보고</div>
     <div class="card-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
         <button class="chart-tab" id="period-btn-today" onclick="setPeriod('today')">오늘</button>
@@ -518,7 +517,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <input type="date" id="period-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
           <span style="font-size:12px;color:var(--text3);">~</span>
           <input type="date" id="period-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-          <button class="btn btn-primary btn-sm" onclick="setPeriod('custom')"><i class="ti ti-search"></i> 조회</button>
+          <button class="btn btn-primary btn-sm" onclick="setPeriod('custom')">조회</button>
         </div>
       </div>
       <div id="period-label" style="font-size:12px;color:var(--text3);margin-bottom:14px;"></div>
@@ -532,7 +531,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <!-- 팀원별 이번달 현황(축소) + 단계별 현황(오른쪽): 같은 행에 배치 (2026-09-18 요청) -->
   <div class="dash-team-stage-row" style="display:grid;grid-template-columns:1fr 380px;gap:12px;margin-bottom:12px;align-items:start;">
     <div class="card" style="margin-bottom:0;">
-      <div class="card-header"><i class="ti ti-users" style="color:var(--accent)"></i>팀원별 이번달 현황</div>
+      <div class="card-header">팀원별 이번달 현황</div>
       <div class="card-body">
         <div style="position:relative;height:200px;"><canvas id="team-month-chart"></canvas></div>
         <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
@@ -543,12 +542,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:0;"><div class="card-header"><i class="ti ti-chart-pie" style="color:var(--accent)"></i>단계별 기관수 현황</div><div class="card-body" id="dash-stages" style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:140px;height:140px;flex-shrink:0;"><canvas id="stage-donut-chart"></canvas></div><div id="dash-stages-legend" style="font-size:11px;flex:1;min-width:0;"></div></div></div>
+    <div class="card" style="margin-bottom:0;"><div class="card-header">단계별 기관수 현황</div><div class="card-body" id="dash-stages" style="display:flex;align-items:center;gap:16px;"><div style="position:relative;width:140px;height:140px;flex-shrink:0;"><canvas id="stage-donut-chart"></canvas></div><div id="dash-stages-legend" style="font-size:11px;flex:1;min-width:0;"></div></div></div>
   </div>
 
   <div class="card" style="margin-bottom:12px;max-width:900px;">
     <div class="card-header" style="justify-content:space-between;">
-      <span><i class="ti ti-activity" style="color:var(--purple)"></i>최근 컨택 활동</span>
+      <span>최근 컨택 활동</span>
       <div style="display:flex;align-items:center;gap:10px;">
         <span id="dash-feed-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
         <button onclick="nav('cold')" style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;">전체 보기 →</button>
@@ -562,7 +561,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-pipeline" class="page">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">파이프라인</div><div class="page-sub">발굴 → 컨택 → 미팅 → 관계형성 → MOU → 인재영입</div></div>
-    <button class="btn btn-primary btn-sm" onclick="nav('add-org')"><i class="ti ti-plus"></i> 기관 등록</button>
+    <button class="btn btn-primary btn-sm" onclick="nav('add-org')">기관 등록</button>
   </div>
   <div class="board" id="board"><div class="loading"><div class="spin"></div>불러오는 중...</div></div>
 </div>
@@ -583,7 +582,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </select>
     </div>
   </div>
-  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="max-width:300px;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;"><i class="ti ti-x"></i> 초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
+  <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;"><div style="max-width:300px;min-width:160px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">기관명 / 담당자</div><input id="orgs-search-kw" placeholder="기관명 또는 담당자 이름 검색..." oninput="renderOrgs()" style="width:100%;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 시작</div><input id="orgs-search-start" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><div style="min-width:130px;"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">등록일 종료</div><input id="orgs-search-end" type="date" onchange="renderOrgs()" style="font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"></div><button onclick="clearOrgsSearch()" style="padding:8px 14px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;">초기화</button><div id="orgs-search-result" style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;"></div></div>
   <!-- 일괄 빠른 접촉: 체크박스로 여러 기관을 골라 채용공고/자료 등을 한 번에 발송했다는 기록을 남긴다 (2026-08-22). -->
   <div id="bulk-quick-contact-bar" style="display:none;background:var(--teal-bg);border:1.5px solid var(--teal);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
@@ -638,8 +637,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span id="draft-status" style="display:none;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;"></span>
-      <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()"><i class="ti ti-x"></i> 신규 등록으로 전환</button>
-      <button class="btn btn-ghost btn-sm" onclick="nav('orgs')" title="기관 목록으로"><i class="ti ti-arrow-left"></i> 나가기</button>
+      <button id="edit-mode-clear" class="btn btn-ghost btn-sm" style="display:none;" onclick="clearEditMode()">신규 등록으로 전환</button>
+      <button class="btn btn-ghost btn-sm" onclick="nav('orgs')" title="기관 목록으로">나가기</button>
     </div>
   </div>
 
@@ -690,7 +689,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <canvas id="card-canvas" style="display:none;"></canvas>
         <div style="display:flex;gap:16px;margin-top:24px;align-items:center;">
           <button onclick="closeCardCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">취소</button>
-          <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:24px;color:#fff;display:flex;align-items:center;justify-content:center;"><i class="ti ti-camera"></i></button>
+          <button onclick="captureCard()" style="width:64px;height:64px;background:#4285f4;border:4px solid #fff;border-radius:50%;cursor:pointer;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;">촬영</button>
           <button onclick="switchCamera()" style="padding:10px 20px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;"> 전환</button>
         </div>
       </div>
@@ -720,7 +719,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fsec-title"> 명함 사진</div>
       <div id="card-upload-wrap">
         <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
-          <i class="ti ti-camera" style="font-size:16px;color:var(--text3);"></i> 명함 사진 등록 (클릭 또는 끌어다 놓기)
+          명함 사진 등록 (클릭 또는 끌어다 놓기)
           <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
         </label>
       </div>
@@ -782,7 +781,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>지역</label><select id="n-region" style="max-width:150px;"><option value="">선택</option><option>서울</option><option>경기</option><option>인천</option><option>부산</option><option>대구</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select></div>
         <div class="fg"><label>주소</label><input id="n-address" placeholder="예: 서울시 강남구 테헤란로 123"></div>
       </div>
-      <div class="fg"><label>기관 웹사이트</label><div style="display:flex;align-items:center;gap:8px;"><input id="n-website" placeholder="https://www.example.or.kr" style="flex:1;" oninput="validateOrgUrl(this)"><button type="button" id="n-website-btn" onclick="openOrgUrl()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;white-space:nowrap;"><i class="ti ti-external-link"></i> 열기</button></div></div>
+      <div class="fg"><label>기관 웹사이트</label><div style="display:flex;align-items:center;gap:8px;"><input id="n-website" placeholder="https://www.example.or.kr" style="flex:1;" oninput="validateOrgUrl(this)"><button type="button" id="n-website-btn" onclick="openOrgUrl()" style="display:none;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;white-space:nowrap;">열기</button></div></div>
     </div>
     <!-- 담당자 변경 이력 (수정 모드에서만 표시) -->
     <div class="form-section" id="member-history-section" style="display:none;">
@@ -809,7 +808,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <div class="fg"><label>이메일</label><input id="new-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
         </div>
         <div class="fg"><label>변경 사유 *</label><input id="new-contact-reason" placeholder="예: 담당자 퇴사, 업무 재배분 등" autocomplete="off"></div>
-        <button onclick="applyContactChange()" class="btn btn-primary btn-sm"><i class="ti ti-check"></i> 변경 적용</button>
+        <button onclick="applyContactChange()" class="btn btn-primary btn-sm">변경 적용</button>
       </div>
       <!-- 추가 모드 -->
       <div id="contact-add-wrap" style="display:none;background:var(--bg);border-radius:var(--radius-sm);padding:14px;border:1.5px solid var(--accent);">
@@ -819,7 +818,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
           <div class="fg"><label>연락처</label><input id="add-contact-phone" placeholder="02-0000-0000" autocomplete="off" oninput="fmtPhone(this)"></div>
           <div class="fg"><label>이메일</label><input id="add-contact-email" placeholder="email@org.kr" autocomplete="off"></div>
         </div>
-        <button onclick="applyContactAdd()" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> 추가</button>
+        <button onclick="applyContactAdd()" class="btn btn-primary btn-sm">추가</button>
       </div>
       <!-- 변경 이력 -->
       <div style="margin-top:14px;">
@@ -830,7 +829,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="form-section">
       <div class="fsec-title">후속 액션 등록</div>
       <div id="action-form-list"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addActionField()"><i class="ti ti-plus"></i> 액션 추가</button>
+      <button class="btn btn-ghost btn-sm" onclick="addActionField()">액션 추가</button>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" id="save-btn" onclick="saveOrg()"> 저장</button>
@@ -844,13 +843,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">후속 액션</div><div class="page-sub">미팅 후 해야 할 일 · MOU 준비 · 마감일 추적</div></div>
     <div style="position:relative;">
-      <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i>
-      <input id="action-search" placeholder="기관명 / 내용 검색" oninput="renderActions()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:200px;">
+      <input id="action-search" placeholder="기관명 / 내용 검색" oninput="renderActions()" style="font-size:12px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:200px;">
     </div>
   </div>
   <div id="mou-section" style="margin-bottom:16px;display:none;">
     <div class="card">
-      <div class="card-header" style="color:var(--teal);"><i class="ti ti-writing"></i>MOU 준비 현황 <span id="mou-org-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
+      <div class="card-header" style="color:var(--teal);">MOU 준비 현황 <span id="mou-org-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span></div>
       <div class="card-body" id="mou-orgs-list"></div>
     </div>
   </div>
@@ -865,8 +863,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">인재 영입</div><div class="page-sub">ATS · 지원자 추적 시스템</div></div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <div style="position:relative;"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;"></i><input id="talent-search" placeholder="이름 / 기관 / 기업명 / 직무 / 담당자" oninput="renderTalent()" style="font-size:12px;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:240px;"></div>
-      <button class="btn btn-primary btn-sm" onclick="openAddTalent()"><i class="ti ti-plus"></i> 영입 등록</button>
+      <div style="position:relative;"><input id="talent-search" placeholder="이름 / 기관 / 기업명 / 직무 / 담당자" oninput="renderTalent()" style="font-size:12px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);width:240px;"></div>
+      <button class="btn btn-primary btn-sm" onclick="openAddTalent()">영입 등록</button>
     </div>
   </div>
   <div id="talent-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;"></div>
@@ -910,7 +908,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-cold" class="page">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">전체 컨택 히스토리</div><div class="page-sub">등록기관 + 신규 컨택 통합 기록</div></div>
-    <button class="btn btn-primary" onclick="openAddCold()"><i class="ti ti-plus"></i> 신규 컨택 추가</button>
+    <button class="btn btn-primary" onclick="openAddCold()">신규 컨택 추가</button>
   </div>
 
   <!-- 탭 -->
@@ -940,12 +938,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <input type="date" id="cold-filter-start" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
     <span style="font-size:12px;color:var(--text3);">~</span>
     <input type="date" id="cold-filter-end" onchange="renderCold()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-    <button class="btn btn-ghost btn-sm" onclick="clearColdFilter()"><i class="ti ti-x"></i> 초기화</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearColdFilter()">초기화</button>
   </div>
 
   <!-- 타임라인 목록 -->
   <div class="card">
-    <div class="card-header"><i class="ti ti-history" style="color:var(--accent)"></i>컨택 이력 <span id="cold-count" style="font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
+    <div class="card-header">컨택 이력 <span id="cold-count" style="font-size:12px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
     <div class="card-body" id="cold-list"><div class="loading"><div class="spin"></div></div></div>
   </div>
 </div>
@@ -955,7 +953,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal modal-wide" style="max-width:660px;width:100%;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
     <div class="modal-title">컨택 기록 추가</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cold-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cold-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <!-- 1행: 대상유형 + 상담주제 -->
@@ -1081,7 +1079,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <!-- 9행: 컨택일시 -->
     <div class="fg" style="max-width:260px;"><label>컨택 일시</label><input id="cold-date" type="datetime-local"></div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveCold()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveCold()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('cold-modal').style.display='none'">취소</button>
     </div>
   </div>
@@ -1092,7 +1090,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-jobs" class="page">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">채용 건 관리</div><div class="page-sub">담당자별 채용 건 진행 현황</div></div>
-    <button class="btn btn-primary" onclick="openAddJob()"><i class="ti ti-plus"></i> 채용 건 등록</button>
+    <button class="btn btn-primary" onclick="openAddJob()">채용 건 등록</button>
   </div>
 
   <!-- 요약 카드 -->
@@ -1102,15 +1100,15 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
        이걸 job.company 기준으로 묶어서 "이 기업에 서칭 몇 건 했는지" 한눈에 보여준다 (2026-08-21 요청). -->
   <div class="card" style="margin-bottom:24px;">
     <div class="card-header" style="cursor:pointer;" onclick="toggleCompanySourcingPanel()">
-      <i class="ti ti-building-skyscraper" style="color:var(--purple)"></i> 기업별 서칭 현황
-      <span id="company-sourcing-toggle-icon" style="margin-left:auto;font-size:11px;color:var(--text3);"><i class="ti ti-chevron-down"></i></span>
+      기업별 서칭 현황
+      <span id="company-sourcing-toggle-icon" style="margin-left:auto;font-size:11px;color:var(--text3);">펼치기</span>
     </div>
     <div id="company-sourcing-panel" style="display:none;padding:0 4px 4px;"></div>
   </div>
 
   <!-- 채용 건 테이블 -->
   <div class="card">
-    <div class="card-header"><i class="ti ti-briefcase" style="color:var(--accent)"></i>채용 건 목록</div>
+    <div class="card-header">채용 건 목록</div>
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">고객사</th>
@@ -1134,7 +1132,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal">
   <div class="modal-head">
     <div class="modal-title" id="job-modal-title">채용 건 등록</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('job-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('job-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div class="fg-row fg-2">
@@ -1204,9 +1202,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="fg"><label>서칭 인재 기관 <span style="font-size:11px;color:var(--text3);font-weight:400;">(쉼표로 구분)</span></label><input id="job-searched-orgs" placeholder="예: 서울장애인복지관, 마포종합복지관"></div>
     <div class="fg"><label>특이사항</label><textarea id="job-notes" style="min-height:56px;" placeholder="예: 담당자 김과장 선호 조건, 이전 매칭 실패 사유 등"></textarea></div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveJob()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveJob()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('job-modal').style.display='none'">취소</button>
-      <button id="job-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteJob()"><i class="ti ti-trash"></i> 삭제</button>
+      <button id="job-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteJob()">삭제</button>
     </div>
   </div>
 </div>
@@ -1216,7 +1214,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div id="p-events" class="page">
   <div class="page-header">
     <div class="page-header-left"><div class="page-title">행사 관리</div><div class="page-sub">외부 행사 참여 기록 · 성과 추적</div></div>
-    <button class="btn btn-primary" onclick="openAddEvent()"><i class="ti ti-plus"></i> 행사 등록</button>
+    <button class="btn btn-primary" onclick="openAddEvent()">행사 등록</button>
   </div>
 
   <!-- 행사 요약 카드 -->
@@ -1224,7 +1222,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <!-- 행사 목록 -->
   <div class="card">
-    <div class="card-header"><i class="ti ti-calendar-event" style="color:var(--accent)"></i>행사 목록</div>
+    <div class="card-header">행사 목록</div>
     <table class="tbl">
       <thead><tr style="background:#f1f4f9;">
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">행사명</th>
@@ -1249,7 +1247,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div style="font-size:15px;font-weight:800;" id="today-tasks-title"> 오늘의 할 일</div>
         <div style="font-size:11px;color:var(--text3);margin-top:3px;" id="today-tasks-date"></div>
       </div>
-      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
+      <button onclick="document.getElementById('today-tasks-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);">닫기</button>
     </div>
     <div id="today-tasks-body" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;"></div>
     <div style="padding:14px 20px;border-top:1.5px solid var(--border);flex-shrink:0;display:flex;justify-content:flex-end;">
@@ -1262,7 +1260,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="modal modal-wide" style="max-width:760px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1.5px solid var(--border);flex-shrink:0;">
       <div><div style="font-size:16px;font-weight:800;" id="history-modal-title">컨택 히스토리</div><div style="font-size:12px;color:var(--text3);margin-top:2px;" id="history-modal-count"></div></div>
-      <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
+      <button onclick="document.getElementById('history-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);">닫기</button>
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;flex-wrap:wrap;">
       <input id="history-search" placeholder="제목, 내용, 참석자 검색..." oninput="filterHistory()" style="flex:1;min-width:160px;font-size:12px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
@@ -1278,7 +1276,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal modal-wide">
   <div class="modal-head">
     <div><div class="modal-title" id="event-modal-title">행사 등록</div><div id="ev-modified" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('event-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('event-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div class="form-section">
@@ -1400,10 +1398,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveEvent()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveEvent()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('event-modal').style.display='none'">취소</button>
-      <button id="ev-add-org-btn" class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);display:none;" onclick="goAddOrgFromEvent()"><i class="ti ti-building-plus"></i> 이 행사로 기관 등록</button>
-      <button id="ev-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteEvent()"><i class="ti ti-trash"></i> 삭제</button>
+      <button id="ev-add-org-btn" class="btn btn-sm" style="background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);display:none;" onclick="goAddOrgFromEvent()">이 행사로 기관 등록</button>
+      <button id="ev-delete-btn" class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;display:none;" onclick="deleteEvent()">삭제</button>
     </div>
   </div>
 </div>
@@ -1416,7 +1414,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <select id="an-member" onchange="renderAnalytics()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);"><option value="">전체 팀원</option></select>
   </div>
   <div id="an-today" style="margin-bottom:16px;"></div>
-  <div class="card" style="margin-bottom:16px;"><div class="card-header"><i class="ti ti-bulb" style="color:var(--red)"></i>운영 인사이트 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">바로 확인할 항목</span></div><div class="card-body" id="an-insight"></div></div>
+  <div class="card" style="margin-bottom:16px;"><div class="card-header">운영 인사이트 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">바로 확인할 항목</span></div><div class="card-body" id="an-insight"></div></div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <button class="chart-tab active" id="an-btn-thisweek" onclick="setAnalyticsPeriod('thisweek')">이번 주</button>
     <button class="chart-tab" id="an-btn-lastweek" onclick="setAnalyticsPeriod('lastweek')">지난 주</button>
@@ -1425,23 +1423,23 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <input type="date" id="an-start" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
     <span style="font-size:12px;color:var(--text3);">~</span>
     <input type="date" id="an-end" style="font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-    <button class="btn btn-primary btn-sm" onclick="setAnalyticsPeriod('custom')"><i class="ti ti-search"></i> 조회</button>
+    <button class="btn btn-primary btn-sm" onclick="setAnalyticsPeriod('custom')">조회</button>
     <span id="an-period-label" style="font-size:12px;color:var(--text3);margin-left:4px;"></span>
   </div>
   <div id="an-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-filter" style="color:var(--accent)"></i>② 기관 퍼널 · 전환율 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">전체 누적 기준</span></div><div class="card-body" id="an-funnel"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-trophy" style="color:var(--amber)"></i>③ TOP 기관 · 입사 성과</div><div class="card-body" id="an-top-orgs" style="max-height:360px;overflow-y:auto;"></div></div>
+    <div class="card"><div class="card-header">② 기관 퍼널 · 전환율 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">전체 누적 기준</span></div><div class="card-body" id="an-funnel"></div></div>
+    <div class="card"><div class="card-header">③ TOP 기관 · 입사 성과</div><div class="card-body" id="an-top-orgs" style="max-height:360px;overflow-y:auto;"></div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="card"><div class="card-header"><i class="ti ti-user-check" style="color:var(--purple)"></i>④ 담당자별 성과 KPI</div><div class="card-body" id="an-member-kpi"></div></div>
-    <div class="card"><div class="card-header"><i class="ti ti-route" style="color:var(--teal)"></i>⑤ 발굴 경로 · ROI</div><div class="card-body" id="an-route"></div></div>
+    <div class="card"><div class="card-header">④ 담당자별 성과 KPI</div><div class="card-body" id="an-member-kpi"></div></div>
+    <div class="card"><div class="card-header">⑤ 발굴 경로 · ROI</div><div class="card-body" id="an-route"></div></div>
   </div>
   <div class="card" style="margin-bottom:16px;">
-    <div class="card-header"><i class="ti ti-target-arrow" style="color:var(--purple)"></i>담당자별 성과 KPI (Phase 2, job_id 기준) <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">서칭 배정 연결된 실적만 집계</span></div>
+    <div class="card-header">담당자별 성과 KPI (Phase 2, job_id 기준) <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">서칭 배정 연결된 실적만 집계</span></div>
     <div class="card-body" id="an-member-kpi-v2"></div>
   </div>
-  <div class="card"><div class="card-header"><i class="ti ti-map-pin" style="color:var(--green)"></i>⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
+  <div class="card"><div class="card-header">⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
 </div>
 
 <div id="p-team" class="page">
@@ -1620,7 +1618,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal" style="max-width:420px;">
   <div class="modal-head">
     <div class="modal-title">할일 상세</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('team-task-edit-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('team-task-edit-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div class="fg"><label>제목</label><textarea id="tte-title" rows="3" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTeamTaskDetail();}" style="width:100%;padding:8px;border-radius:6px;border:1.5px solid var(--border);font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea></div>
@@ -1631,9 +1629,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <input type="checkbox" id="tte-done" style="width:16px;height:16px;accent-color:var(--green);"> 완료 처리
     </label>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveTeamTaskDetail()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveTeamTaskDetail()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('team-task-edit-modal').style.display='none'">취소</button>
-      <button id="tte-delete-btn" class="btn btn-ghost" style="margin-left:auto;color:var(--red);border-color:var(--red-bg);" onclick="deleteTeamTask()"><i class="ti ti-trash"></i> 삭제</button>
+      <button id="tte-delete-btn" class="btn btn-ghost" style="margin-left:auto;color:var(--red);border-color:var(--red-bg);" onclick="deleteTeamTask()">삭제</button>
     </div>
   </div>
 </div>
@@ -1645,7 +1643,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="modal" style="max-width:460px;width:100%;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1.5px solid var(--border);">
       <div style="font-size:16px;font-weight:800;">선물·초청 명단 내보내기</div>
-      <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);"><i class="ti ti-x"></i></button>
+      <button onclick="document.getElementById('rel-export-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);">닫기</button>
     </div>
     <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;gap:8px;">
@@ -1669,7 +1667,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 기관 상세 모달 -->
 <div id="modal" class="overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
 <div class="modal">
-  <div class="modal-head"><div class="modal-title" id="m-title"></div><button class="btn btn-ghost btn-sm" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title" id="m-title"></div><button class="btn btn-ghost btn-sm" onclick="closeModal()">닫기</button></div>
   <div class="modal-body" id="m-body"></div>
 </div>
 </div>
@@ -1680,7 +1678,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal" style="max-width:520px;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
     <div class="modal-title" id="td-title">지원자 상세</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-detail-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-detail-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div id="td-info" style="margin-bottom:16px;"></div>
@@ -1696,14 +1694,14 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="modal-sec-title" style="margin-top:16px;"> 첨부 파일 (지원서 · 포트폴리오)</div>
     <div id="td-files-list" style="margin-bottom:10px;"></div>
     <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
-      <i class="ti ti-upload" style="font-size:14px;"></i> 파일 업로드
+      파일 업로드
       <input type="file" id="td-file-input" multiple accept=".pdf,.doc,.docx,.hwp,.jpg,.jpeg,.png,.zip"
         style="display:none;" onchange="uploadTalentFiles(event)">
     </label>
     <div style="font-size:10px;color:var(--text3);margin-top:5px;">PDF, Word, HWP, 이미지, ZIP 파일 가능</div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveTalentDetail()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveTalentDetail()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('talent-detail-modal').style.display='none'">닫기</button>
     </div>
   </div>
@@ -1712,7 +1710,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 <div id="talent-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal">
-  <div class="modal-head"><div class="modal-title">영입 인재 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">영입 인재 등록</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('talent-modal').style.display='none'">닫기</button></div>
   <div class="modal-body">
     <div id="talent-modal-job-banner" style="display:none;margin-bottom:12px;padding:8px 12px;background:var(--accent-bg);color:var(--accent);border-radius:6px;font-size:12px;font-weight:700;"></div>
     <div class="fg" style="margin-bottom:16px;">
@@ -1770,11 +1768,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 합격 - 입사일 팝업 -->
 <div id="hapgyeok-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal" style="max-width:360px;">
-  <div class="modal-head"><div class="modal-title">합격 처리 - 입사일 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('hapgyeok-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">합격 처리 - 입사일 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('hapgyeok-modal').style.display='none'">닫기</button></div>
   <div class="modal-body">
     <div class="fg"><label>입사일</label><input id="hapgyeok-date" type="date"></div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="confirmHapgyeok()"><i class="ti ti-check"></i> 합격 확정</button>
+      <button class="btn btn-primary" onclick="confirmHapgyeok()">합격 확정</button>
       <button class="btn btn-ghost" onclick="document.getElementById('hapgyeok-modal').style.display='none'">취소</button>
     </div>
   </div>
@@ -1784,11 +1782,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 불합격 - 사유 팝업 -->
 <div id="bulhapgyeok-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal" style="max-width:400px;">
-  <div class="modal-head"><div class="modal-title">불합격 처리 - 사유 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">불합격 처리 - 사유 입력</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'">닫기</button></div>
   <div class="modal-body">
     <div class="fg"><label>불합격 사유</label><textarea id="bulhapgyeok-reason" placeholder="불합격 사유를 입력하세요" style="min-height:80px;"></textarea></div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="confirmBulhapgyeok()"><i class="ti ti-check"></i> 불합격 확정</button>
+      <button class="btn btn-primary" onclick="confirmBulhapgyeok()">불합격 확정</button>
       <button class="btn btn-ghost" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'">취소</button>
     </div>
   </div>
@@ -1800,7 +1798,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal" style="max-width:440px;">
   <div class="modal-head">
     <div class="modal-title">내 프로필 설정</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('profile-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);">
@@ -1820,10 +1818,10 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <input id="profile-status" placeholder="예: 휴가중, 미팅중, 외근중...">
     </div>
     <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="btn btn-ghost btn-sm" onclick="clearStatus()"><i class="ti ti-x"></i> 상태 초기화</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearStatus()">상태 초기화</button>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveProfile()"><i class="ti ti-check"></i> 저장</button>
+      <button class="btn btn-primary" onclick="saveProfile()">저장</button>
       <button class="btn btn-ghost" onclick="document.getElementById('profile-modal').style.display='none'">취소</button>
     </div>
 
@@ -1832,7 +1830,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>새 비밀번호</label><input id="new-pw" type="password" placeholder="새 비밀번호 (8자 이상)"></div>
       <div class="fg"><label>새 비밀번호 확인</label><input id="new-pw-confirm" type="password" placeholder="한 번 더 입력"></div>
       <p id="pw-err" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px;"></p>
-      <button class="btn btn-ghost btn-sm" onclick="changePassword()"><i class="ti ti-lock"></i> 비밀번호 변경</button>
+      <button class="btn btn-ghost btn-sm" onclick="changePassword()">비밀번호 변경</button>
     </div>
   </div>
 </div>
@@ -1869,7 +1867,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div id="contact-alert-list" style="background:var(--bg);border-radius:var(--radius-sm);padding:4px 12px;margin-bottom:20px;max-height:300px;overflow-y:auto;"></div>
   <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
     <button onclick="closeContactAlert()" class="btn btn-ghost">닫기</button>
-    <button onclick="dismissContactAlertToday()" class="btn btn-primary"><i class="ti ti-check"></i> 오늘 확인 완료 (오늘 하루 안 보기)</button>
+    <button onclick="dismissContactAlertToday()" class="btn btn-primary">오늘 확인 완료 (오늘 하루 안 보기)</button>
   </div>
 </div>
 </div>
@@ -1879,7 +1877,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal modal-wide" style="max-width:700px;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
     <div class="modal-title">변경 이력</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('audit-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('audit-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div style="display:flex;gap:8px;margin-bottom:12px;">
@@ -1898,14 +1896,14 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <div class="modal" style="max-width:560px;width:100%;max-height:88vh;overflow-y:auto;">
   <div class="modal-head">
     <div class="modal-title" id="mou-detail-title">MOU 준비 체크리스트</div>
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mou-detail-modal').style.display='none'"><i class="ti ti-x"></i></button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mou-detail-modal').style.display='none'">닫기</button>
   </div>
   <div class="modal-body">
     <div id="mou-detail-info" style="margin-bottom:16px;"></div>
     <div id="mou-detail-checklist"></div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="document.getElementById('mou-detail-modal').style.display='none'">닫기</button>
-      <button class="btn btn-primary btn-sm" onclick="openOrg(currentMouOrgId);document.getElementById('mou-detail-modal').style.display='none'"><i class="ti ti-building"></i> 기관 상세 보기</button>
+      <button class="btn btn-primary btn-sm" onclick="openOrg(currentMouOrgId);document.getElementById('mou-detail-modal').style.display='none'">기관 상세 보기</button>
     </div>
   </div>
 </div>
@@ -1913,12 +1911,12 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
 <div id="del-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal" style="max-width:420px;">
-  <div class="modal-head"><div class="modal-title" style="color:#dc2626;"><i class="ti ti-alert-triangle"></i> 삭제 확인</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('del-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title" style="color:#dc2626;"><i class="ti ti-alert-triangle"></i> 삭제 확인</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('del-modal').style.display='none'">닫기</button></div>
   <div class="modal-body">
     <p id="del-msg" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1rem;"></p>
     <div style="background:#fee2e2;border-radius:6px;padding:10px 12px;font-size:12px;color:#b91c1c;margin-bottom:1.2rem;"> 삭제된 데이터는 복구할 수 없습니다.</div>
     <div class="btn-row">
-      <button class="btn" style="background:#dc2626;color:#fff;" onclick="execDelete()"><i class="ti ti-trash"></i> 삭제</button>
+      <button class="btn" style="background:#dc2626;color:#fff;" onclick="execDelete()">삭제</button>
       <button class="btn btn-ghost" onclick="document.getElementById('del-modal').style.display='none'">취소</button>
     </div>
   </div>
@@ -1928,7 +1926,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 채용 투입 모달 -->
 <div id="recruit-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
-  <div class="modal-head"><div class="modal-title">채용 투입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('recruit-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">채용 투입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('recruit-modal').style.display='none'">닫기</button></div>
   <div class="modal-body" id="recruit-body"></div>
 </div>
 </div>
@@ -1936,7 +1934,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 인재영입 현황 모달 -->
 <div id="supply-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
-  <div class="modal-head"><div class="modal-title">인재영입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('supply-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title">인재영입 현황</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('supply-modal').style.display='none'">닫기</button></div>
   <div class="modal-body">
     <div class="mtab-row">
       <button class="mtab active" onclick="switchSupplyTab('pass',this)">합격자</button>
@@ -1950,7 +1948,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <!-- 메트릭 상세 모달 -->
 <div id="metric-modal" class="overlay" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
 <div class="modal modal-wide">
-  <div class="modal-head"><div class="modal-title" id="metric-modal-title"></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('metric-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+  <div class="modal-head"><div class="modal-title" id="metric-modal-title"></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('metric-modal').style.display='none'">닫기</button></div>
   <div class="modal-body" id="metric-modal-body"></div>
 </div>
 </div>
@@ -2661,11 +2659,11 @@ function renderMobileOrgList(q){
 function toggleMobileNav(){
   const sb=document.querySelector('.sidebar');
   sb.classList.toggle('open');
-  document.getElementById('m-menu-btn').innerHTML=sb.classList.contains('open')?'<i class="ti ti-x"></i>':'<i class="ti ti-menu-2"></i>';
+  document.getElementById('m-menu-btn').textContent=sb.classList.contains('open')?'닫기':'메뉴';
 }
 async function nav(page, pushState=true){
   const sb=document.querySelector('.sidebar');
-  if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').innerHTML='<i class="ti ti-menu-2"></i>';}
+  if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').textContent='메뉴';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('p-'+page).classList.add('active');
@@ -2965,7 +2963,7 @@ function checkAlerts(manual=false){
   const textMap={danger:'#7f1d1d',warn:'#78350f',info:'#1e1b4b'};
   bannerEl.innerHTML=`
     <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow-sm);">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i class="ti ti-bell-ringing" style="color:var(--red);"></i>오늘 알림 <span style="background:var(--red);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;">${alerts.length}</span></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;">오늘 알림 <span style="background:var(--red);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;">${alerts.length}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${alerts.map(a=>`
           <div onclick="if(this.dataset.orgId){openOrg(Number(this.dataset.orgId))}else{nav(this.dataset.link)}" data-org-id="${a.orgId||''}" data-link="${a.link||''}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${colorMap[a.type]};border:1px solid ${borderMap[a.type]};border-radius:var(--radius-sm);cursor:pointer;transition:opacity .1s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
@@ -2974,7 +2972,6 @@ function checkAlerts(manual=false){
               <div style="font-size:13px;font-weight:800;color:${textMap[a.type]};letter-spacing:-.01em;">${a.title}</div>
               <div style="font-size:12px;color:${textMap[a.type]};opacity:.95;margin-top:3px;font-weight:500;">${a.msg}</div>
             </div>
-            <i class="ti ti-chevron-right" style="font-size:14px;color:${textMap[a.type]};opacity:.7;"></i>
           </div>`).join('')}
       </div>
     </div>`;
@@ -3430,7 +3427,7 @@ function renderPipeline(){
       if(!items.length)return'';
       return'<div style="background:var(--surface);border-radius:12px;overflow:hidden;border:1.5px solid var(--border);"><div style="background:'+STAGE_BGS[i]+';color:'+STAGE_COLORS[i]+';padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px;">'+STAGES[s]+'<span style="background:'+STAGE_COLORS[i]+';color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;">'+items.length+'</span></div>'+items.map(o=>{
         const oa=actionsForOrg(o.id).filter(a=>!a.done&&dayDiff(a.due)<=3);
-        return`<div onclick="openOrg(${o.id})" style="padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">${o.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.cat||''} · ${o.member||'—'}</div>${oa.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px;"> ${oa[0].content||oa[0].text||''}</div>`:''}</div><i class="ti ti-chevron-right" style="color:var(--text3);font-size:14px;"></i></div>`;
+        return`<div onclick="openOrg(${o.id})" style="padding:12px 14px;border-top:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">${o.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${o.cat||''} · ${o.member||'—'}</div>${oa.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px;"> ${oa[0].content||oa[0].text||''}</div>`:''}</div></div>`;
       }).join('')+'</div>';
     }).join('')+'</div>';
     return;
@@ -3445,7 +3442,7 @@ function renderPipeline(){
           ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:100%;height:60px;object-fit:contain;border-radius:4px;margin-bottom:5px;">`:'' }
           <div class="p-card-name">${o.name}</div>
           <div class="p-card-meta">${o.cat||''} · ${o.member||'—'}</div>
-          ${oa.length?`<div class="p-card-warn"><i class="ti ti-alert-triangle"></i> ${oa[0].content||oa[0].text||''}</div>`:''}
+          ${oa.length?`<div class="p-card-warn">${oa[0].content||oa[0].text||''}</div>`:''}
         </div>`;}).join(''):'<div class="empty" style="padding:.5rem 0;font-size:11px;">없음</div>'}</div>
     </div>`;
   }).join('');
@@ -4431,7 +4428,7 @@ function renderActions(){
   const sumEl=document.getElementById('action-summary');
   if(sumEl){const kpis=[{k:'',label:'전체 미완료',val:undoneAll.length,c:''},{k:'late',label:'기한 초과',val:undoneAll.filter(a=>a.diff<0).length,c:'var(--red)'},{k:'today',label:'오늘 마감',val:undoneAll.filter(a=>a.diff===0).length,c:'var(--red)'},{k:'d3',label:'D-3 이내',val:undoneAll.filter(a=>a.diff>0&&a.diff<=3).length,c:'var(--amber)'},{k:'done',label:'완료',val:doneAll.length,c:'var(--green)'}];sumEl.innerHTML=kpis.map(k=>`<button class="ac-stat${(F.tab||'')===k.k?' on':''}" onclick="setActionTab('${(F.tab||'')===k.k?'':k.k}')"><b style="${k.val&&k.c?'color:'+k.c:''}">${k.val}</b><span>${k.label}</span></button>`).join('');}
   const ri=(a,isDone=false)=>`<div class="action-item" style="${isDone?'opacity:.65;':''}${a.org_id?'cursor:pointer;':''}" ${a.org_id?`onclick="openOrg(${a.org_id})"`:''}>
-    <div class="action-cb ${a.done?'done':''}" onclick="event.stopPropagation();toggleAction(${a.id},${a.done})">${a.done?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}</div>
+    <div class="action-cb ${a.done?'done':''}" onclick="event.stopPropagation();toggleAction(${a.id},${a.done})"></div>
     <div style="flex:1;min-width:0;">
       <div class="action-text ${a.done?'done':''}" style="margin-bottom:3px;">${a.text}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text3);">
@@ -4455,7 +4452,7 @@ function renderActions(){
   inboxEl.innerHTML=groups.map(g=>`<div style="margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
     <div onclick="toggleActionGroup('${g.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);cursor:pointer;user-select:none;">
       <span style="font-size:13px;font-weight:700;color:${g.color};">${g.label} <span style="font-size:12px;font-weight:400;color:var(--text3);">(${g.items.length}건)</span></span>
-      <i class="ti ti-chevron-${g.open?'down':'right'}" id="action-icon-${g.key}" style="color:var(--text3);font-size:14px;"></i>
+      <span id="action-icon-${g.key}" style="color:var(--text3);font-size:12px;">${g.open?'접기':'펼치기'}</span>
     </div>
     <div id="action-group-${g.key}" style="display:${g.open?'block':'none'};padding:0 4px;">${g.items.map(a=>ri(a,g.isDone||false)).join('')}</div>
   </div>`).join('');
@@ -4468,7 +4465,7 @@ function toggleActionGroup(key){
   const el=document.getElementById('action-group-'+key);const ic=document.getElementById('action-icon-'+key);
   if(!el)return;const open=el.style.display!=='none';
   el.style.display=open?'none':'block';
-  if(ic)ic.className=`ti ti-chevron-${open?'right':'down'}`;
+  if(ic)ic.textContent=open?'펼치기':'접기';
 }
 function toggleOldDone(){
   const list=document.getElementById('old-done-list');const icon=document.getElementById('old-done-icon');const toggle=document.getElementById('old-done-toggle');
@@ -4629,7 +4626,7 @@ function renderTalent(){
     return;
   }
   if(thead)thead.innerHTML=`<tr style="background:#f8faff;"><th style="${TH}">이름</th><th style="${TH}">유입기관</th><th style="${TH}">지원회사</th><th style="${TH}">직무</th><th style="${TH}">담당자</th><th style="${TH}">현재단계</th><th style="${TH}">등록일</th><th style="padding:10px 14px;border-bottom:2px solid #e2e8f0;"></th></tr>`;
-  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${cpv(t.name)}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${cpv(t.phone)}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${cpv(org?.name)}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${cpv(talApps[0]?.hire_company||t.hire_company||'—')}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>`:''}</td></tr>`;}).join('');}
+  tbody.innerHTML=filtered.map(t=>{const org=cache.orgs.find(o=>o.id===(t.source_org_id||t.org_id));const talApps=apps.filter(a=>a.talent_id===t.id);const status=talApps[0]?.status||t.status||'인재등록';const regDate=t.created_at?fDate(t.created_at.slice(0,10)):'—';return`<tr onclick="openTalentDrawer(${t.id})" style="cursor:pointer;transition:background .12s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''"><td style="padding:13px 16px;"><div style="font-size:13px;font-weight:700;color:var(--text);">${cpv(t.name)}</div>${t.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${cpv(t.phone)}</div>`:''}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${cpv(org?.name)}${isTestTalent(t)?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}</td><td style="font-size:12px;color:var(--accent);font-weight:600;padding:13px 14px;">${cpv(talApps[0]?.hire_company||t.hire_company||'—')}</td><td style="font-size:12px;color:var(--text2);padding:13px 14px;">${t.job||'—'}</td><td style="padding:13px 14px;"><span class="member-pill">${t.member||'—'}</span></td><td style="padding:13px 14px;">${stageBadge(status)}</td><td style="font-size:11px;color:var(--text3);padding:13px 14px;">${regDate}</td><td style="padding:13px 14px;">${currentUser?.email==='sjvest@vdream.co.kr'?`<button onclick="event.stopPropagation();confirmDeleteTalent(${t.id},'${t.name.replace(/'/g,"\\'")} ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제">삭제</button>`:''}</td></tr>`;}).join('');}
 function clearTalentFilter(){['talent-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['talent-filter-org','talent-filter-member','talent-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});talentColFilter={};renderTalent();}
 // 인재영입 목록 화면에 적용된 검색/필터를 그대로 반영해서, 지금 화면에 보이는 인재만 뽑는다
 // (특정 기관만 필터해두고 내보내면 그 기관 소개 인재만 담긴 파일이 됨).
@@ -5502,7 +5499,7 @@ function renderMouChecklist(org){
   function checkItem(item){
     return `<div onclick="toggleMouItem('${item.id}')" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;cursor:pointer;border-radius:6px;transition:background .1s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
       <div style="width:18px;height:18px;border-radius:4px;border:2px solid ${cl[item.id]?'var(--teal)':'var(--border)'};background:${cl[item.id]?'var(--teal)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-        ${cl[item.id]?'<i class="ti ti-check" style="font-size:10px;color:#fff;"></i>':''}
+        
       </div>
       <span style="font-size:12px;color:${cl[item.id]?'var(--text3)':'var(--text)'};text-decoration:${cl[item.id]?'line-through':'none'};line-height:1.4;">${item.label}</span>
     </div>`;
@@ -5654,14 +5651,14 @@ function renderAnalytics(){
   const todayEl=document.getElementById('an-today');
   if(todayEl){const urgents=[];allOrgs.filter(o=>o.mou_date&&Math.ceil((new Date(o.mou_date)-now)/864e5)<=3&&Math.ceil((new Date(o.mou_date)-now)/864e5)>=0).forEach(o=>urgents.push({type:'danger',label:'MOU D-'+Math.ceil((new Date(o.mou_date)-now)/864e5),text:o.name}));allOrgs.filter(o=>o.lastcontact&&(now-new Date(o.lastcontact))/864e5>=30).slice(0,3).forEach(o=>urgents.push({type:'warning',label:'미연락 '+Math.floor((now-new Date(o.lastcontact))/864e5)+'일',text:o.name}));allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=14&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0).forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);urgents.push({type:'danger',label:'계약만료 D-'+Math.ceil((new Date(a.contract_end_date)-now)/864e5),text:t?.name||'—'});});(cache.actions||[]).filter(a=>!a.done&&a.due&&Math.ceil((new Date(a.due)-now)/864e5)<=1).slice(0,3).forEach(a=>urgents.push({type:'warning',label:'후속액션 마감',text:a.text}));if(!urgents.length){todayEl.style.display='none';}else{todayEl.style.display='block';todayEl.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:4px;"><div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px;">오늘 우선 처리</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${urgents.map(u=>`<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:${u.type==='danger'?'#fee2e2':'#fef3c7'};border-radius:20px;"><span style="font-size:10px;font-weight:700;color:${u.type==='danger'?'#dc2626':'#b54708'};">${u.label}</span><span style="font-size:11px;font-weight:600;color:var(--text);">${u.text}</span></div>`).join('')}</div></div>`;}}
   const kpiEl=document.getElementById('an-kpi');
-  if(kpiEl){const K=[{label:'신규 기관',val:pO.length,prev:prevO,icon:'ti-building',c:'#2563eb'},{label:'컨택',val:pL.length,prev:prevL,icon:'ti-phone',c:'#7c3aed'},{label:'미팅완료',val:pMt.length,prev:prevMt,icon:'ti-calendar-event',c:'#8b5cf6'},{label:'MOU',val:pM.length,prev:prevM,icon:'ti-file-check',c:'#0d9488'},{label:'유입 지원자',val:pT.length,prev:prevT,icon:'ti-users',c:'#d97706'},{label:'채용 지원',val:pA.length,prev:null,icon:'ti-clipboard-list',c:'#2563eb'},{label:'최종합격',val:pH.length,prev:prevH,icon:'ti-circle-check',c:'#059669'},{label:'계약종료',val:pJ.length,prev:prevJ,icon:'ti-door-exit',c:'#6b7280'}];kpiEl.innerHTML=K.map(k=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:24px;height:24px;border-radius:6px;background:${k.c}18;display:flex;align-items:center;justify-content:center;"><i class="ti ${k.icon}" style="font-size:13px;color:${k.c};"></i></div><span style="font-size:11px;color:var(--text3);font-weight:600;">${k.label}</span></div><div style="font-size:26px;font-weight:800;color:${k.c};line-height:1;">${k.val}</div><div style="margin-top:4px;">${chgBadge(k.val,k.prev)}</div></div>`).join('');}
+  if(kpiEl){const K=[{label:'신규 기관',val:pO.length,prev:prevO,icon:'ti-building',c:'#2563eb'},{label:'컨택',val:pL.length,prev:prevL,icon:'ti-phone',c:'#7c3aed'},{label:'미팅완료',val:pMt.length,prev:prevMt,icon:'ti-calendar-event',c:'#8b5cf6'},{label:'MOU',val:pM.length,prev:prevM,icon:'ti-file-check',c:'#0d9488'},{label:'유입 지원자',val:pT.length,prev:prevT,icon:'ti-users',c:'#d97706'},{label:'채용 지원',val:pA.length,prev:null,icon:'ti-clipboard-list',c:'#2563eb'},{label:'최종합격',val:pH.length,prev:prevH,icon:'ti-circle-check',c:'#059669'},{label:'계약종료',val:pJ.length,prev:prevJ,icon:'ti-door-exit',c:'#6b7280'}];kpiEl.innerHTML=K.map(k=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.10)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:11px;color:var(--text3);font-weight:600;">${k.label}</span></div><div style="font-size:26px;font-weight:800;color:${k.c};line-height:1;">${k.val}</div><div style="margin-top:4px;">${chgBadge(k.val,k.prev)}</div></div>`).join('');}
   const fEl=document.getElementById('an-funnel');
   if(fEl){const stages=[{l:'발굴',icon:'ti-building',v:pipelineOrgs.length,c:'#2563eb',bg:'#dbeafe'},{l:'관계형성',icon:'ti-handshake',v:pipelineOrgs.filter(o=>Number(o.stage)>=1).length,c:'#7c3aed',bg:'#ede9fe'},{l:'미팅',icon:'ti-calendar-event',v:pipelineOrgs.filter(o=>Number(o.stage)>=2).length,c:'#8b5cf6',bg:'#f3e8ff'},{l:'MOU',icon:'ti-file-check',v:pipelineOrgs.filter(o=>Number(o.stage)>=4).length,c:'#0d9488',bg:'#ccfbf1'},{l:'지원 접수',icon:'ti-users',v:allTals.length,c:'#d97706',bg:'#fef3c7'},{l:'최종합격',icon:'ti-circle-check',v:allApps.filter(a=>a.status==='최종합격').length,c:'#059669',bg:'#d1fae5'}];
     // 막대 길이가 값 크기와 무관하게 항상 카드 전체 폭으로 그려져 "퍼널"이 한눈에 안 읽힌다는 피드백(2026-09-23) —
     // 최댓값 대비 비율만큼 배경을 채워서 단계가 내려갈수록 막대가 실제로 줄어들어 보이도록 함.
     // 텍스트/숫자는 채워진 막대 폭과 무관하게 항상 전체 너비로 놓아 저조한 단계에서도 잘리지 않게 함.
     const maxV=Math.max(...stages.map(s=>s.v),1);
-    fEl.innerHTML='<div style="display:flex;flex-direction:column;gap:4px;">'+stages.map((s,i)=>{const prev=i>0?stages[i-1].v:null;const rate=prev&&prev>0?Math.round(s.v/prev*100):null;const isBottleneck=rate!==null&&rate<50;const pct=Math.max(s.v/maxV*100,8);return`<div style="position:relative;border-radius:6px;overflow:hidden;border:1.5px solid ${s.c}33;background:var(--bg);transition:all .15s;" onmouseover="this.style.borderColor='${s.c}';this.style.transform='translateX(2px)'" onmouseout="this.style.borderColor='${s.c}33';this.style.transform=''"><div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${s.bg};transition:width .3s;"></div><div style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px;"><div style="width:28px;height:28px;border-radius:7px;background:${s.c};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ${s.icon}" style="color:#fff;font-size:13px;"></i></div><div style="flex:1;"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;font-weight:700;color:#374151;">${s.l}</span>${isBottleneck?'<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#fee2e2;color:#dc2626;border-radius:10px;">병목</span>':''}</div>${rate!==null?`<div style="font-size:10px;color:${isBottleneck?'#dc2626':'#6b7280'};">전환율 ${rate}%</div>`:''}</div><div style="font-size:20px;font-weight:800;color:${s.c};">${s.v}</div></div></div>${i<stages.length-1?'<div style="padding:0 12px;"><div style="width:28px;display:flex;justify-content:center;"><i class="ti ti-chevron-down" style="color:#9ca3af;font-size:12px;"></i></div></div>':''}`;}).join('')+'</div>';}
+    fEl.innerHTML='<div style="display:flex;flex-direction:column;gap:4px;">'+stages.map((s,i)=>{const prev=i>0?stages[i-1].v:null;const rate=prev&&prev>0?Math.round(s.v/prev*100):null;const isBottleneck=rate!==null&&rate<50;const pct=Math.max(s.v/maxV*100,8);return`<div style="position:relative;border-radius:6px;overflow:hidden;border:1.5px solid ${s.c}33;background:var(--bg);transition:all .15s;" onmouseover="this.style.borderColor='${s.c}';this.style.transform='translateX(2px)'" onmouseout="this.style.borderColor='${s.c}33';this.style.transform=''"><div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${s.bg};transition:width .3s;"></div><div style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 12px;"><div style="flex:1;"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:12px;font-weight:700;color:#374151;">${s.l}</span>${isBottleneck?'<span style="font-size:9px;font-weight:700;padding:1px 5px;background:#fee2e2;color:#dc2626;border-radius:10px;">병목</span>':''}</div>${rate!==null?`<div style="font-size:10px;color:${isBottleneck?'#dc2626':'#6b7280'};">전환율 ${rate}%</div>`:''}</div><div style="font-size:20px;font-weight:800;color:${s.c};">${s.v}</div></div></div>${i<stages.length-1?'<div style="padding:0 12px;"><div style="width:28px;display:flex;justify-content:center;"><i class="ti ti-chevron-down" style="color:#9ca3af;font-size:12px;"></i></div></div>':''}`;}).join('')+'</div>';}
   const topEl=document.getElementById('an-top-orgs');
   if(topEl){const os=allOrgs.map(o=>{const ot=allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length;const oa=allApps.filter(a=>a.org_id===o.id).length;const oh=allApps.filter(a=>a.org_id===o.id&&a.status==='최종합격').length;const hs=calcHealthScore(o.id).score;const rate=ot>0?Math.round(oh/ot*100):0;return{...o,ot,oa,oh,rate,hs};}).filter(o=>o.ot>0||o.oh>0).sort((a,b)=>b.oh-a.oh||b.ot-a.ot).slice(0,10);topEl.innerHTML=os.length?os.map((o,i)=>`<div onclick="openOrg(${o.id})" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;"><span style="font-size:13px;font-weight:800;color:${i<3?'var(--amber)':'var(--text3)'};">${i+1}</span><span style="font-size:12px;font-weight:700;flex:1;">${o.name}</span>${healthBadge(o.hs,false)}</div><div style="display:flex;gap:8px;font-size:11px;margin-bottom:3px;"><span style="color:var(--text3);">유입 <b style="color:var(--text2);">${o.ot}</b></span><span style="color:var(--text3);">지원 <b style="color:var(--accent);">${o.oa}</b></span><span style="color:var(--text3);">입사 <b style="color:var(--green);font-weight:800;">${o.oh}</b></span><span style="margin-left:auto;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${o.rate>30?'var(--green-bg)':o.rate>10?'var(--amber-bg)':'var(--bg)'};color:${o.rate>30?'var(--green)':o.rate>10?'var(--amber)':'var(--text3)'};">${o.rate}%</span></div><div style="background:var(--bg);border-radius:20px;height:4px;overflow:hidden;"><div style="width:${Math.min(o.rate*2,100)}%;height:100%;background:${o.rate>30?'var(--green)':o.rate>10?'var(--amber)':'var(--border)'};border-radius:20px;"></div></div></div>`).join(''):'<div class="empty">데이터 없음</div>';}
   const mEl=document.getElementById('an-member-kpi');
@@ -5673,7 +5670,7 @@ function renderAnalytics(){
     mEl2.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:7px 8px;text-align:left;color:var(--text3);">담당자</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">담당 채용건</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">서칭목표</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">실제서칭</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">지원전환</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">합격기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">입사기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">목표달성률</th></tr></thead><tbody>${ms2.map(m=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;font-weight:700;">${m.name}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${m.assignedJobCount}</td><td style="padding:7px 8px;text-align:center;color:var(--text3);">${m.sourcingTargetTotal||'—'}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--teal);">${m.actualSourcedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--amber);">${m.applicationConvertedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--green);">${m.passedCount}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${m.hiredCount}</td><td style="padding:7px 8px;text-align:center;">${m.targetAchievementRate===null?'—':m.targetAchievementRate+'%'}</td></tr>`).join('')}</tbody></table>`;
   }
   const rEl=document.getElementById('an-route');
-  if(rEl){const routes=[{l:'서칭',ch:'서칭',icon:'ti-search'},{l:'인바운드',ch:'인바운드',icon:'ti-phone'},{l:'행사·전시회',ch:'행사',icon:'ti-calendar'},{l:'소개',ch:'소개',icon:'ti-user-plus'},{l:'기관연계',ch:'기관연계',icon:'ti-building'}];rEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+routes.map(r=>{const rt=allTals.filter(t=>t.channel===r.ch);const rh=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===r.ch&&a.status==='최종합격';});const cv=rt.length>0?Math.round(rh.length/rt.length*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><i class="ti ${r.icon}" style="font-size:13px;color:var(--accent);"></i><span style="font-size:12px;font-weight:700;">${r.l}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${cv>20?'var(--green-bg)':cv>10?'var(--amber-bg)':'var(--bg2)'};color:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--text3)'};">${cv}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);"><span>유입 <b style="color:var(--amber);">${rt.length}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${rh.length}</b></span></div></div>`;}).join('')+'</div>';}
+  if(rEl){const routes=[{l:'서칭',ch:'서칭',icon:'ti-search'},{l:'인바운드',ch:'인바운드',icon:'ti-phone'},{l:'행사·전시회',ch:'행사',icon:'ti-calendar'},{l:'소개',ch:'소개',icon:'ti-user-plus'},{l:'기관연계',ch:'기관연계',icon:'ti-building'}];rEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+routes.map(r=>{const rt=allTals.filter(t=>t.channel===r.ch);const rh=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===r.ch&&a.status==='최종합격';});const cv=rt.length>0?Math.round(rh.length/rt.length*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${r.l}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${cv>20?'var(--green-bg)':cv>10?'var(--amber-bg)':'var(--bg2)'};color:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--text3)'};">${cv}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);"><span>유입 <b style="color:var(--amber);">${rt.length}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${rh.length}</b></span></div></div>`;}).join('')+'</div>';}
   const rgEl=document.getElementById('an-region');
   if(rgEl){const rm={};allOrgs.forEach(o=>{const r=o.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].o++;});allTals.forEach(t=>{const org=allOrgs.find(o=>o.id===(t.source_org_id||t.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].t++;});allApps.filter(a=>a.status==='최종합격').forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);const org=allOrgs.find(o=>o.id===(t?.source_org_id||t?.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].h++;});rgEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+Object.entries(rm).sort((a,b)=>b[1].h-a[1].h||b[1].t-a[1].t).slice(0,8).map(([r,v])=>{const rate=v.t>0?Math.round(v.h/v.t*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;">${r}</span><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${rate>20?'var(--green-bg)':'var(--bg2)'};color:${rate>20?'var(--green)':'var(--text3)'};">${rate}%</span></div><div style="display:flex;gap:8px;font-size:11px;color:var(--text3);"><span>기관 <b style="color:var(--accent);">${v.o}</b></span><span>유입 <b style="color:var(--amber);">${v.t}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${v.h}</b></span></div></div>`;}).join('')+'</div>';}
   const iEl=document.getElementById('an-insight');
@@ -5959,9 +5956,9 @@ async function renderCold(){
             <div style="font-size:12px;font-weight:600;color:var(--text);">${c.summary||''}</div>
             ${c.phone||c.email||c.address?`
             <div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;">
-              ${c.phone?`<span style="font-size:11px;color:var(--text2);"><i class="ti ti-phone" style="font-size:10px;"></i> ${c.phone}</span>`:''}
-              ${c.email?`<span style="font-size:11px;color:var(--accent);"><i class="ti ti-mail" style="font-size:10px;"></i> ${c.email}</span>`:''}
-              ${c.address?`<span style="font-size:11px;color:var(--text3);"><i class="ti ti-map-pin" style="font-size:10px;"></i> ${c.address}</span>`:''}
+              ${c.phone?`<span style="font-size:11px;color:var(--text2);">${c.phone}</span>`:''}
+              ${c.email?`<span style="font-size:11px;color:var(--accent);">${c.email}</span>`:''}
+              ${c.address?`<span style="font-size:11px;color:var(--text3);">${c.address}</span>`:''}
             </div>`:''}
             ${c.memo?`<div style="font-size:12px;color:var(--text3);margin-top:5px;white-space:pre-line;background:rgba(0,0,0,.03);padding:7px 10px;border-radius:5px;">${c.memo}</div>`:''}
             <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text3);">
@@ -5970,9 +5967,9 @@ async function renderCold(){
             </div>
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;align-items:flex-start;">
-            ${!c.converted_org_id&&(c.result==='긍정적'||c.result==='재연락 필요')?`<button onclick="convertToOrg(${c.id},'${c.org_name.replace(/'/g,"\\'")}')" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;" title="기관으로 등록"><i class="ti ti-building-plus"></i> 기관 등록</button>`:''}
-            ${(c.result==='재연락 필요'||c.status==='진행중')?`<button onclick="toggleColdFollowup(${c.id})" style="background:#fffbeb;color:#b54708;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;"><i class="ti ti-plus"></i> 추가 컨택</button>`:''}
-            <button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제"><i class="ti ti-trash"></i></button>
+            ${!c.converted_org_id&&(c.result==='긍정적'||c.result==='재연락 필요')?`<button onclick="convertToOrg(${c.id},'${c.org_name.replace(/'/g,"\\'")}')" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;" title="기관으로 등록">기관 등록</button>`:''}
+            ${(c.result==='재연락 필요'||c.status==='진행중')?`<button onclick="toggleColdFollowup(${c.id})" style="background:#fffbeb;color:#b54708;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;">추가 컨택</button>`:''}
+            <button onclick="deleteCold(${c.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;" title="삭제">삭제</button>
           </div>
         </div>
         ${(c.result==='재연락 필요'||c.status==='진행중')?`<div id="cold-followup-${c.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--radius-sm);">
@@ -6358,7 +6355,7 @@ function renderContactsList(){
           ${c.email?`<span style="font-size:11px;color:var(--accent);margin-left:8px;">${c.email}</span>`:''}
           ${c.status==='변경됨'?`<span class="badge b-amber" style="font-size:10px;margin-left:6px;">이전 담당자</span>`:''}
         </div>
-        ${c.status!=='변경됨'?`<button onclick="removeContact(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;"><i class="ti ti-trash"></i></button>`:''}
+        ${c.status!=='변경됨'?`<button onclick="removeContact(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;">삭제</button>`:''}
       </div>`).join('')}
   </div>`;
 }
@@ -6450,7 +6447,7 @@ function loadOrgForEdit(orgId){
   document.getElementById('add-org-title').textContent='기관 정보 수정';
   document.getElementById('add-org-sub').textContent=`"${o.name}" 정보를 수정합니다`;
   document.getElementById('edit-mode-clear').style.display='';
-  document.getElementById('save-btn').innerHTML='<i class="ti ti-check"></i> 수정 완료';
+  document.getElementById('save-btn').innerHTML='수정 완료';
   // 폼에 데이터 채우기
   document.getElementById('n-name').value=o.name||'';
   document.getElementById('n-cat').value=o.cat||'복지관, 센터';
@@ -6788,7 +6785,7 @@ function renderStatusTimeline(t){
           <div style="position:absolute;left:-17px;top:3px;width:10px;height:10px;border-radius:50%;background:${STATUS_COLOR[h.to]||'var(--text3)'};border:2px solid #fff;"></div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             ${h.from?`<span class="badge b-gray" style="font-size:10px;">${h.from}</span>
-            <i class="ti ti-arrow-right" style="font-size:10px;color:var(--text3);"></i>`:''}
+            <span style="font-size:10px;color:var(--text3);">→</span>`:''}
             <span class="badge ${STATUS_CLS[h.to]||'b-blue'}" style="font-size:10px;">${h.to}</span>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;">
@@ -6806,13 +6803,12 @@ function renderTalentFiles(talent){
   el.innerHTML=files.map((f,i)=>{
     const viewable=['application/pdf','image/jpeg','image/jpg','image/png','image/gif','image/webp'].includes(f.type);
     return`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:5px;">
-      <i class="ti ti-file" style="font-size:14px;color:var(--accent);flex-shrink:0;"></i>
       <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
       <span style="font-size:10px;color:var(--text3);flex-shrink:0;">${f.size||''}</span>
       <button onclick="downloadTalentFile(${i})" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--accent);font-size:11px;padding:3px 8px;flex-shrink:0;">
-        <i class="ti ti-${viewable?'eye':'download'}"></i> ${viewable?'보기':'다운'}
+        ${viewable?'보기':'다운'}
       </button>
-      <button onclick="deleteTalentFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;flex-shrink:0;"><i class="ti ti-trash"></i></button>
+      <button onclick="deleteTalentFile(${i})" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;flex-shrink:0;">삭제</button>
     </div>`;
   }).join('');
 }
@@ -6984,7 +6980,7 @@ function sourcingPanelHtml(job){
       <span style="font-weight:700;color:${pct!==null&&pct>=100?'var(--green)':'var(--accent)'};">실제 ${actual}명${pct!==null?` (${pct}%)`:''}</span>
       <span style="color:var(--text3);">${a.start_date?fDate(a.start_date):'—'} ~ ${a.due_date?fDate(a.due_date):'—'}</span>
       <span class="badge b-gray" style="font-size:10px;">${a.status||'진행중'}</span>
-      <button onclick="event.stopPropagation();deleteSourcingAssignment(${a.id})" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;" title="배정 삭제"><i class="ti ti-trash"></i></button>
+      <button onclick="event.stopPropagation();deleteSourcingAssignment(${a.id})" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;" title="배정 삭제">삭제</button>
     </div>`;
   }).join('')||'<div style="font-size:12px;color:var(--text3);padding:6px 0;">등록된 서칭 배정 없음</div>';
   return `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);" onclick="event.stopPropagation()">
@@ -7083,7 +7079,7 @@ function toggleCompanySourcingPanel(){
   if(!panel)return;
   const open=panel.style.display==='none';
   panel.style.display=open?'block':'none';
-  if(icon)icon.innerHTML=open?'<i class="ti ti-chevron-up"></i>':'<i class="ti ti-chevron-down"></i>';
+  if(icon)icon.textContent=open?'접기':'펼치기';
 }
 async function renderJobs(){
   const{data,error}=await sb.from('jobs').select('*').order('deadline',{ascending:true});
@@ -7933,7 +7929,7 @@ function previewCard(event){
     document.getElementById('card-upload-wrap').innerHTML=`
       <div class="card-preview">
         <img src="${cardImageBase64}" alt="명함 사진">
-        <button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button>
+        <button class="card-preview-del" onclick="clearCardPreview()" title="삭제">삭제</button>
       </div>`;
   };
   reader.readAsDataURL(file);
@@ -7943,7 +7939,7 @@ function clearCardPreview(){
   extraCardFiles=[];
   document.getElementById('card-upload-wrap').innerHTML=`
     <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:#fafbfc;font-size:12px;color:var(--text2);font-weight:600;">
-      <i class="ti ti-camera" style="font-size:16px;color:var(--text3);"></i> 명함 사진 등록 (클릭 또는 끌어다 놓기)
+      명함 사진 등록 (클릭 또는 끌어다 놓기)
       <input type="file" id="card-file" accept="image/*" onchange="previewCard(event)" style="display:none;">
     </label>`;
 }
@@ -7955,11 +7951,11 @@ function renderCardThumbnails(){
   const extraThumbs=extraCardFiles.map((f,i)=>`
     <div class="card-preview" style="width:70px;height:70px;">
       <img src="${URL.createObjectURL(f)}" alt="추가 명함" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
-      <button class="card-preview-del" onclick="removeExtraCard(${i})" title="삭제" style="transform:scale(.8);"><i class="ti ti-x"></i></button>
+      <button class="card-preview-del" onclick="removeExtraCard(${i})" title="삭제" style="transform:scale(.8);">삭제</button>
     </div>`).join('');
   wrap.innerHTML=`
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;">
-      <div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제"><i class="ti ti-x"></i></button></div>
+      <div class="card-preview"><img src="${cardImageBase64}" alt="명함 사진"><button class="card-preview-del" onclick="clearCardPreview()" title="삭제">삭제</button></div>
       ${extraThumbs}
       <label style="display:flex;align-items:center;justify-content:center;width:70px;height:70px;border:2px dashed var(--border2);border-radius:8px;cursor:pointer;color:var(--text3);font-size:11px;text-align:center;">
         + 추가
@@ -8279,9 +8275,9 @@ async function openOrg(id){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
         <span style="font-size:12px;font-weight:700;color:var(--text3);"> 명함</span>
         <div style="display:flex;gap:6px;">
-          <button onclick="reExtractCardInfo(${id})" title="등록된 명함 사진에서 담당자/연락처 정보를 다시 추출해서 비어있는 항목만 채워요" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--accent);background:var(--accent-bg);"><i class="ti ti-refresh"></i> 정보 재추출</button>
+          <button onclick="reExtractCardInfo(${id})" title="등록된 명함 사진에서 담당자/연락처 정보를 다시 추출해서 비어있는 항목만 채워요" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--accent);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--accent);background:var(--accent-bg);">정보 재추출</button>
           <label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--teal);background:var(--teal-bg);">
-            <i class="ti ti-plus"></i> 명함 추가
+            명함 추가
             <input type="file" accept="image/*" style="display:none;" onchange="handleModalCardImage(event,${id})">
           </label>
         </div>
@@ -8292,7 +8288,7 @@ async function openOrg(id){
     <div id="meetings-wrap" style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;flex-wrap:wrap;">
         <span style="font-size:12px;font-weight:700;color:var(--text3);"> 미팅</span>
-        <button onclick="toggleMeetingForm(${id})" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--purple);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--purple);background:var(--purple-bg);"><i class="ti ti-plus"></i> 미팅 기록</button>
+        <button onclick="toggleMeetingForm(${id})" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1.5px solid var(--purple);border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;color:var(--purple);background:var(--purple-bg);">미팅 기록</button>
       </div>
       <div id="meeting-form-${id}" style="display:none;margin-bottom:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">
         <div style="display:flex;gap:6px;margin-bottom:6px;">
@@ -8316,9 +8312,9 @@ async function openOrg(id){
         style="cursor:pointer;border:1.5px dashed #94a3b8;display:inline-flex;align-items:center;gap:4px;padding:3px 10px;"
         onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
         onmouseout="this.style.borderColor='#94a3b8';this.style.color=''">
-        ${o.source||'발굴경로'} <i class="ti ti-pencil" style="font-size:10px;"></i>
+        ${o.source||'발굴경로'}
       </span>
-      ${linkedEvent?`<span class="badge b-teal"><i class="ti ti-calendar-event" style="font-size:10px;"></i> ${linkedEvent.name||linkedEvent.title}</span>`:''}
+      ${linkedEvent?`<span class="badge b-teal">${linkedEvent.name||linkedEvent.title}</span>`:''}
       ${o.accompany?`<span class="badge b-purple">${o.accompany}</span>`:''}
       ${o.school==1?'<span class="badge b-amber">직무교육 협의 필요</span>':o.school==2?'<span class="badge b-green">직무교육 협의 완료</span>':''}
       ${o.premeil==2?'<span class="badge b-amber">사전 메일 요구</span>':o.premeil==1?'<span class="badge b-green">사전 메일 발송 완료</span>':''}
@@ -8349,7 +8345,7 @@ async function openOrg(id){
     ${o.fax?`<div class="info-row"><span class="info-key">팩스</span><span>${o.fax}</span></div>`:''}
     <div class="info-row"><span class="info-key">이메일</span><span>${cpv(o.email)}</span></div>
     ${o.region||o.address?`<div class="info-row"><span class="info-key">지역/주소</span><span>${[o.region,o.address].filter(Boolean).join(' · ')}</span></div>`:''}
-    <div class="info-row"><span class="info-key">웹사이트</span><span>${o.website?`<a href="${o.website}" target="_blank" style="color:var(--accent);text-decoration:none;">${o.website} <i class="ti ti-external-link"></i></a>`:'—'}</span></div>
+    <div class="info-row"><span class="info-key">웹사이트</span><span>${o.website?`<a href="${o.website}" target="_blank" style="color:var(--accent);text-decoration:none;">${o.website}</a>`:'—'}</span></div>
     <div class="info-row"><span class="info-key">담당팀원</span><span class="member-pill">${o.member||'—'}</span></div>
     <div class="info-row"><span class="info-key">등록자</span><span style="font-size:12px;font-weight:600;color:var(--accent);">${o.created_by_name||'—'}</span></div>
     <div class="info-row"><span class="info-key">첫 미팅</span><span>${fDate(o.date)}</span></div>
@@ -8362,7 +8358,7 @@ async function openOrg(id){
           ${o.stage>=5?'':(()=>{const days=Math.floor((new Date(o.mou_date)-new Date())/864e5);return days>=0?`<span style="background:${days<=7?'#fee2e2':'#eff4ff'};color:${days<=7?'#dc2626':'#3b6ef8'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D-${days}</span>`:`<span style="background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;">D+${Math.abs(days)} 초과</span>`;})()}
         `:'<span style="color:var(--text3);font-size:12px;">미설정</span>'}
         <input type="date" id="mou-date-input" value="${o.mou_date||''}" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-        <button onclick="saveMouDate(${id})" class="btn btn-primary btn-sm"><i class="ti ti-check"></i> 저장</button>
+        <button onclick="saveMouDate(${id})" class="btn btn-primary btn-sm">저장</button>
       </div>
     </div>`:''}
     <div class="info-row"><span class="info-key">마지막 연락</span><span style="color:${days>=30?'var(--red)':'inherit'}">${days!==null?days+'일 전':'—'}</span></div>
@@ -8388,7 +8384,7 @@ async function openOrg(id){
     <div style="font-size:13px;font-weight:800;color:var(--teal);background:var(--teal-bg);padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;">관계 이력 (명절 선물 · 행사 초청)<button onclick="openRelForm(${id})" style="margin-left:auto;font-size:11px;padding:3px 10px;border:1.5px solid var(--teal);border-radius:6px;background:#fff;color:var(--teal);font-weight:700;cursor:pointer;">이력 추가</button></div>
     <div id="org-rel-form"></div>
     <div id="org-rel-list"><div class="empty" style="padding:.5rem 0;font-size:12px;">불러오는 중</div></div>
-    <div style="font-size:13px;font-weight:800;color:var(--purple);background:#faf5ff;padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-history"></i> 컨택 히스토리</div>
+    <div style="font-size:13px;font-weight:800;color:var(--purple);background:#faf5ff;padding:6px 12px;border-radius:8px;margin:14px 0 10px;display:flex;align-items:center;gap:6px;">컨택 히스토리</div>
     <div id="contact-log-list">${renderContactLogs(id)}</div>
     <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <select id="log-contact-type" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);flex-shrink:0;">
@@ -8418,10 +8414,9 @@ async function openOrg(id){
   <div>
     ${o.stage===5?`
     <div style="background:var(--green-bg);border:1.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-      <i class="ti ti-circle-check" style="color:var(--green);font-size:18px;"></i>
       <span style="font-size:13px;font-weight:700;color:var(--green);">MOU 완료! </span>
     </div>`:''}
-    <div style="font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-bg);padding:6px 12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="ti ti-checkbox"></i> 후속 액션</div>
+    <div style="font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-bg);padding:6px 12px;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">후속 액션</div>
     ${oa.filter(a=>!a.done).length?oa.filter(a=>!a.done).map(a=>`
       <div class="action-item">
         <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
@@ -8430,24 +8425,24 @@ async function openOrg(id){
           ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
         </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}${a.due_time?' · '+a.due_time:''}</div>
-        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가"><i class="ti ti-calendar-plus"></i></button>`:''}
-        ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>` : ''}
+        ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">캘린더</button>`:''}
+        ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제">삭제</button>` : ''}
       </div>`).join(''):'<div class="empty" style="padding:.5rem 0;font-size:12px;">미완료 액션 없음 </div>'}
     ${oa.filter(a=>a.done).length?`
     <div onclick="toggleDoneActions()" style="font-size:11px;font-weight:700;color:var(--green);margin:12px 0 6px;display:flex;align-items:center;gap:4px;cursor:pointer;">
-      <i class="ti ti-circle-check"></i> 완료된 액션 (${oa.filter(a=>a.done).length}건) <i class="ti ti-chevron-down" id="done-actions-icon" style="font-size:10px;margin-left:4px;"></i>
+      완료된 액션 (${oa.filter(a=>a.done).length}건) <span id="done-actions-icon" style="font-size:10px;margin-left:4px;">펼치기</span>
     </div>
     <div id="done-actions-wrap" style="display:none;">
     ${oa.filter(a=>a.done).map(a=>`
       <div class="action-item" style="opacity:.7;background:#f0fdf4;border-radius:6px;padding:6px 8px;margin-bottom:4px;">
-        <div class="action-cb done" onclick="toggleActionModal(${a.id},${a.done})"><i class="ti ti-check" style="font-size:10px;color:#fff;"></i></div>
+        <div class="action-cb done" onclick="toggleActionModal(${a.id},${a.done})"></div>
         <div style="flex:1;">
           <div class="action-text done">${a.content||a.text||''}</div>
           ${a.due?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px;">${fDate(a.due)}</div>`:''}
           ${a.created_by_name?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:1px;">${a.created_by_name}</div>`:''}${a.completed_by_name?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px;"> ${a.completed_by_name}</div>`:''}
         </div>
         <div style="font-size:10px;color:var(--green);font-weight:600;flex-shrink:0;">완료</div>
-        <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제"><i class="ti ti-trash"></i></button>
+        <button onclick="deleteAction(${a.id})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 4px;font-size:14px;flex-shrink:0;" title="삭제">삭제</button>
       </div>`).join('')}
     </div>`:``}
     <div style="font-size:12px;font-weight:700;color:var(--text2);border-left:3px solid var(--accent);padding-left:8px;margin:12px 0 8px;">+ 액션 추가</div>
@@ -8539,9 +8534,9 @@ async function openOrg(id){
         <option value="중립적" ${o.contact_tier==='중립적'?'selected':''}> 중립적</option>
         <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}> 부정적</option>
       </select>
-      <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})"><i class="ti ti-phone"></i> 연락 완료</button>
-      <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})"><i class="ti ti-pencil"></i> 정보 수정</button>
-      ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})"><i class="ti ti-trash"></i> 기관 삭제</button>` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})">연락 완료</button>
+      <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})">정보 수정</button>
+      ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})">기관 삭제</button>` : ''}
     </div>
   `;
   document.getElementById('modal').querySelector('.modal').classList.add('modal-org');
@@ -8841,8 +8836,8 @@ function renderContactLogItem(l,orgId){
       ${statusBadge}
       ${threads.length?`<span style="font-size:10px;font-weight:700;color:#b54708;background:#fffbeb;border:1px solid #fcd34d;padding:1px 7px;border-radius:10px;flex-shrink:0;">+${threads.length} 추가상담</span>`:''}
       ${l.created_by_name?`<span style="font-size:10px;color:var(--accent);background:var(--accent-bg);padding:2px 7px;border-radius:4px;font-weight:600;flex-shrink:0;">${l.created_by_name}</span>`:''}
-      ${hasMemo||threads.length?`<i class="ti ti-chevron-down" style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}"></i>`:''}
-      <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제"><i class="ti ti-x"></i></button>
+      ${hasMemo||threads.length?`<span style="font-size:11px;color:var(--text3);" id="log-icon-${l.id}">펼치기</span>`:''}
+      <button onclick="event.stopPropagation();deleteContactLog(${l.id},${orgId})" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:0 2px;font-size:12px;" title="삭제">삭제</button>
     </div>
     ${(l.our_members||l.their_members)?`<div style="margin:6px 0 2px 22px;font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap;">${l.our_members?`<span> 참여자: <b style="color:var(--text2);">${l.our_members}</b></span>`:''}${l.their_members?`<span> 기관측: <b style="color:var(--text2);">${l.their_members}</b></span>`:''}</div>`:''}
     <div id="log-detail-${l.id}" style="display:none;margin:8px 0 4px 22px;">
@@ -8874,7 +8869,7 @@ function renderContactLogs(orgId){
   if(!logs.length)return`<div class="empty" style="padding:.5rem 0;font-size:12px;">컨택 기록 없음</div>`;
   const recent=logs.slice(0,3);
   const moreCount=logs.length-3;
-  return recent.map(l=>renderContactLogItem(l,orgId)).join('')+(moreCount>0?`<button onclick="openHistoryModal(${orgId})" style="width:100%;margin-top:8px;padding:9px;background:var(--bg);border:1.5px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;"><i class="ti ti-history"></i> 전체 히스토리 보기 (총 ${logs.length}건)</button>`:'');
+  return recent.map(l=>renderContactLogItem(l,orgId)).join('')+(moreCount>0?`<button onclick="openHistoryModal(${orgId})" style="width:100%;margin-top:8px;padding:9px;background:var(--bg);border:1.5px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;">전체 히스토리 보기 (총 ${logs.length}건)</button>`:'');
 }
 async function addThread(logId,orgId){
   const input=document.getElementById('thread-input-'+logId);
@@ -8946,7 +8941,7 @@ function toggleDoneActions(){
   if(!wrap)return;
   const open=wrap.style.display==='none';
   wrap.style.display=open?'block':'none';
-  if(icon)icon.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
+  if(icon)icon.textContent=open?'접기':'펼치기';
 }
 function toggleLogDetail(id){
   const el=document.getElementById(`log-detail-${id}`);
@@ -8954,7 +8949,7 @@ function toggleLogDetail(id){
   if(!el)return;
   const open=el.style.display==='none';
   el.style.display=open?'block':'none';
-  if(icon)icon.className=open?'ti ti-chevron-up':'ti ti-chevron-down';
+  if(icon)icon.textContent=open?'접기':'펼치기';
 }
 function toggleRecontactDate(){
   const status=document.getElementById('log-status')?.value;
@@ -9305,7 +9300,7 @@ function loadMeetings(orgId){
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:11px;font-weight:700;color:var(--purple);">${fDate(m.date)}</span>
         <span style="font-size:12px;font-weight:700;flex:1;">${m.summary||'미팅'}</span>
-        <button onclick="removeMeetingLog(${m.id},${orgId})" title="삭제" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px;"><i class="ti ti-x"></i></button>
+        <button onclick="removeMeetingLog(${m.id},${orgId})" title="삭제" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px;">삭제</button>
       </div>
       ${meta?`<div style="font-size:10.5px;color:var(--text3);margin-bottom:3px;">${meta}</div>`:''}
       ${body?`<div style="font-size:11px;color:var(--text2);white-space:pre-wrap;">${body}</div>`:''}
@@ -9358,7 +9353,7 @@ async function loadBizCards(orgId){
   const entries=[...legacyUrls.map(u=>({url:u,id:null,info:null})),...cards.map(c=>({url:c.url,id:c.id,info:c}))];
   if(!entries.length){wrap.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px 0;">등록된 명함이 없어요</div>';return;}
   const [main,...rest]=entries;
-  const delBtn=(cardId,style)=>`<button class="biz-card-del" onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" style="${style}"><i class="ti ti-trash" style="font-size:inherit;"></i></button>`;
+  const delBtn=(cardId,style)=>`<button class="biz-card-del" onclick="${cardId?`removeBusinessCard(${cardId},${orgId})`:`removeCardImage(${orgId})`}" style="${style}">삭제</button>`;
   const renderMain=(e)=>`
     <div class="biz-card-item" style="position:relative;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:#fff;">
       <img src="${e.url}" style="width:100%;max-height:160px;object-fit:contain;display:block;cursor:pointer;" onclick="showImageLightbox(this.src)" title="클릭 시 크게 보기">
@@ -9850,7 +9845,7 @@ function renderTeamTasks(){
           const canDel=isAdmin||t.assigned_to===myName||t.created_by===myName;
           return`<div onclick="openTeamTaskDetail(${t.id})" style="background:var(--surface);border:1.5px solid var(--border);${urgent?'border-left:3px solid var(--red);':''}border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:9px;cursor:pointer;transition:border-color .12s;${t.done?'opacity:.55;':''}box-shadow:var(--shadow-sm);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='${urgent?'var(--red)':'var(--border)'}'">
             <div onclick="event.stopPropagation();toggleTeamTask(${t.id},${!t.done})" style="width:18px;height:18px;border:2px solid ${t.done?'var(--green)':'var(--border2)'};border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:${t.done?'var(--green)':'transparent'};margin-top:1px;transition:all .12s;">
-              ${t.done?'<i class="ti ti-check" style="font-size:11px;color:#fff;"></i>':''}
+              
             </div>
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">미팅</span>':''}${t.title}</div>
@@ -9873,7 +9868,7 @@ function renderTeamTasks(){
             <button onclick="cancelInlineTask(this)" style="padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;">취소</button>
           </div>
         </div>
-        ${canAdd?`<button id="inline-btn-${safeId}" onclick="showInlineForm('${safeId}')" style="margin-top:4px;width:100%;padding:7px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;" onmouseover="this.style.background='var(--bg)';this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)';this.style.borderColor='var(--border)'"><i class="ti ti-plus"></i> 할일 추가</button>`:''}
+        ${canAdd?`<button id="inline-btn-${safeId}" onclick="showInlineForm('${safeId}')" style="margin-top:4px;width:100%;padding:7px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:none;color:var(--text3);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;" onmouseover="this.style.background='var(--bg)';this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)';this.style.borderColor='var(--border)'">할일 추가</button>`:''}
       </div>
     </div>`;
   }).join('');
