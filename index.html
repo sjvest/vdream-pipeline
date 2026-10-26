@@ -1221,7 +1221,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 
   <!-- 행사 요약 카드 -->
-  <div id="event-metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;"></div>
+  <div id="event-metrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;"></div>
 
   <!-- 행사 목록 -->
   <div class="card">
@@ -1234,10 +1234,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">유형</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">참여팀원</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">명함/미팅</th>
+        <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">사용 비용</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">발굴 기관</th>
         <th style="padding:13px 16px;font-size:11px;font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;">인재영입</th>
       </tr></thead>
-      <tbody id="event-tbody"><tr><td colspan="8"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
+      <tbody id="event-tbody"><tr><td colspan="9"><div class="loading"><div class="spin"></div></div></td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1374,6 +1375,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <div class="fg"><label>특이사항 / 메모</label><textarea id="ev-notes" placeholder="행사 후기, 주요 접촉 인물, 다음 행사 건의사항 등"></textarea></div>
     </div>
 
+    <div class="form-section" id="ev-cost-section">
+      <div class="fsec-title">행사 비용 <span id="ev-cost-total-head" style="font-size:12px;font-weight:700;color:var(--accent);margin-left:4px;"></span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">행사 때문에 쓴 비용을 항목별로 적어요 (예: 부스비, 교통비, 식비, 인쇄비). 합계는 자동 계산돼요.</div>
+      <div id="ev-cost-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;flex-wrap:wrap;">
+        <button type="button" onclick="addEvCostRow()" style="font-size:12px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;font-weight:700;color:var(--text2);">+ 비용 항목 추가</button>
+        <div style="font-size:13px;color:var(--text2);">합계 <b id="ev-cost-total" style="font-size:16px;color:var(--text);">0원</b></div>
+      </div>
+    </div>
+
     <div class="form-section">
       <div class="fsec-title">내년 참여 검토</div>
       <div class="fg-row fg-2">
@@ -1474,6 +1485,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       <button onclick="sendGoodsStockAlertNow()" title="안전재고 이하인 품목을 구글 챗으로 알려요" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">구글 챗으로 재고 알림</button>
       <button onclick="openGoodsItemModal()" style="font-size:12px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">품목 추가</button>
     </div>
+  </div>
+  <div class="card" style="margin-bottom:14px;"><div class="card-header">행사 사용 비용</div>
+    <div class="card-body" id="goods-event-cost" style="padding:12px 16px;"></div>
   </div>
   <div class="card" style="margin-bottom:14px;"><div class="card-header">재고 현황</div>
     <div class="card-body" style="padding:0;overflow-x:auto;" id="goods-summary"></div>
@@ -3556,10 +3570,25 @@ function goodsStatus(t){
 }
 async function renderGoods(){
   if(!_goodsLoaded)await loadGoods();
+  if(!Array.isArray(cache.events)){try{await loadEvents();}catch(_){}}
+  renderGoodsEventCost();
   renderGoodsSummary();renderGoodsForm();
   const sel=document.getElementById('goods-f-item');
   if(sel){const cur=sel.value;sel.innerHTML='<option value="">전체 품목</option>'+goodsItems.map(i=>`<option value="${i.id}">${relEsc(i.name)}</option>`).join('');sel.value=cur;}
   renderGoodsLogs();
+}
+function renderGoodsEventCost(){
+  const el=document.getElementById('goods-event-cost');if(!el)return;
+  if(!Array.isArray(cache.events)){el.innerHTML='<span style="font-size:12px;color:var(--text3);">행사 비용을 불러오지 못했어요. 행사 관리 화면을 한 번 열었다가 다시 와주세요.</span>';return;}
+  const list=cache.events.filter(e=>evCostTotal(e)>0);
+  const total=evCostGrandTotal(cache.events);
+  const yr=String(new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'})).slice(0,4);
+  const yTotal=evCostGrandTotal(cache.events.filter(e=>String(e.date||'').slice(0,4)===yr));
+  el.innerHTML=`<div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;">
+    <div><div style="font-size:11px;color:var(--text3);font-weight:600;">누적 사용 비용 (전체 행사)</div><div style="font-size:22px;font-weight:800;">${fWonEv(total)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);font-weight:600;">${yr}년</div><div style="font-size:16px;font-weight:700;">${fWonEv(yTotal)}</div></div>
+    <div style="font-size:12px;color:var(--text3);">비용을 입력한 행사 ${list.length}건 · 입력은 행사 관리에서 해요</div>
+  </div>`;
 }
 function renderGoodsSummary(){
   const el=document.getElementById('goods-summary');if(!el)return;
@@ -7440,6 +7469,65 @@ async function deleteJob(){
 
 // ── 행사 관리 ──
 let currentEventId=null;
+// ── 행사 비용: events.cost_items = [{item:'부스비', amount:150000}, ...] ──
+function evCostItems(e){
+  const raw=e&&e.cost_items;
+  let arr=raw;
+  if(typeof raw==='string'){try{arr=JSON.parse(raw);}catch(_){arr=[];}}
+  if(!Array.isArray(arr))return [];
+  return arr.map(x=>({item:String((x&&x.item)||'').trim(),amount:Number(x&&x.amount)||0})).filter(x=>x.amount>0||x.item);
+}
+function evCostTotal(e){return evCostItems(e).reduce((a,x)=>a+x.amount,0);}
+function evCostGrandTotal(list){return (list||[]).reduce((a,e)=>a+evCostTotal(e),0);}
+function fWonEv(n){return (Number(n)||0).toLocaleString('ko-KR')+'원';}
+function addEvCostRow(item,amount){
+  const wrap=document.getElementById('ev-cost-list');if(!wrap)return;
+  const row=document.createElement('div');
+  row.className='ev-cost-row';
+  row.style.cssText='display:flex;gap:6px;align-items:center;';
+  const a=document.createElement('input');
+  a.className='ev-cost-item';a.placeholder='항목 (예: 부스비)';a.maxLength=40;a.value=item||'';
+  a.style.cssText='flex:1.4;min-width:0;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);';
+  const b=document.createElement('input');
+  b.className='ev-cost-amount';b.type='number';b.min='0';b.step='1';b.placeholder='금액(원)';
+  b.value=(amount!=null&&amount!==''&&Number(amount)>0)?Number(amount):'';
+  b.style.cssText='flex:1;min-width:0;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:right;';
+  b.addEventListener('input',updateEvCostTotal);
+  const d=document.createElement('button');
+  d.type='button';d.textContent='삭제';d.title='이 항목 삭제';
+  d.style.cssText='font-size:11px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;';
+  d.addEventListener('click',()=>{row.remove();updateEvCostTotal();});
+  row.appendChild(a);row.appendChild(b);row.appendChild(d);
+  wrap.appendChild(row);
+  updateEvCostTotal();
+}
+function setEvCostRows(items){
+  const wrap=document.getElementById('ev-cost-list');if(!wrap)return;
+  wrap.innerHTML='';
+  (items||[]).forEach(x=>addEvCostRow(x.item,x.amount));
+  updateEvCostTotal();
+}
+function updateEvCostTotal(){
+  let sum=0;
+  document.querySelectorAll('#ev-cost-list .ev-cost-amount').forEach(el=>{const v=Number(el.value);if(Number.isFinite(v)&&v>0)sum+=v;});
+  const t=document.getElementById('ev-cost-total');if(t)t.textContent=fWonEv(sum);
+  const h=document.getElementById('ev-cost-total-head');if(h)h.textContent=sum>0?'('+fWonEv(sum)+')':'';
+}
+// 저장용으로 입력칸을 읽는다. 잘못된 값(음수·숫자 아님)이 있으면 안내하고 null을 돌려준다.
+function readEvCostItems(){
+  const out=[];
+  const rows=document.querySelectorAll('#ev-cost-list .ev-cost-row');
+  for(const r of rows){
+    const name=(r.querySelector('.ev-cost-item').value||'').trim();
+    const raw=(r.querySelector('.ev-cost-amount').value||'').toString().trim();
+    if(!name&&raw==='')continue;
+    if(raw===''){toast('비용 항목 "'+name+'"의 금액을 입력하거나 삭제해 주세요');return null;}
+    const amt=Number(raw);
+    if(!Number.isFinite(amt)||amt<0){toast('비용 금액은 0 이상의 숫자로 입력해 주세요');return null;}
+    out.push({item:name||'기타',amount:Math.round(amt)});
+  }
+  return out;
+}
 async function renderEvents(){
   const{data,error}=await sb.from('events').select('*').order('date',{ascending:false});
   if(error){toast('오류: '+error.message);return;}
@@ -7455,6 +7543,7 @@ async function renderEvents(){
     <div class="metric"><div class="metric-label">수집 명함</div><div class="metric-value">${totalCards}</div><div class="metric-sub">장 누적</div></div>
     <div class="metric"><div class="metric-label">미팅 약속</div><div class="metric-value">${totalMeetings}</div><div class="metric-sub">건 누적</div></div>
     <div class="metric"><div class="metric-label">행사 발굴 기관</div><div class="metric-value">${orgLinked}</div><div class="metric-sub">개 기관</div></div>
+    <div class="metric"><div class="metric-label">누적 사용 비용</div><div class="metric-value" style="font-size:22px;">${fWonEv(evCostGrandTotal(cache.events))}</div><div class="metric-sub">비용 입력 ${cache.events.filter(e=>evCostTotal(e)>0).length}/${total}건</div></div>
   `;
 
   // 행사 목록
@@ -7479,10 +7568,11 @@ async function renderEvents(){
       <td style="padding:13px 16px;"><span class="badge ${CAT_CLS[e.category]||'b-gray'}" style="font-size:11px;">${e.category||'—'}</span></td>
       <td style="padding:13px 16px;font-size:12px;">${members}</td>
       <td style="padding:13px 16px;font-size:12px;">명함 ${cards} · 미팅 ${meetings}</td>
+      <td style="padding:13px 16px;font-size:12px;white-space:nowrap;">${evCostTotal(e)>0?fWonEv(evCostTotal(e)):'<span style="color:var(--text3);">미입력</span>'}</td>
       <td style="padding:13px 16px;"><span class="badge b-blue" style="font-size:11px;">${linked}개</span></td>
       <td style="padding:13px 16px;"><span class="badge b-green" style="font-size:11px;">${recruited}명</span></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="8" class="empty">등록된 행사 없음</td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="empty">등록된 행사 없음</td></tr>`;
 }
 function openAddEvent(){
   currentEventId=null;
@@ -7500,6 +7590,7 @@ function openAddEvent(){
   document.getElementById('ev-revisit').value='';
   document.getElementById('ev-revisit-headcount').value='';
   document.getElementById('ev-improvement').value='';
+  setEvCostRows([]);
   document.getElementById('ev-linked-orgs-section').style.display='none';
   evInviteSel=new Set();evInviteRows=[];
   document.getElementById('ev-invite-search').value='';
@@ -7559,6 +7650,7 @@ function openEvent(id){
   document.getElementById('ev-revisit').value=e.revisit||'';
   document.getElementById('ev-revisit-headcount').value=e.revisit_headcount||'';
   document.getElementById('ev-improvement').value=e.improvement||'';
+  setEvCostRows(evCostItems(e));
   document.getElementById('ev-members-check').innerHTML=cache.profiles.map(p=>`
     <label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
       <input type="checkbox" value="${p.name}" ${(e.members||[]).includes(p.name)?'checked':''} style="width:14px;height:14px;"> ${p.name}
@@ -7671,6 +7763,8 @@ async function saveEvent(){
   if(!name||!date){toast('행사명과 날짜를 입력하세요');return;}
   const members=Array.from(document.querySelectorAll('#ev-members-check input:checked')).map(el=>el.value);
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
+  const costItems=readEvCostItems();
+  if(costItems===null)return;
   const row={
     name,date,location:document.getElementById('ev-location').value.trim(),
     host:document.getElementById('ev-host').value.trim(),
@@ -7687,6 +7781,7 @@ async function saveEvent(){
     revisit:document.getElementById('ev-revisit').value,
     revisit_headcount:document.getElementById('ev-revisit-headcount').value,
     improvement:document.getElementById('ev-improvement').value.trim(),
+    cost_items:costItems,
     created_by:currentUser?.id||null,created_by_name:myName
   };
   let savedEventId=currentEventId;
