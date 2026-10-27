@@ -449,6 +449,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div class="nav-section">관리</div>
   <button class="nav-item" id="nav-goods" onclick="nav('goods')">물품 관리</button>
   <button class="nav-item" id="nav-data" onclick="nav('data')">데이터 관리</button>
+  <button class="nav-item" id="nav-accounts" style="display:none;" onclick="nav('accounts')">계정 관리</button>
   </div>
   <div class="sidebar-bottom">
     <div onclick="openProfileModal()" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">
@@ -1511,6 +1512,18 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
 </div>
 
+<!-- 계정 관리 (계정 관리자 전용 — 권한은 서버 함수 account-admin에서 매번 확인) -->
+<div id="p-accounts" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">계정 관리</div>
+      <div class="page-sub">담당자 로그인 계정 생성 · 비밀번호 초기화 · 비활성화 (삭제는 하지 않아요)</div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="acc-create-btn" onclick="openAccountCreate()">아이디 생성</button>
+  </div>
+  <div class="card"><div class="card-body" style="padding:0;overflow-x:auto;" id="acc-list"></div></div>
+</div>
+
 <!-- 데이터 관리 -->
 <div id="p-data" class="page">
   <div class="page-header">
@@ -1805,6 +1818,45 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="btn-row">
       <button class="btn btn-primary" onclick="confirmBulhapgyeok()">불합격 확정</button>
       <button class="btn btn-ghost" onclick="document.getElementById('bulhapgyeok-modal').style.display='none'">취소</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 계정 관리: 아이디 생성 모달 -->
+<div id="acc-create-modal" class="overlay" style="display:none;" onclick="if(event.target===this)closeAccountCreate()">
+<div class="modal" style="max-width:420px;">
+  <div class="modal-head">
+    <div class="modal-title">아이디 생성</div>
+    <button class="btn btn-ghost btn-sm" onclick="closeAccountCreate()">닫기</button>
+  </div>
+  <div class="modal-body">
+    <div class="fg"><label>이름</label><input id="acc-new-name" maxlength="20" placeholder="예: 홍길동"></div>
+    <div class="fg"><label>아이디 (회사 메일)</label><input id="acc-new-email" type="email" placeholder="example@vdream.co.kr" onkeydown="if(event.key==='Enter')submitAccountCreate()"></div>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 8px;">임시 비밀번호가 자동으로 만들어져요. 생성 직후 한 번만 보여드립니다.</p>
+    <p id="acc-create-err" style="font-size:11px;color:var(--red);display:none;margin-bottom:8px;"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="acc-create-submit" onclick="submitAccountCreate()">생성</button>
+      <button class="btn btn-ghost" onclick="closeAccountCreate()">취소</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 계정 관리: 임시 비밀번호 표시 모달 (닫으면 다시 볼 수 없음) -->
+<div id="acc-pw-modal" class="overlay" style="display:none;z-index:600;">
+<div class="modal" style="max-width:420px;">
+  <div class="modal-head">
+    <div class="modal-title" id="acc-pw-title">임시 비밀번호</div>
+  </div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;" id="acc-pw-who"></div>
+    <div id="acc-pw-value" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;font-weight:800;letter-spacing:1px;padding:14px;background:var(--bg);border-radius:var(--radius-sm);text-align:center;user-select:all;"></div>
+    <p style="font-size:11px;color:var(--red);margin:10px 0 4px;font-weight:700;">이 창을 닫으면 다시 볼 수 없어요. 복사해서 본인에게 직접 전달해 주세요.</p>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 12px;">받은 분은 로그인 후 왼쪽 아래 이름 → 비밀번호 변경에서 바꾸도록 안내해 주세요.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="copyAccountPw()">복사</button>
+      <button class="btn btn-ghost" onclick="closeAccountPw()">확인했어요, 닫기</button>
     </div>
   </div>
 </div>
@@ -2120,6 +2172,8 @@ async function checkSession(){
   }
 }
 async function setUser(user){
+  // 저장된 로그인 정보에는 권한(app_metadata)이 옛 값일 수 있어, 서버에서 최신 사용자 정보를 한 번 확인한다
+  try{const {data:fu}=await sb.auth.getUser();if(fu?.user&&fu.user.id===user.id)user=fu.user;}catch(e){}
   currentUser=user;
   const {data}=await sb.from('profiles').select('name,role,status,status_emoji,sort_order').eq('id',user.id).single();
   currentProfile=data;
@@ -2127,6 +2181,7 @@ async function setUser(user){
   const initial=name.charAt(0);
   document.getElementById('user-avatar').textContent=initial;
   document.getElementById('user-name').textContent=name;
+  const accNav=document.getElementById('nav-accounts');if(accNav)accNav.style.display=isAccountAdmin()?'':'none';
   updateStatusDisplay();
 }
 function updateStatusDisplay(){
@@ -2210,6 +2265,7 @@ async function doLogout(){
   currentUser=null;currentProfile=null;
   document.getElementById('user-avatar').textContent='?';
   document.getElementById('user-name').textContent='로그인 필요';
+  const accNav2=document.getElementById('nav-accounts');if(accNav2)accNav2.style.display='none';
   document.getElementById('user-status-label').textContent='프로필 설정';
   document.getElementById('user-status-dot').style.display='none';
   document.getElementById('login-banner').style.display='flex';
@@ -2687,6 +2743,7 @@ function toggleMobileNav(){
   document.getElementById('m-menu-btn').textContent=sb.classList.contains('open')?'닫기':'메뉴';
 }
 async function nav(page, pushState=true){
+  if(page==='accounts'&&!isAccountAdmin()){toast('계정 관리 권한이 없어요');page='dashboard';}
   const sb=document.querySelector('.sidebar');
   if(sb.classList.contains('open')){sb.classList.remove('open');document.getElementById('m-menu-btn').textContent='메뉴';}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2697,7 +2754,8 @@ async function nav(page, pushState=true){
   document.querySelectorAll('.ng').forEach(g=>g.classList.toggle('on',!!g.querySelector('.nav-item.active')));
   if(page==='data')document.getElementById('nav-data')?.classList.add('active');
   if(page==='goods')document.getElementById('nav-goods')?.classList.add('active');
-  const r={goods:renderGoods,data:renderDataPage,dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg,'team-tasks':renderTeamTasks};
+  if(page==='accounts')document.getElementById('nav-accounts')?.classList.add('active');
+  const r={goods:renderGoods,data:renderDataPage,dashboard:renderDashboard,pipeline:renderPipeline,orgs:renderOrgs,actions:renderActions,talent:renderTalent,team:renderTeam,events:renderEvents,jobs:renderJobs,cold:renderCold,analytics:renderAnalytics,'add-org':renderAddOrg,'team-tasks':renderTeamTasks,accounts:renderAccounts};
   // 인재영입/Analytics/기관목록은 talents/applications가 필요 (기관목록은 Health Score 배지 정확도 때문)
   // 지연로딩이라 이미 로드됐으면 재조회 안 함
   if(page==='talent'||page==='analytics'||page==='orgs')await ensureTalentDataLoaded();
@@ -6289,6 +6347,123 @@ function executeConfirm(){
   document.getElementById('confirm-modal').style.display='none';
   if(confirmCallback)confirmCallback();
   confirmCallback=null;
+}
+
+// ── 계정 관리 (계정 관리자 전용) ──
+// 화면의 메뉴 숨김은 편의일 뿐이고, 실제 권한 확인은 서버 함수(account-admin)가 매 요청마다 한다.
+let accBusy=false;
+function isAccountAdmin(){return currentUser?.app_metadata?.account_admin===true;}
+async function accCall(payload){
+  const {data,error}=await sb.functions.invoke('account-admin',{body:payload});
+  if(error){
+    let msg='요청에 실패했어요. 잠시 후 다시 시도해 주세요.';
+    try{const j=await error.context.json();if(j?.error)msg=j.error;}catch(e){}
+    throw new Error(msg);
+  }
+  if(data?.error)throw new Error(data.error);
+  return data;
+}
+async function renderAccounts(){
+  const box=document.getElementById('acc-list');
+  box.innerHTML='<div class="loading"><div class="spin"></div>불러오는 중...</div>';
+  try{
+    const d=await accCall({action:'list'});
+    const users=d.users||[];
+    if(!users.length){box.innerHTML='<div class="empty">계정이 없어요</div>';return;}
+    const fmt=v=>v?new Date(v).toLocaleString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,16):'로그인 기록 없음';
+    box.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:var(--bg);text-align:left;color:var(--text2);">
+        <th style="padding:10px 14px;">이름</th><th style="padding:10px 14px;">아이디(회사 메일)</th><th style="padding:10px 14px;">상태</th><th style="padding:10px 14px;">마지막 로그인</th><th style="padding:10px 14px;"></th>
+      </tr></thead><tbody>${users.map(u=>`<tr style="border-top:1px solid var(--border);">
+        <td style="padding:10px 14px;font-weight:700;">${relEsc(u.name||'(프로필 없음)')}${u.is_account_admin?' <span class="badge b-gray" style="font-size:10px;">계정 관리자</span>':''}</td>
+        <td style="padding:10px 14px;">${relEsc(u.email)}</td>
+        <td style="padding:10px 14px;"><span class="badge ${u.active?'b-green':'b-red'}">${u.active?'활성':'비활성'}</span></td>
+        <td style="padding:10px 14px;color:var(--text3);">${fmt(u.last_sign_in_at)}</td>
+        <td style="padding:10px 14px;text-align:right;white-space:nowrap;">${u.is_account_admin?'':`
+          <button class="btn btn-ghost btn-sm acc-act" onclick="accResetPw('${u.id}')">비밀번호 초기화</button>
+          <button class="btn btn-ghost btn-sm acc-act" onclick="accToggleActive('${u.id}',${u.active?'false':'true'})">${u.active?'비활성화':'활성화'}</button>`}</td>
+      </tr>`).join('')}</tbody></table>`;
+    window._accUsers=users;
+  }catch(e){
+    box.innerHTML=`<div class="empty">불러오지 못했어요: ${relEsc(e.message)}<br><button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="renderAccounts()">다시 시도</button></div>`;
+  }
+}
+function accSetBusy(b){accBusy=b;document.querySelectorAll('.acc-act,#acc-create-submit,#acc-create-btn').forEach(el=>el.disabled=b);}
+function openAccountCreate(){
+  document.getElementById('acc-new-name').value='';
+  document.getElementById('acc-new-email').value='';
+  document.getElementById('acc-create-err').style.display='none';
+  document.getElementById('acc-create-modal').style.display='flex';
+  document.getElementById('acc-new-name').focus();
+}
+function closeAccountCreate(){
+  const n=document.getElementById('acc-new-name').value.trim(),e=document.getElementById('acc-new-email').value.trim();
+  if(accBusy)return;
+  if((n||e)&&!confirm('입력한 내용이 저장되지 않아요. 닫을까요?'))return;
+  document.getElementById('acc-create-modal').style.display='none';
+  document.getElementById('acc-create-btn')?.focus();
+}
+async function submitAccountCreate(){
+  if(accBusy)return;
+  const name=document.getElementById('acc-new-name').value.trim();
+  const email=document.getElementById('acc-new-email').value.trim().toLowerCase();
+  const err=document.getElementById('acc-create-err');err.style.display='none';
+  const fail=m=>{err.textContent=m;err.style.display='block';};
+  if(!name)return fail('이름을 입력하세요.');
+  if(!/^[a-z0-9._+-]+@vdream\.co\.kr$/.test(email))return fail('회사 메일(@vdream.co.kr)만 아이디로 만들 수 있어요.');
+  accSetBusy(true);
+  try{
+    const d=await accCall({action:'create',name,email});
+    document.getElementById('acc-new-name').value='';document.getElementById('acc-new-email').value='';
+    document.getElementById('acc-create-modal').style.display='none';
+    showAccountPw('아이디가 만들어졌어요',`${d.name} · ${d.email}`,d.password);
+    if(d.audit_ok===false)toast('계정은 만들었지만 변경 이력 기록에 실패했어요');
+    await loadProfiles();
+    await renderAccounts();
+  }catch(e){fail(e.message);}
+  finally{accSetBusy(false);}
+}
+function showAccountPw(title,who,pw){
+  document.getElementById('acc-pw-title').textContent=title;
+  document.getElementById('acc-pw-who').textContent=who;
+  document.getElementById('acc-pw-value').textContent=pw;
+  document.getElementById('acc-pw-modal').style.display='flex';
+}
+async function copyAccountPw(){
+  const pw=document.getElementById('acc-pw-value').textContent;
+  try{await navigator.clipboard.writeText(pw);toast('복사됐어요');}
+  catch(e){toast('복사하지 못했어요. 비밀번호를 직접 드래그해서 복사해 주세요');}
+}
+function closeAccountPw(){
+  document.getElementById('acc-pw-value').textContent='';
+  document.getElementById('acc-pw-modal').style.display='none';
+}
+function accResetPw(id){
+  const u=(window._accUsers||[]).find(x=>x.id===id);if(!u||accBusy)return;
+  showConfirm({title:'비밀번호 초기화',sub:u.email,msg:`${u.name||u.email} 님의 비밀번호를 임시 비밀번호로 바꿔요. 지금 쓰던 비밀번호로는 다음 로그인부터 들어갈 수 없어요.`,type:'warning',okLabel:'초기화',onOk:async()=>{
+    accSetBusy(true);
+    try{
+      const d=await accCall({action:'reset_password',user_id:id});
+      showAccountPw('비밀번호를 초기화했어요',`${u.name||''} · ${d.email}`,d.password);
+      if(d.audit_ok===false)toast('초기화는 됐지만 변경 이력 기록에 실패했어요');
+    }catch(e){toast('오류: '+e.message);}
+    finally{accSetBusy(false);}
+  }});
+}
+function accToggleActive(id,active){
+  const u=(window._accUsers||[]).find(x=>x.id===id);if(!u||accBusy)return;
+  showConfirm({title:active?'계정 활성화':'계정 비활성화',sub:u.email,
+    msg:active?`${u.name||u.email} 님이 다시 로그인할 수 있게 돼요.`:`${u.name||u.email} 님의 로그인을 막아요. 데이터는 지워지지 않고, 이미 로그인한 화면은 최대 1시간 정도 더 유지될 수 있어요.`,
+    type:active?'info':'danger',okLabel:active?'활성화':'비활성화',onOk:async()=>{
+    accSetBusy(true);
+    try{
+      const d=await accCall({action:'set_active',user_id:id,active});
+      toast(active?'활성화했어요':'비활성화했어요');
+      if(d.audit_ok===false)toast('변경은 됐지만 이력 기록에 실패했어요');
+      await renderAccounts();
+    }catch(e){toast('오류: '+e.message);}
+    finally{accSetBusy(false);}
+  }});
 }
 
 // ── 감사 로그 ──
