@@ -9484,8 +9484,15 @@ async function reassignAction(id,name,ctx){
   if((a.member||'')===name)return;
   const{error}=await sb.from('actions').update({member:name||null}).eq('id',id);
   if(error){toast('오류: '+error.message);redraw();return;} // 저장 실패 시 화면 선택값을 원래대로 되돌림
+  const prev=a.member||'미지정';
   a.member=name||null;
   toast(name?`담당이 ${name}님으로 변경됨`:'담당이 미지정으로 변경됨');
+  // 다른 사람에게 업무를 넘길 때만 구글 챗으로 알림 (본인 지정·미지정은 알리지 않음)
+  const myName=currentProfile?.name||'';
+  if(name&&name!==myName){
+    const org=cache.orgs.find(o=>o.id===a.org_id);
+    sendGChat('[담당 지정] *'+name+'님께 후속 액션이 배정됐어요*\n내용: '+(a.text||'')+'\n기관: '+(org?.name||'—')+'\n마감: '+(a.due?a.due+(a.due_time?' '+a.due_time:''):'미설정')+'\n이전 담당: '+prev+' · 지정: '+(myName||'—'));
+  }
   updateUrgentCount();redraw();
 }
 
