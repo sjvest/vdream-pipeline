@@ -4539,7 +4539,8 @@ function renderActions(){
       <div class="action-text ${a.done?'done':''}" style="margin-bottom:3px;">${a.text}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text3);">
         <span style="font-weight:600;color:var(--text2);">${a.orgName}</span>
-        ${a.created_by_name?`<span style="color:var(--accent);">${a.created_by_name}</span>`:''}
+        ${isDone?`<span>담당: ${a.member||'미지정'}</span>`:`<span>담당 ${actionAssigneeSelect(a,'page')}</span>`}
+        ${a.created_by_name?`<span style="color:var(--accent);">등록: ${a.created_by_name}</span>`:''}
         ${isDone&&a.completed_by_name?`<span style="color:var(--green);">완료: ${a.completed_by_name}</span>`:''}
         ${!isDone&&a.due?`<span class="action-due ${dueClass(a.diff)}">${dueLabel(a.diff,a.due)}${a.due_time?' · '+a.due_time:''}</span>`:''}
         ${!isDone&&a.due?`<span onclick="event.stopPropagation();openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${(a.orgName||'').replace(/'/g,"\\'")}','${a.due_time||''}')" style="font-size:11px;color:#4285f4;cursor:pointer;">캘린더</span>`:''}
@@ -8711,7 +8712,10 @@ async function openOrg(id){
         <div class="action-cb" onclick="toggleActionModal(${a.id},${a.done})"></div>
         <div style="flex:1;">
           <div class="action-text">${a.text}</div>
-          ${(a.created_by_name||a.member)?`<div style="font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">등록: ${a.created_by_name||a.member}</div>`:''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px;">
+            <span style="font-size:10px;color:var(--text3);font-weight:600;">담당 ${actionAssigneeSelect(a,'modal')}</span>
+            ${a.created_by_name?`<span style="font-size:10px;color:var(--accent);font-weight:600;">등록: ${a.created_by_name}</span>`:''}
+          </div>
         </div>
         <div class="action-due ${dueClass(dayDiff(a.due))}">${dueLabel(dayDiff(a.due),a.due)}${a.due_time?' · '+a.due_time:''}</div>
         ${a.due?`<button onclick="openGoogleCalendar('${(a.text||'').replace(/'/g,"\\'")}','${a.due}','${o.name.replace(/'/g,"\\'")}','${a.due_time||''}') " style="background:none;border:1.5px solid #4285f4;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:#4285f4;flex-shrink:0;" title="구글 캘린더에 추가">캘린더</button>`:''}
@@ -8737,6 +8741,7 @@ async function openOrg(id){
     <div style="font-size:12px;font-weight:700;color:var(--text2);border-left:3px solid var(--accent);padding-left:8px;margin:12px 0 8px;">+ 액션 추가</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <select id="new-action-member" title="담당 팀원" style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">${actionMemberOptions(currentProfile?.name||'',false)}</select>
       <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
       <input id="new-action-due-time" type="time" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
       <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})">저장</button>
@@ -9456,10 +9461,32 @@ async function addActionFromModal(orgId){
   const dueTime=document.getElementById('new-action-due-time')?.value||null;
   if(!text){toast('액션 내용을 입력하세요');return;}
   const myName=currentProfile?.name||'';
-  const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,due_time:dueTime,done:false,status:'pending',member:myName,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
+  const assignee=document.getElementById('new-action-member')?.value||myName;
+  const{data,error}=await sb.from('actions').insert({org_id:orgId,text,content:text,due:due||null,due_time:dueTime,done:false,status:'pending',member:assignee,created_by:currentUser?.id||null,created_by_name:myName}).select().single();
   if(error){toast('오류: '+error.message);return;}
   cache.actions.push(data);
-  toast('액션 추가됨 ');updateUrgentCount();openOrg(orgId);
+  toast(assignee&&assignee!==myName?`액션 추가됨 · 담당: ${assignee}`:'액션 추가됨 ');updateUrgentCount();openOrg(orgId);
+}
+
+// 후속 액션 담당자 지정/변경: 팀장이 팀원에게 업무를 부여하거나 담당을 바꿀 때 사용 (2026-11-02)
+function actionMemberOptions(sel,withEmpty){
+  const names=(cache.profiles||[]).map(p=>p.name).filter(Boolean);
+  if(sel&&!names.includes(sel))names.unshift(sel); // 예전 값이 팀원 목록에 없어도 사라지지 않게 유지
+  return (withEmpty?`<option value=""${sel?'':' selected'}>미지정</option>`:'')+names.map(n=>`<option value="${n}"${n===sel?' selected':''}>${n}</option>`).join('');
+}
+function actionAssigneeSelect(a,ctx){
+  return `<select onclick="event.stopPropagation()" onchange="reassignAction(${a.id},this.value,'${ctx}')" title="담당 팀원 변경" style="font-size:11px;font-weight:700;padding:2px 4px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text2);cursor:pointer;">${actionMemberOptions(a.member||'',true)}</select>`;
+}
+async function reassignAction(id,name,ctx){
+  const a=cache.actions.find(x=>x.id===id);if(!a)return;
+  const redraw=()=>{if(ctx==='modal'&&currentOrgId)openOrg(currentOrgId);else renderActions();};
+  if(isGuest){toast('게스트 모드에서는 수정할 수 없습니다.');redraw();return;}
+  if((a.member||'')===name)return;
+  const{error}=await sb.from('actions').update({member:name||null}).eq('id',id);
+  if(error){toast('오류: '+error.message);redraw();return;} // 저장 실패 시 화면 선택값을 원래대로 되돌림
+  a.member=name||null;
+  toast(name?`담당이 ${name}님으로 변경됨`:'담당이 미지정으로 변경됨');
+  updateUrgentCount();redraw();
 }
 
 async function toggleActionModal(id,done){
