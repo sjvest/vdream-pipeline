@@ -8739,12 +8739,12 @@ async function openOrg(id){
       </div>`).join('')}
     </div>`:``}
     <div style="font-size:12px;font-weight:700;color:var(--text2);border-left:3px solid var(--accent);padding-left:8px;margin:12px 0 8px;">+ 액션 추가</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <input id="new-action-text" placeholder="새 액션 내용" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
-      <select id="new-action-member" title="담당 팀원" style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">${actionMemberOptions(currentProfile?.name||'',false)}</select>
-      <input id="new-action-due" type="date" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
-      <input id="new-action-due-time" type="time" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
-      <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})">저장</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <input id="new-action-text" placeholder="새 액션 내용" style="flex:1 1 100%;min-width:0;box-sizing:border-box;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <select id="new-action-member" title="담당 팀원" style="flex:1 1 90px;min-width:0;box-sizing:border-box;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">${actionMemberOptions(currentProfile?.name||'',false)}</select>
+      <input id="new-action-due" type="date" style="flex:1 1 130px;min-width:0;box-sizing:border-box;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <input id="new-action-due-time" type="time" style="flex:1 1 100px;min-width:0;box-sizing:border-box;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);">
+      <button class="btn btn-primary btn-sm" onclick="addActionFromModal(${id})" style="flex:0 0 auto;">저장</button>
     </div>
     ${(()=>{
       const orgTals=cache.talents.filter(t=>(t.source_org_id||t.org_id)===id);
