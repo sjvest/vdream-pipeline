@@ -1386,6 +1386,16 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
       </div>
     </div>
 
+    <div class="form-section" id="ev-goods-section">
+      <div class="fsec-title">사용 물품 <span id="ev-goods-head" style="font-size:12px;font-weight:700;color:var(--accent);margin-left:4px;"></span></div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">이미 가지고 있던 굿즈·기념품을 행사에 쓴 경우 적어요. <b>물품 관리에 있는 품목</b>은 저장하면 재고가 자동으로 줄어요. 목록에 없는 물품은 "목록에 없음(직접 입력)"을 골라 이름만 적으면 기록만 남고 재고는 바뀌지 않아요.</div>
+      <div id="ev-goods-status" style="font-size:12px;color:var(--text3);margin-bottom:6px;display:none;"></div>
+      <div id="ev-goods-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <div style="margin-top:8px;">
+        <button type="button" id="ev-goods-add-btn" onclick="addEvGoodsRow()" style="font-size:12px;padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;font-weight:700;color:var(--text2);">+ 물품 추가</button>
+      </div>
+    </div>
+
     <div class="form-section">
       <div class="fsec-title">내년 참여 검토</div>
       <div class="fg-row fg-2">
@@ -3775,7 +3785,7 @@ function renderGoodsLogs(){
     <td><span style="font-size:11px;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text2)'};">${l.kind}</span></td>
     <td>${relEsc(nameOf[l.item_id]||'(삭제된 품목)')}</td>
     <td style="text-align:right;font-weight:700;color:${l.kind==='입고'?'var(--green)':'var(--text)'};">${l.kind==='입고'?'+':'-'}${l.qty.toLocaleString()}</td>
-    <td>${relEsc(l.place||'')}</td><td>${relEsc(l.user_name||'')}</td><td style="color:var(--text3);">${relEsc(l.note||'')}</td>
+    <td>${relEsc(l.place||'')}${l.event_id!=null?' <span title="행사 관리에서 입력한 기록이에요" style="font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-bg);border-radius:8px;padding:1px 6px;">행사 연동</span>':''}</td><td>${relEsc(l.user_name||'')}</td><td style="color:var(--text3);">${relEsc(l.note||'')}</td>
     <td style="text-align:right;">${bal[l.id]!=null?bal[l.id].toLocaleString():''}</td>
     <td style="color:var(--text3);font-size:11px;white-space:nowrap;">${l.updated_at?relEsc(l.updated_by_name||'—')+'<br>'+shortDT(l.updated_at):''}</td>
     <td><button onclick="openGoodsLogModal(${l.id})" style="font-size:11px;padding:4px 9px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--text2);font-weight:700;">수정</button></td>
@@ -7750,6 +7760,149 @@ async function renderEvents(){
     </tr>`;
   }).join(''):`<tr><td colspan="9" class="empty">등록된 행사 없음</td></tr>`;
 }
+// ── 사용 물품 입력줄 ──
+let evGoodsReady=false; // 물품 목록·기존 연결 기록을 정상으로 불러왔을 때만 true (아니면 저장 시 물품은 건드리지 않음)
+function evGoodsLogsOf(eventId){
+  if(eventId==null)return [];
+  return goodsLogs.filter(l=>l.kind==='사용'&&l.event_id!=null&&String(l.event_id)===String(eventId));
+}
+function evGoodsItemOptions(selectedId){
+  const {st}=goodsCalc();
+  const opts=['<option value="">품목 선택</option>'];
+  goodsItems.filter(i=>i.is_active!==false||String(i.id)===String(selectedId)).forEach(i=>{
+    const stock=st[i.id]?st[i.id].stock:0;
+    opts.push(`<option value="${i.id}"${String(i.id)===String(selectedId)?' selected':''}>${relEsc(i.name)} (재고 ${stock.toLocaleString()})</option>`);
+  });
+  opts.push(`<option value="__custom"${selectedId==='__custom'?' selected':''}>목록에 없음 (직접 입력)</option>`);
+  return opts.join('');
+}
+function addEvGoodsRow(spec){
+  const wrap=document.getElementById('ev-goods-list');if(!wrap)return;
+  spec=spec||{};
+  const row=document.createElement('div');
+  row.className='ev-goods-row';
+  row.style.cssText='display:flex;gap:6px;align-items:center;flex-wrap:wrap;';
+  if(spec.logId!=null)row.dataset.logId=String(spec.logId);
+  const sel=document.createElement('select');
+  sel.className='ev-goods-item';
+  sel.style.cssText='flex:1.6 1 170px;min-width:0;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);';
+  sel.innerHTML=evGoodsItemOptions(spec.custom?'__custom':(spec.itemId!=null?spec.itemId:''));
+  const cn=document.createElement('input');
+  cn.className='ev-goods-custom';cn.placeholder='물품 이름 (예: 볼펜)';cn.maxLength=40;cn.value=spec.customName||'';
+  cn.style.cssText='flex:1.2 1 120px;min-width:0;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);display:'+(spec.custom?'':'none')+';';
+  const q=document.createElement('input');
+  q.className='ev-goods-qty';q.type='number';q.min='1';q.step='1';q.placeholder='수량';
+  q.value=spec.qty!=null&&Number(spec.qty)>0?Number(spec.qty):'';
+  q.style.cssText='flex:0 1 90px;min-width:0;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:right;';
+  const d=document.createElement('button');
+  d.type='button';d.textContent='삭제';d.title='이 물품 삭제';
+  d.style.cssText='font-size:11px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;color:var(--text2);white-space:nowrap;';
+  sel.addEventListener('change',()=>{cn.style.display=sel.value==='__custom'?'':'none';updateEvGoodsHead();});
+  q.addEventListener('input',updateEvGoodsHead);
+  d.addEventListener('click',()=>{row.remove();updateEvGoodsHead();});
+  row.appendChild(sel);row.appendChild(cn);row.appendChild(q);row.appendChild(d);
+  wrap.appendChild(row);
+  updateEvGoodsHead();
+}
+function updateEvGoodsHead(){
+  const h=document.getElementById('ev-goods-head');if(!h)return;
+  let n=0;
+  document.querySelectorAll('#ev-goods-list .ev-goods-row').forEach(r=>{const v=Number(r.querySelector('.ev-goods-qty').value);if(r.querySelector('.ev-goods-item').value&&v>0)n++;});
+  h.textContent=n?`(${n}종)`:'';
+}
+// 저장용으로 읽기. {catalog:[{logId,item_id,qty}], custom:[{name,qty}]} / 잘못된 값이 있으면 안내 후 null
+function readEvGoods(){
+  const catalog=[],custom=[];
+  const rows=document.querySelectorAll('#ev-goods-list .ev-goods-row');
+  for(const r of rows){
+    const v=r.querySelector('.ev-goods-item').value;
+    const raw=(r.querySelector('.ev-goods-qty').value||'').toString().trim();
+    const cname=(r.querySelector('.ev-goods-custom').value||'').trim();
+    if(!v&&raw===''&&!cname)continue;
+    if(!v){toast('사용 물품의 품목을 선택해 주세요');return null;}
+    const qty=Number(raw);
+    if(raw===''||!Number.isInteger(qty)||qty<=0){toast('사용 물품의 수량은 1 이상의 정수로 입력해 주세요');return null;}
+    if(v==='__custom'){
+      if(!cname){toast('목록에 없는 물품은 이름을 적어 주세요');return null;}
+      custom.push({name:cname,qty});
+    }else{
+      catalog.push({logId:r.dataset.logId!=null?r.dataset.logId:null,item_id:Number(v),qty});
+    }
+  }
+  return {catalog,custom};
+}
+// 행사 창을 열 때: 비용 칸 채우기 + 물품 품목·기존 연결 기록 불러오기
+async function initEvCostGoods(e){
+  setEvCostRows(e?evCostItems(e):[]);
+  const wrap=document.getElementById('ev-goods-list');if(wrap)wrap.innerHTML='';
+  updateEvGoodsHead();
+  evGoodsReady=false;
+  const stEl=document.getElementById('ev-goods-status');const addBtn=document.getElementById('ev-goods-add-btn');
+  const eid=currentEventId;
+  if(stEl){stEl.style.display='';stEl.style.color='var(--text3)';stEl.textContent='물품 목록을 불러오는 중…';}
+  if(addBtn)addBtn.disabled=true;
+  const ok=await loadGoods();
+  if(eid!==currentEventId)return; // 그 사이 다른 행사 창으로 바뀜
+  if(!ok){
+    if(stEl){stEl.style.color='var(--red)';stEl.textContent='물품 목록을 불러오지 못했어요. 지금 저장하면 사용 물품은 바뀌지 않아요. 창을 닫았다가 다시 열어 주세요.';}
+    return;
+  }
+  if(stEl)stEl.style.display='none';
+  if(addBtn)addBtn.disabled=false;
+  evGoodsReady=true;
+  if(e){
+    evGoodsLogsOf(e.id).forEach(l=>addEvGoodsRow({logId:l.id,itemId:l.item_id,qty:l.qty}));
+    (Array.isArray(e.goods_custom)?e.goods_custom:[]).forEach(c=>addEvGoodsRow({custom:true,customName:c&&c.name,qty:c&&c.qty}));
+  }
+}
+// 재고보다 많이 쓰게 되는 품목이 있으면 확인 (행사 저장 전에 물어서, 취소하면 아무것도 저장하지 않는다)
+function confirmEvGoodsOver(catalogRows,eventId){
+  const {st}=goodsCalc();
+  const old=evGoodsLogsOf(eventId);
+  const after={};
+  Object.keys(st).forEach(k=>{after[k]=st[k].stock;});
+  old.forEach(l=>{if(after[l.item_id]!=null)after[l.item_id]+=l.qty;}); // 이 행사의 기존 사용분은 먼저 돌려놓고 계산
+  catalogRows.forEach(r=>{if(after[r.item_id]!=null)after[r.item_id]-=r.qty;});
+  const nameOf={};goodsItems.forEach(i=>{nameOf[i.id]=i.name;});
+  const over=Object.keys(after).filter(k=>after[k]<0&&catalogRows.some(r=>String(r.item_id)===String(k))).map(k=>`${nameOf[k]||k} (부족 ${Math.abs(after[k]).toLocaleString()}개)`);
+  if(!over.length)return true;
+  return confirm('현재 재고보다 많이 사용하는 품목이 있어요. 그래도 저장할까요?\n\n'+over.join('\n'));
+}
+// 행사에 연결된 물품 사용 기록을 입력한 내용과 맞춘다 (추가·수정·삭제). 실패한 건수를 돌려준다.
+async function syncEventGoods(eventId,name,date,rows){
+  const myName=currentProfile?.name||currentUser?.email||'';
+  const existing=evGoodsLogsOf(eventId);
+  const keep=new Set();
+  let fail=0;
+  for(const r of rows){
+    const old=r.logId!=null?existing.find(l=>String(l.id)===String(r.logId)):null;
+    if(old){
+      keep.add(String(old.id));
+      const patch={};
+      if(String(old.item_id)!==String(r.item_id))patch.item_id=r.item_id;
+      if(old.qty!==r.qty)patch.qty=r.qty;
+      if(old.log_date!==date)patch.log_date=date;
+      if((old.place||'')!==name)patch.place=name;
+      if(Object.keys(patch).length){
+        const {error}=await sb.from('goods_logs').update(patch).eq('id',old.id);
+        if(error){console.error(error);fail++;}
+      }
+    }else{
+      const {error}=await sb.from('goods_logs').insert({item_id:r.item_id,kind:'사용',qty:r.qty,log_date:date,place:name,user_name:myName||null,note:'행사 연동',event_id:eventId,
+        created_by:currentUser?.id||null,created_by_name:myName||null});
+      if(error){console.error(error);fail++;}
+    }
+  }
+  for(const l of existing){
+    if(keep.has(String(l.id)))continue;
+    const {error}=await sb.from('goods_logs').delete().eq('id',l.id);
+    if(error){console.error(error);fail++;}
+  }
+  await loadGoods();
+  return fail;
+}
+function evGoodsUsedCount(e){return (_goodsLoaded?evGoodsLogsOf(e.id).length:0)+(Array.isArray(e.goods_custom)?e.goods_custom.length:0);}
+
 function openAddEvent(){
   currentEventId=null;
   document.getElementById('event-modal-title').textContent='행사 등록';
@@ -7766,7 +7919,7 @@ function openAddEvent(){
   document.getElementById('ev-revisit').value='';
   document.getElementById('ev-revisit-headcount').value='';
   document.getElementById('ev-improvement').value='';
-  setEvCostRows([]);
+  initEvCostGoods(null);
   document.getElementById('ev-linked-orgs-section').style.display='none';
   evInviteSel=new Set();evInviteRows=[];
   document.getElementById('ev-invite-search').value='';
@@ -7826,7 +7979,7 @@ function openEvent(id){
   document.getElementById('ev-revisit').value=e.revisit||'';
   document.getElementById('ev-revisit-headcount').value=e.revisit_headcount||'';
   document.getElementById('ev-improvement').value=e.improvement||'';
-  setEvCostRows(evCostItems(e));
+  initEvCostGoods(e);
   document.getElementById('ev-members-check').innerHTML=cache.profiles.map(p=>`
     <label style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
       <input type="checkbox" value="${p.name}" ${(e.members||[]).includes(p.name)?'checked':''} style="width:14px;height:14px;"> ${p.name}
@@ -7933,14 +8086,25 @@ async function syncEventInvites(eventId,name,date){
     if(e3)throw e3;
   }
 }
+let _evSaving=false;
 async function saveEvent(){
+  if(_evSaving)return; // 저장 버튼을 두 번 눌러도 한 번만 저장
+  _evSaving=true;
+  try{await _saveEventCore();}finally{_evSaving=false;}
+}
+async function _saveEventCore(){
   const name=document.getElementById('ev-name').value.trim();
   const date=document.getElementById('ev-date').value;
   if(!name||!date){toast('행사명과 날짜를 입력하세요');return;}
+  const costItems=readEvCostItems();if(costItems===null)return;
+  const goodsRead=readEvGoods();if(goodsRead===null)return;
+  if(evGoodsReady){
+    const okL=await loadGoods(); // 저장 직전 최신 재고·연결 기록 기준으로 확인
+    if(!okL){toast('물품 재고를 확인하지 못해 저장하지 않았어요. 잠시 후 다시 시도해 주세요.');return;}
+    if(!confirmEvGoodsOver(goodsRead.catalog,currentEventId))return;
+  }
   const members=Array.from(document.querySelectorAll('#ev-members-check input:checked')).map(el=>el.value);
   const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
-  const costItems=readEvCostItems();
-  if(costItems===null)return;
   const row={
     name,date,location:document.getElementById('ev-location').value.trim(),
     host:document.getElementById('ev-host').value.trim(),
@@ -7958,6 +8122,7 @@ async function saveEvent(){
     revisit_headcount:document.getElementById('ev-revisit-headcount').value,
     improvement:document.getElementById('ev-improvement').value.trim(),
     cost_items:costItems,
+    goods_custom:goodsRead.custom,
     created_by:currentUser?.id||null,created_by_name:myName
   };
   let savedEventId=currentEventId;
@@ -7969,6 +8134,14 @@ async function saveEvent(){
     if(error){toast('오류: '+error.message);return;}
     savedEventId=ins&&ins.id;
   }
+  // 물품 관리 재고 연동: 이 행사에 연결된 '사용' 기록을 입력한 내용과 맞춤
+  let goodsMsg='';
+  if(evGoodsReady&&savedEventId){
+    try{
+      const failN=await syncEventGoods(savedEventId,name,date,goodsRead.catalog);
+      if(failN)goodsMsg=` · 물품 ${failN}건은 재고에 반영하지 못했어요. 행사를 다시 열어 확인해 주세요`;
+    }catch(err){goodsMsg=' · 물품 재고 반영 중 오류: '+(err.message||err);}
+  }
   // 브이드림 주최 행사: 선택한 초청 기관을 각 기관의 관계 이력(행사 초청)에 반영
   if(row.host==='브이드림'&&savedEventId){
     try{await syncEventInvites(savedEventId,name,date);}
@@ -7976,14 +8149,14 @@ async function saveEvent(){
     await loadRelLite();
   }
   document.getElementById('event-modal').style.display='none';
-  toast(currentEventId?'행사 수정 완료 ':'행사 등록 완료 ');
+  toast((currentEventId?'행사 수정 완료 ':'행사 등록 완료 ')+goodsMsg);
   renderEvents();
 }
 async function deleteEvent(){
   const e=cache.events.find(x=>x.id===currentEventId);
   showConfirm({
     title:'행사 삭제',sub:`"${e?.name}" 행사를 삭제합니다`,
-    msg:'이 행사를 삭제하면 복구할 수 없어요.\n\n정말 삭제하시겠어요?',
+    msg:'이 행사를 삭제하면 복구할 수 없어요.'+(evGoodsLogsOf(currentEventId).length?`\n\n이 행사에 연결된 물품 사용 기록 ${evGoodsLogsOf(currentEventId).length}건은 물품 관리에 그대로 남아요 (재고는 바뀌지 않아요).`:'')+'\n\n정말 삭제하시겠어요?',
     type:'danger',okLabel:'삭제',
     onOk:async()=>{
       const{error}=await sb.from('events').delete().eq('id',currentEventId);
