@@ -1464,6 +1464,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-header">담당자별 성과 KPI (Phase 2, job_id 기준) <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">서칭 배정 연결된 실적만 집계</span></div>
     <div class="card-body" id="an-member-kpi-v2"></div>
   </div>
+  <div class="card" style="margin-bottom:16px;"><div class="card-header">담당자별 연락 현황 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">마지막 연락 후 경과일 · 방치 기관 확인</span></div><div class="card-body" id="an-contact-gap"></div></div>
   <div class="card"><div class="card-header">⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
 </div>
 
@@ -5745,6 +5746,87 @@ function setAnalyticsPeriod(type){
 }
 // ===== 발굴팀 경영진 대시보드 (2026-07-21 1차 구현) =====
 // 각 KPI는 자기 기준 날짜로 독립 계산한다 (단일 created_at 기준 아님). 테스트 기관 연결 데이터는 전부 제외.
+// ── 담당자별 연락 현황 (마지막 연락 후 경과일 분포 · 2026-11-02) ──
+// 활성 기관 = 보류(9단계) 제외. 보류는 의도적으로 연락을 쉬는 기관이라 따로 건수만 센다.
+const CG_BUCKETS=[{k:'b7',l:'7일 이내',max:7},{k:'b14',l:'8~14일',max:14},{k:'b30',l:'15~30일',max:30},{k:'b60',l:'31~60일',max:60},{k:'b61',l:'61일 이상',max:Infinity},{k:'none',l:'기록 없음',max:null}];
+let _cgSel=null;
+function cgKstDay(d){if(!d)return null;const t=new Date(d);if(isNaN(t))return null;return new Date(t.toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'})+'T00:00:00Z');}
+// 연락 기록은 1,000건을 넘으면 한 번에 다 못 받아오므로, 이 카드 전용으로 나눠서 전부 읽는다 (기관별 마지막 연락일만 보관)
+let _cgLast=null,_cgLoadedAt=0,_cgLoading=null;
+async function cgLoadLast(force){
+  if(!force&&_cgLast&&Date.now()-_cgLoadedAt<60000)return true;
+  if(_cgLoading)return _cgLoading;
+  _cgLoading=(async()=>{
+    const map={};const PAGE=1000;
+    for(let from=0;;from+=PAGE){
+      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date').order('id').range(from,from+PAGE-1);
+      if(error){console.error(error);return false;}
+      (data||[]).forEach(l=>{const d=l.logged_at||l.created_at||l.date;if(!d||l.org_id==null)return;if(!map[l.org_id]||d>map[l.org_id])map[l.org_id]=d;});
+      if(!data||data.length<PAGE)break;
+    }
+    _cgLast=map;_cgLoadedAt=Date.now();return true;
+  })().catch(err=>{console.error(err);return false;}).finally(()=>{_cgLoading=null;});
+  return _cgLoading;
+}
+function cgCalc(){
+  const lastMap=_cgLast||{};
+  const today=cgKstDay(new Date());
+  const rows={};
+  (getMetricOrgs()||[]).forEach(o=>{
+    const m=(o.member||'').trim()||'미배정';
+    const r=rows[m]||(rows[m]={name:m,total:0,hold:0,active:0,sumDays:0,withLog:0,b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}});
+    r.total++;
+    if(o.stage===9){r.hold++;return;}
+    r.active++;
+    const ld=cgKstDay(lastMap[o.id]);
+    if(!ld){r.b.none.push({o,days:null});return;}
+    const days=Math.max(0,Math.round((today-ld)/864e5));
+    r.sumDays+=days;r.withLog++;
+    const bk=CG_BUCKETS.find(x=>x.max!=null&&days<=x.max);
+    r.b[bk.k].push({o,days});
+  });
+  return Object.values(rows).sort((a,b)=>b.active-a.active);
+}
+async function renderContactGap(force){
+  const el=document.getElementById('an-contact-gap');if(!el)return;
+  if(force||!_cgLast||Date.now()-_cgLoadedAt>=60000){
+    if(!_cgLast)el.innerHTML='<div class="loading"><div class="spin"></div></div>';
+    const ok=await cgLoadLast(force);
+    if(!ok&&!_cgLast){el.innerHTML='<span style="font-size:12px;color:var(--red);">연락 기록을 불러오지 못했어요.</span> <button type="button" onclick="renderContactGap(true)" style="font-size:12px;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;">다시 시도</button>';return;}
+  }
+  let data;
+  try{data=cgCalc();}catch(err){console.error(err);el.innerHTML='<span style="font-size:12px;color:var(--red);">연락 현황을 계산하지 못했어요. 새로고침 후 다시 열어 주세요.</span>';return;}
+  if(!data.length){el.innerHTML='<div class="empty">기관 없음</div>';return;}
+  const th='style="padding:8px 10px;font-size:11px;color:var(--text3);font-weight:700;text-align:right;white-space:nowrap;border-bottom:2px solid var(--border);background:var(--bg);"';
+  const thl=th.replace('text-align:right','text-align:left');
+  const cell=(r,k,n,warn)=>n?`<td style="text-align:right;padding:8px 10px;"><button type="button" onclick="cgPick('${String(r.name).replace(/'/g,"\\'")}','${k}')" style="border:none;background:${_cgSel&&_cgSel.m===r.name&&_cgSel.k===k?'var(--accent-bg)':'transparent'};cursor:pointer;font-size:13px;font-weight:700;padding:2px 8px;border-radius:6px;color:${warn?'var(--red)':'var(--text)'};">${n}</button></td>`:`<td style="text-align:right;padding:8px 10px;color:var(--text3);font-size:13px;">0</td>`;
+  const sum={name:'전체',total:0,hold:0,active:0,sumDays:0,withLog:0,b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}};
+  data.forEach(r=>{sum.total+=r.total;sum.hold+=r.hold;sum.active+=r.active;sum.sumDays+=r.sumDays;sum.withLog+=r.withLog;Object.keys(r.b).forEach(k=>sum.b[k]=sum.b[k].concat(r.b[k]));});
+  const line=(r,bold)=>`<tr style="${bold?'background:var(--bg);font-weight:800;':''}border-bottom:1px solid var(--border);">
+    <td style="padding:8px 10px;font-size:13px;font-weight:700;">${relEsc(r.name)}</td>
+    <td style="text-align:right;padding:8px 10px;font-size:13px;">${r.active}</td>
+    ${CG_BUCKETS.map(b=>cell(r,b.k,r.b[b.k].length,b.k==='b61'||b.k==='none')).join('')}
+    <td style="text-align:right;padding:8px 10px;font-size:13px;">${r.withLog?Math.round(r.sumDays/r.withLog)+'일':'—'}</td>
+    <td style="text-align:right;padding:8px 10px;font-size:13px;color:var(--text2);">${r.hold}</td></tr>`;
+  const pct=(r,k)=>r.active?Math.round(r.b[k].length/r.active*100):0;
+  const bars=data.map(r=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0;"><div style="width:64px;font-size:12px;font-weight:700;">${relEsc(r.name)}</div>
+    <div style="flex:1;display:flex;height:16px;border-radius:5px;overflow:hidden;background:var(--bg);">${['b7','b14','b30','b60','b61','none'].map((k,i)=>{const p=pct(r,k);const col=['#12b76a','#7ccf9c','#fdb022','#f79009','#f04438','#98a2b3'][i];return p?`<div title="${CG_BUCKETS[i].l} ${r.b[k].length}곳 (${p}%)" style="width:${p}%;background:${col};"></div>`:'';}).join('')}</div></div>`).join('');
+  const legend=CG_BUCKETS.map((b,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:11px;color:var(--text2);"><i style="width:9px;height:9px;border-radius:2px;background:${['#12b76a','#7ccf9c','#fdb022','#f79009','#f04438','#98a2b3'][i]};display:inline-block;"></i>${b.l}</span>`).join('');
+  let detail='';
+  if(_cgSel){
+    const src=_cgSel.m==='전체'?sum:data.find(r=>r.name===_cgSel.m);
+    const items=src?(src.b[_cgSel.k]||[]).slice().sort((a,b)=>(b.days==null?9999:b.days)-(a.days==null?9999:a.days)):[];
+    const bl=CG_BUCKETS.find(b=>b.k===_cgSel.k).l;
+    detail=`<div style="margin-top:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b style="font-size:13px;">${relEsc(_cgSel.m)} · ${bl} (${items.length}곳, 오래된 순)</b><button type="button" onclick="cgPick(null,null)" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:12px;">닫기</button></div>
+      <div style="max-height:260px;overflow-y:auto;">${items.map(x=>`<div onclick="openOrg(${x.o.id})" style="display:flex;gap:10px;padding:6px 2px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;"><span style="flex:1;font-weight:600;">${relEsc(x.o.name||'')}</span><span style="color:var(--text3);">${relEsc(STAGES[x.o.stage]||'')}</span><span style="width:70px;text-align:right;color:${x.days==null||x.days>60?'var(--red)':'var(--text2)'};">${x.days==null?'기록 없음':x.days+'일 전'}</span></div>`).join('')||'<div class="empty">없음</div>'}</div></div>`;
+  }
+  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">기관별 <b>마지막 연락 기록</b>으로부터 오늘까지 지난 날(한국 시간)로 나눈 기관 수예요. 보류 단계 기관은 활성 기관에서 빼고 맨 오른쪽에 따로 세요. 숫자를 누르면 기관 목록이 나와요.</div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:640px;"><thead><tr><th ${thl}>담당자</th><th ${th}>활성 기관</th>${CG_BUCKETS.map(b=>`<th ${th}>${b.l}</th>`).join('')}<th ${th}>평균 경과</th><th ${th}>보류 전환</th></tr></thead>
+    <tbody>${data.map(r=>line(r,false)).join('')}${line(sum,true)}</tbody></table></div>
+    <div style="margin-top:14px;">${bars}<div style="margin-top:6px;">${legend}</div></div>${detail}`;
+}
+function cgPick(m,k){_cgSel=m?{m,k}:null;renderContactGap();}
 function renderAnalytics(){
   const memberSel=document.getElementById('an-member');
   if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});}
@@ -5786,6 +5868,7 @@ function renderAnalytics(){
     const ms2=cache.profiles.filter(p=>p.name).map(p=>({name:p.name,...calcMemberPerformanceKPIs(p.name,rangeStart,rangeEnd)})).sort((a,b)=>b.actualSourcedCount-a.actualSourcedCount);
     mEl2.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:7px 8px;text-align:left;color:var(--text3);">담당자</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">담당 채용건</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">서칭목표</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">실제서칭</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">지원전환</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">합격기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">입사기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">목표달성률</th></tr></thead><tbody>${ms2.map(m=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;font-weight:700;">${m.name}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${m.assignedJobCount}</td><td style="padding:7px 8px;text-align:center;color:var(--text3);">${m.sourcingTargetTotal||'—'}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--teal);">${m.actualSourcedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--amber);">${m.applicationConvertedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--green);">${m.passedCount}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${m.hiredCount}</td><td style="padding:7px 8px;text-align:center;">${m.targetAchievementRate===null?'—':m.targetAchievementRate+'%'}</td></tr>`).join('')}</tbody></table>`;
   }
+  renderContactGap();
   const rEl=document.getElementById('an-route');
   if(rEl){const routes=[{l:'서칭',ch:'서칭',icon:'ti-search'},{l:'인바운드',ch:'인바운드',icon:'ti-phone'},{l:'행사·전시회',ch:'행사',icon:'ti-calendar'},{l:'소개',ch:'소개',icon:'ti-user-plus'},{l:'기관연계',ch:'기관연계',icon:'ti-building'}];rEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+routes.map(r=>{const rt=allTals.filter(t=>t.channel===r.ch);const rh=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===r.ch&&a.status==='최종합격';});const cv=rt.length>0?Math.round(rh.length/rt.length*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${r.l}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${cv>20?'var(--green-bg)':cv>10?'var(--amber-bg)':'var(--bg2)'};color:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--text3)'};">${cv}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);"><span>유입 <b style="color:var(--amber);">${rt.length}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${rh.length}</b></span></div></div>`;}).join('')+'</div>';}
   const rgEl=document.getElementById('an-region');
