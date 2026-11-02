@@ -2408,10 +2408,22 @@ async function loadTalentFiles(talentId){
   if(t)t.files=data?.files||[];
 }
 async function loadLogs(){
-  const {data,error}=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false});
-  if(error) console.error('[Supabase Error] contact_logs 조회 실패:', error);
-  cache.logs=data||[];
-  return {data,error};
+  // 연락 기록은 1,000건을 넘으면 한 번에 다 못 받아오므로(서버 한도) 1,000건씩 나눠서 전부 읽는다 (2026-11-02)
+  const PAGE=1000;let all=[],error=null;
+  for(let from=0;;from+=PAGE){
+    const r=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}).order('id',{ascending:false}).range(from,from+PAGE-1);
+    if(r.error){error=r.error;break;}
+    all=all.concat(r.data||[]);
+    if(!r.data||r.data.length<PAGE)break;
+  }
+  if(error){
+    console.error('[Supabase Error] contact_logs 조회 실패:', error);
+    // 일부만 읽힌 채로 덮어쓰면 마지막 연락일이 틀려지므로, 기존에 읽어 둔 값이 있으면 그대로 둔다
+    if(!Array.isArray(cache.logs)||!cache.logs.length)cache.logs=all;
+    return {data:null,error};
+  }
+  cache.logs=all;
+  return {data:all,error:null};
 }
 async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('id,name,role,status,status_emoji,sort_order').order('sort_order',{ascending:true});
