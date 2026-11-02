@@ -7021,6 +7021,49 @@ function normalizeOrgName(name){
     .replace(/\s+/g,'')
     .toLowerCase();
 }
+// ── 기관 중복 판정 (2026-11-02) ──
+// block = 같은 이름/표기만 다른 이름/거의 같은 이름 → 등록 불가, warn = 한 글자 차이·이름이 일부 포함 → 확인 후 등록 가능
+// (예: "동구장애인복지관"과 "서구장애인복지관"은 한 글자 차이지만 서로 다른 기관이라 막지 않고 확인만 받는다)
+function orgDupKey(name){
+  // 법인 표기("사단법인", "(사)", "(주)" 등)는 빼고 비교한다 (normalizeOrgName은 "사단법인"을 "단법인"으로 남겨서 쓰지 않음)
+  return String(name||'').trim().toLowerCase()
+    .replace(/^(사단법인|재단법인|사회복지법인|\(\s*사\s*\)|\(\s*재\s*\)|사\s*\)|재\s*\))\s*/,'')
+    .replace(/\(\s*주\s*\)|주식회사|\(\s*유\s*\)|유한회사/g,'')
+    .replace(/[^0-9a-z가-힣]/g,'');
+}
+function orgNameDist(a,b){
+  const m=a.length,n=b.length;if(!m)return n;if(!n)return m;
+  let prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){const cur=[i];for(let j=1;j<=n;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));}prev=cur;}
+  return prev[n];
+}
+function checkOrgDup(name,excludeId,list){
+  const key=orgDupKey(name);if(!key)return null;
+  let warn=null;
+  for(const o of (list||cache.orgs||[])){
+    if(excludeId!=null&&o.id===excludeId)continue;
+    const ok=orgDupKey(o.name);if(!ok)continue;
+    if(ok===key)return {level:'block',org:o,why:'같은 이름'};
+    const s=ok.length<key.length?ok:key,l=ok.length<key.length?key:ok;
+    if(l.includes(s)&&s.length/l.length>=0.8)return {level:'block',org:o,why:'거의 같은 이름'};
+    if(!warn&&s.length>=4&&(l.includes(s)||orgNameDist(ok,key)<=1))warn={level:'warn',org:o,why:l.includes(s)?'이름의 일부가 같음':'한 글자 차이'};
+  }
+  return warn;
+}
+async function orgDupFreshList(){
+  try{
+    let all=[];
+    for(let from=0;;from+=1000){
+      const r=await sb.from('orgs').select('id,name').range(from,from+999);
+      if(r.error||!Array.isArray(r.data))return cache.orgs||[];
+      all=all.concat(r.data);if(r.data.length<1000)break;
+    }
+    return all;
+  }catch(_){return cache.orgs||[];}
+}
+function orgDupBlockMsg(name,d){
+  return `"${d.org.name}" 기관이 이미 등록되어 있어요. (${d.why})\n입력한 이름: "${name}"\n\n같은 기관은 새로 등록할 수 없어요.\n기관 목록에서 "${d.org.name}"을(를) 열어 히스토리를 추가해 주세요.`;
+}
 function findDuplicateOrg(name,excludeId){
   const norm=normalizeOrgName(name);
   if(!norm)return null;
@@ -7050,10 +7093,15 @@ function goToDuplicateOrg(){
 function checkOrgNameDup(val){
   const warn=document.getElementById('n-name-warn');
   if(!warn)return;
-  if(editOrgId){warn.style.display='none';return;} // 수정 모드에서는 자기 자신과 비교할 필요 없음
-  const dup=findDuplicateOrg(val,editOrgId);
-  if(dup){
-    warn.innerHTML=` <b>${dup.name}</b> 기관이 이미 등록되어 있어요. 중복 등록이면 <a href="#" onclick="event.preventDefault();openOrg(${dup.id});" style="color:#c2410c;text-decoration:underline;">해당 기관으로 바로가기</a>에서 히스토리를 추가해주세요.`;
+  const prev=editOrgId?(cache.orgs||[]).find(o=>o.id===editOrgId):null;
+  if(prev&&prev.name===String(val||'').trim()){warn.style.display='none';return;} // 수정 모드에서 이름을 안 바꿨으면 비교하지 않음
+  const d=checkOrgDup(val,editOrgId);
+  if(d){
+    const block=d.level==='block';
+    warn.style.background=block?'#fee2e2':'#fff7ed';warn.style.borderColor=block?'#dc2626':'#f97316';
+    warn.innerHTML=block
+      ?` <b>${relEsc(d.org.name)}</b> 기관이 이미 있어요 (${d.why}). <b>이 이름으로는 등록할 수 없어요.</b> <a href="#" onclick="event.preventDefault();openOrg(${d.org.id});" style="color:#b91c1c;text-decoration:underline;">해당 기관 열기</a>에서 히스토리를 추가해 주세요.`
+      :` 이름이 비슷한 기관 <b>${relEsc(d.org.name)}</b>이(가) 있어요 (${d.why}). 같은 기관이면 <a href="#" onclick="event.preventDefault();openOrg(${d.org.id});" style="color:#c2410c;text-decoration:underline;">해당 기관 열기</a>에서 히스토리를 추가해 주세요. 다른 기관이면 계속 등록해도 돼요.`;
     warn.style.display='block';
   }else{warn.style.display='none';}
 }
@@ -8745,6 +8793,8 @@ async function saveOrg(){
 
   // ── 수정 모드 ──
   if(editOrgId){
+    {const prev0=(cache.orgs||[]).find(o=>o.id===editOrgId);
+    if(!prev0||prev0.name!==name){const dE=checkOrgDup(name,editOrgId,await orgDupFreshList());if(dE&&dE.level==='block'){alert(orgDupBlockMsg(name,dE));btn.disabled=false;btn.innerHTML=' 저장';return;}}}
     showConfirm({
       title:'기관 정보 수정',sub:`"${name}" 정보를 수정합니다`,
       msg:`입력한 내용으로 기관 정보가 업데이트돼요.\n\n계속하시겠어요?`,
@@ -8774,10 +8824,14 @@ async function saveOrg(){
   // ── 신규 등록 모드 ──
   // 정확히 같은 이름뿐 아니라 "사)한국장애인문화협회" vs "한국장애인문화협회"처럼 사단법인 축약 표기만
   // 다른 경우도 findDuplicateOrg()로 걸러서 중복 기관 등록을 막는다 (2026-07-27).
-  const dup=findDuplicateOrg(name);
-  if(dup){
-    const reg=dup.created_by_name||'누군가';
-    if(!confirm(` "${dup.name}" 기관이 이미 등록되어 있어요! (입력한 "${name}"와(과) 유사한 이름)\n\n등록자: ${reg}\n\n정말 별개의 기관이 맞다면 계속 등록하시고, 같은 기관이면 취소 후 기관 목록에서 히스토리를 추가해주세요.\n\n그래도 계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML=' 저장';return;}
+  const dupList=await orgDupFreshList(); // 화면에 떠 있는 목록이 오래됐을 수 있어 등록 직전에 최신 기관 이름을 다시 읽는다
+  const dupR=checkOrgDup(name,null,dupList);
+  if(dupR&&dupR.level==='block'){
+    alert(orgDupBlockMsg(name,dupR));
+    btn.disabled=false;btn.innerHTML=' 저장';return;
+  }
+  if(dupR&&dupR.level==='warn'){
+    if(!confirm(`이름이 비슷한 기관 "${dupR.org.name}"이(가) 이미 있어요. (${dupR.why})\n입력한 이름: "${name}"\n\n같은 기관이면 취소 후 기관 목록에서 히스토리를 추가해 주세요.\n정말 다른 기관이면 계속 등록하세요.\n\n계속 등록하시겠어요?`)){btn.disabled=false;btn.innerHTML=' 저장';return;}
   }
   orgRow.card_image=cardImageBase64||null;
   orgRow.lastcontact=today();
