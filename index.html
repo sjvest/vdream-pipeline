@@ -5759,9 +5759,9 @@ async function cgLoadLast(force){
   _cgLoading=(async()=>{
     const map={};const PAGE=1000;
     for(let from=0;;from+=PAGE){
-      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date').order('id').range(from,from+PAGE-1);
+      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type').order('id').range(from,from+PAGE-1);
       if(error){console.error(error);return false;}
-      (data||[]).forEach(l=>{const d=l.logged_at||l.created_at||l.date;if(!d||l.org_id==null)return;if(!map[l.org_id]||d>map[l.org_id])map[l.org_id]=d;});
+      (data||[]).forEach(l=>{if(l.contact_type==='채용공고 발송')return; /* 공고 발송은 연락으로 안 침 */ const d=l.logged_at||l.created_at||l.date;if(!d||l.org_id==null)return;if(!map[l.org_id]||d>map[l.org_id])map[l.org_id]=d;});
       if(!data||data.length<PAGE)break;
     }
     _cgLast=map;_cgLoadedAt=Date.now();return true;
@@ -5821,7 +5821,7 @@ async function renderContactGap(force){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b style="font-size:13px;">${relEsc(_cgSel.m)} · ${bl} (${items.length}곳, 오래된 순)</b><button type="button" onclick="cgPick(null,null)" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:12px;">닫기</button></div>
       <div style="max-height:260px;overflow-y:auto;">${items.map(x=>`<div onclick="openOrg(${x.o.id})" style="display:flex;gap:10px;padding:6px 2px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;"><span style="flex:1;font-weight:600;">${relEsc(x.o.name||'')}</span><span style="color:var(--text3);">${relEsc(STAGES[x.o.stage]||'')}</span><span style="width:70px;text-align:right;color:${x.days==null||x.days>60?'var(--red)':'var(--text2)'};">${x.days==null?'기록 없음':x.days+'일 전'}</span></div>`).join('')||'<div class="empty">없음</div>'}</div></div>`;
   }
-  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">기관별 <b>마지막 연락 기록</b>으로부터 오늘까지 지난 날(한국 시간)로 나눈 기관 수예요. 보류 단계 기관은 활성 기관에서 빼고 맨 오른쪽에 따로 세요. 숫자를 누르면 기관 목록이 나와요.</div>
+  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">기관별 <b>마지막 연락 기록</b>(채용공고 발송은 연락에서 뺌)으로부터 오늘까지 지난 날(한국 시간)로 나눈 기관 수예요. 보류 단계 기관은 활성 기관에서 빼고 맨 오른쪽에 따로 세요. 숫자를 누르면 기관 목록이 나와요.</div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:640px;"><thead><tr><th ${thl}>담당자</th><th ${th}>활성 기관</th>${CG_BUCKETS.map(b=>`<th ${th}>${b.l}</th>`).join('')}<th ${th}>평균 경과</th><th ${th}>보류 전환</th></tr></thead>
     <tbody>${data.map(r=>line(r,false)).join('')}${line(sum,true)}</tbody></table></div>
     <div style="margin-top:14px;">${bars}<div style="margin-top:6px;">${legend}</div></div>${detail}`;
