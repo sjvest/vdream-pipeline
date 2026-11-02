@@ -5827,6 +5827,38 @@ async function renderContactGap(force){
     <div style="margin-top:14px;">${bars}<div style="margin-top:6px;">${legend}</div></div>${detail}`;
 }
 function cgPick(m,k){_cgSel=m?{m,k}:null;renderContactGap();}
+// ── 발굴 경로별 성과 (2026-11-02) ──
+// 기준: 지원자를 데려온 '기관'의 발굴 경로(기관의 source). 지원자 개인에게 적힌 유입 채널과는 별개다.
+function routeNorm(src){
+  const s=String(src||'').trim();
+  if(!s)return '경로 미입력';
+  if(s.includes('행사')||s.includes('전시'))return '행사·전시회';
+  if(s.includes('소개')||s.includes('명함'))return '명함·소개';
+  if(s.includes('서칭')||s.includes('콜드'))return '서칭';
+  if(s.includes('인바운드'))return '인바운드';
+  return s;
+}
+function routeStats(orgs,tals,apps){
+  const ORDER=['서칭','인바운드','명함·소개','행사·전시회'];
+  const byOrg={};(orgs||[]).forEach(o=>{byOrg[o.id]=o;});
+  const rows={};
+  const get=k=>rows[k]||(rows[k]={route:k,orgs:0,tals:0,hired:0});
+  (orgs||[]).forEach(o=>{get(routeNorm(o.source)).orgs++;});
+  const hiredTal=new Set((apps||[]).filter(a=>a.status==='최종합격').map(a=>String(a.talent_id)));
+  (tals||[]).forEach(t=>{
+    const o=byOrg[t.source_org_id||t.org_id];
+    const r=get(o?routeNorm(o.source):'기관 미연결');
+    r.tals++;if(hiredTal.has(String(t.id)))r.hired++;
+  });
+  ORDER.forEach(k=>get(k));
+  return Object.values(rows).filter(r=>ORDER.includes(r.route)||r.orgs>0||r.tals>0)
+    .sort((a,b)=>{const ia=ORDER.indexOf(a.route),ib=ORDER.indexOf(b.route);return (ia<0?99:ia)-(ib<0?99:ib)||b.tals-a.tals;})
+    .map(r=>({...r,rate:r.tals>0?Math.round(r.hired/r.tals*100):0}));
+}
+function renderRouteCard(el,orgs,tals,apps){
+  const st=routeStats(orgs,tals,apps);
+  el.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">지원자를 데려온 <b>기관의 발굴 경로</b> 기준이에요. 입사 = 최종합격한 지원자 수, 입사율 = 입사 ÷ 유입.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+st.map(r=>`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${relEsc(r.route)}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${r.rate>20?'var(--green-bg)':r.rate>10?'var(--amber-bg)':'var(--bg2)'};color:${r.rate>20?'var(--green)':r.rate>10?'var(--amber)':'var(--text3)'};">${r.rate}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);flex-wrap:wrap;"><span>기관 <b style="color:var(--text);">${r.orgs}</b></span><span>유입 <b style="color:var(--amber);">${r.tals}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${r.hired}</b></span></div></div>`).join('')+'</div>';
+}
 function renderAnalytics(){
   const memberSel=document.getElementById('an-member');
   if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});}
@@ -5870,7 +5902,7 @@ function renderAnalytics(){
   }
   renderContactGap();
   const rEl=document.getElementById('an-route');
-  if(rEl){const routes=[{l:'서칭',ch:'서칭',icon:'ti-search'},{l:'인바운드',ch:'인바운드',icon:'ti-phone'},{l:'행사·전시회',ch:'행사',icon:'ti-calendar'},{l:'소개',ch:'소개',icon:'ti-user-plus'},{l:'기관연계',ch:'기관연계',icon:'ti-building'}];rEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+routes.map(r=>{const rt=allTals.filter(t=>t.channel===r.ch);const rh=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===r.ch&&a.status==='최종합격';});const cv=rt.length>0?Math.round(rh.length/rt.length*100):0;return`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${r.l}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${cv>20?'var(--green-bg)':cv>10?'var(--amber-bg)':'var(--bg2)'};color:${cv>20?'var(--green)':cv>10?'var(--amber)':'var(--text3)'};">${cv}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);"><span>유입 <b style="color:var(--amber);">${rt.length}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${rh.length}</b></span></div></div>`;}).join('')+'</div>';}
+  if(rEl)renderRouteCard(rEl,allOrgs,allTals,allApps);
   const rgEl=document.getElementById('an-region');
   if(rgEl){const rm={};allOrgs.forEach(o=>{const r=o.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].o++;});allTals.forEach(t=>{const org=allOrgs.find(o=>o.id===(t.source_org_id||t.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].t++;});allApps.filter(a=>a.status==='최종합격').forEach(a=>{const t=allTals.find(x=>x.id===a.talent_id);const org=allOrgs.find(o=>o.id===(t?.source_org_id||t?.org_id));const r=org?.region||'미설정';if(!rm[r])rm[r]={o:0,t:0,h:0};rm[r].h++;});rgEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+Object.entries(rm).sort((a,b)=>b[1].h-a[1].h||b[1].t-a[1].t).slice(0,8).map(([r,v])=>{const rate=v.t>0?Math.round(v.h/v.t*100):0;const rk=encodeURIComponent(r==='미설정'?'__none__':r).replace(/'/g,'%27');return`<div role="button" tabindex="0" title="${r} 기관 목록 보기" onclick="goOrgsByRegion(decodeURIComponent('${rk}'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goOrgsByRegion(decodeURIComponent('${rk}'));}" style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;">${r}</span><span style="font-size:10px;padding:1px 6px;border-radius:10px;background:${rate>20?'var(--green-bg)':'var(--bg2)'};color:${rate>20?'var(--green)':'var(--text3)'};">${rate}%</span></div><div style="display:flex;gap:8px;font-size:11px;color:var(--text3);"><span>기관 <b style="color:var(--accent);">${v.o}</b></span><span>유입 <b style="color:var(--amber);">${v.t}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${v.h}</b></span></div></div>`;}).join('')+'</div>';}
   const iEl=document.getElementById('an-insight');
@@ -5884,8 +5916,8 @@ function renderAnalytics(){
     if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요',items:exp.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);const days=Math.ceil((new Date(a.contract_end_date)-now)/864e5);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:`D-${days}`,open:'talent'};})});
     const nc=allOrgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30));
     if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장',items:nc.map(o=>({id:o.id,name:o.name,extra:o.lastcontact?`${Math.floor((now-new Date(o.lastcontact))/864e5)}일 전`:'연락 기록 없음',open:'org'}))});
-    const chStats=['서칭','인바운드','행사','소개','기관연계'].map(ch=>{const ct=allTals.filter(t=>t.channel===ch).length;const ch2=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.channel===ch&&a.status==='최종합격';}).length;return{ch,rate:ct>0?Math.round(ch2/ct*100):0,t:ct};}).filter(x=>x.t>0).sort((a,b)=>b.rate-a.rate);
-    if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`,items:chStats.map(c=>({name:c.ch,extra:`전환율 ${c.rate}% (${c.t}건 중 ${Math.round(c.rate*c.t/100)}건 전환)`}))});
+    const chStats=routeStats(allOrgs,allTals,allApps).filter(x=>x.tals>0&&x.route!=='기관 미연결'&&x.route!=='경로 미입력').map(x=>({ch:x.route,rate:x.rate,t:x.tals,h:x.hired})).sort((a,b)=>b.rate-a.rate);
+    if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`,items:chStats.map(c=>({name:c.ch,extra:`입사율 ${c.rate}% (유입 ${c.t}명 중 ${c.h}명 입사)`}))});
     const thisM=new Date(now.getFullYear(),now.getMonth(),1);
     const topM=cache.profiles.map(p=>{const apps=allApps.filter(a=>{const t=allTals.find(x=>x.id===a.talent_id);return t?.member===p.name&&a.status==='최종합격'&&new Date(a.created_at)>=thisM;});return{name:p.name,h:apps.length,apps};}).sort((a,b)=>b.h-a.h)[0];
     if(topM?.h>0)ins.push({t:'success',msg:`이번달 TOP 담당자: ${topM.name}`,sub:`입사 ${topM.h}명 달성`,items:topM.apps.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:a.status,open:'talent'};})});
