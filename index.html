@@ -481,8 +481,11 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   <div id="alert-banner" style="display:none;margin-bottom:16px;"></div>
   <div class="metrics" id="metrics"><div class="loading" style="grid-column:1/-1;"><div class="spin"></div>불러오는 중...</div></div>
 
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;"><span>오늘 연락 필요 <span id="dash-contact-need-count" style="font-size:12px;color:var(--red);font-weight:800;"></span></span><span><button type="button" id="cn-scope-all" onclick="setContactNeedScope('all')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">전체</button> <button type="button" id="cn-scope-mine" onclick="setContactNeedScope('mine')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">내 담당</button></span></div>
+  <div class="card" id="dash-contact-card" style="margin-bottom:16px;background:#fff6f4;border-color:#f3cfc8;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+      <div><div style="font-size:16px;font-weight:800;">오늘 연락 필요 <span id="dash-contact-need-count" style="font-size:12px;color:var(--red);font-weight:800;"></span></div><div style="font-size:12px;color:var(--text3);font-weight:400;margin-top:3px;">공고·자료·뉴스레터를 제외한 실제 연락 기준</div></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><button type="button" id="cn-scope-all" onclick="setContactNeedScope('all')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">전체</button><button type="button" id="cn-scope-mine" onclick="setContactNeedScope('mine')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;">내 담당</button><button type="button" class="btn btn-ghost btn-sm" onclick="nav('analytics')">담당자 KPI 보기</button></div>
+    </div>
     <div class="card-body" id="dash-contact-need"></div>
   </div>
 
@@ -556,7 +559,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 
   <div class="card" style="margin-bottom:12px;max-width:900px;">
     <div class="card-header" style="justify-content:space-between;">
-      <span>최근 컨택 활동</span>
+      <span>최근 활동</span>
       <div style="display:flex;align-items:center;gap:10px;">
         <span id="dash-feed-count" style="font-size:11px;color:var(--text3);font-weight:400;"></span>
         <button onclick="nav('cold')" style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-bg);border:none;border-radius:6px;padding:3px 10px;cursor:pointer;">전체 보기 →</button>
@@ -2421,7 +2424,7 @@ async function loadLogs(){
   // 연락 기록은 1,000건을 넘으면 한 번에 다 못 받아오므로(서버 한도) 1,000건씩 나눠서 전부 읽는다 (2026-11-02)
   const PAGE=1000;let all=[],error=null;
   for(let from=0;;from+=PAGE){
-    const r=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name').order('logged_at',{ascending:false}).order('id',{ascending:false}).range(from,from+PAGE-1);
+    const r=await sb.from('contact_logs').select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name,is_quick').order('logged_at',{ascending:false}).order('id',{ascending:false}).range(from,from+PAGE-1);
     if(r.error){error=r.error;break;}
     all=all.concat(r.data||[]);
     if(!r.data||r.data.length<PAGE)break;
@@ -2505,7 +2508,7 @@ async function loadTeamTaskSummary(){
 }
 async function loadRecentLogs(){
   const {data,error}=await sb.from('contact_logs')
-    .select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name')
+    .select('id,org_id,date,summary,memo,our_members,their_members,contact_type,status,threads,logged_at,created_at,created_by,created_by_name,is_quick')
     .order('logged_at',{ascending:false})
     .limit(30);
   if(error) console.error('[Supabase Error] contact_logs(최근) 조회 실패:', error);
@@ -3203,12 +3206,20 @@ function renderDashboard(){
   // 최근 컨택 활동 피드
   const TYPE_ICON={'통화':'<i class="ti ti-phone"></i>','미팅':'<i class="ti ti-users"></i>','이메일':'<i class="ti ti-mail"></i>','문자':'<i class="ti ti-message"></i>','기타':'<i class="ti ti-dots"></i>'};
   const TYPE_COLOR={'통화':'var(--accent)','미팅':'var(--green)','이메일':'var(--purple)','문자':'var(--amber)','기타':'var(--text3)'};
-  const logFeed=cache.logs.map(l=>({type:'log',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
+  const logFeed=cache.logs.map(l=>({type:'log',is_quick:!!l.is_quick,summary_raw:l.summary||'',id:l.id,org_id:l.org_id,title:l.summary||'컨택',contact_type:l.contact_type||'기타',status:l.status||'완료',by:l.created_by_name||'',date:l.logged_at||l.created_at}));
   const coldFeed=(cache.cold||[]).map(c=>({type:'cold',id:c.id,title:c.org_name||c.org||'',contact_type:c.contact_type||'통화',status:'완료',by:c.created_by_name||'',date:c.logged_at||c.created_at}));
   const _allFeed=[...logFeed,...coldFeed].sort((a,b)=>new Date(b.date)-new Date(a.date));
   const _today=new Date();
-  const allFeed=_allFeed.filter(f=>{const d=new Date(f.date);return d.getFullYear()===_today.getFullYear()&&d.getMonth()===_today.getMonth()&&d.getDate()===_today.getDate();});
-  document.getElementById('dash-feed-count').textContent=`오늘 ${allFeed.length}건`;
+  // 최근 7일 활동. 공고·자료 등 간편 발송은 '발송 성과'로 따로 표시하고, 같은 때 여러 기관에 보낸 건 한 줄로 묶는다 (2026-11-03)
+  const _isSend=f=>f.type==='log'&&f.is_quick&&!(f.contact_type==='안부메세지 발송'&&!String(f.summary_raw||'').includes('(일괄)'));
+  const _grp={},_merged=[];
+  _allFeed.forEach(f=>{
+    if(_isSend(f)){const k=f.contact_type+'|'+String(f.date||'').slice(0,16)+'|'+(f.by||'');if(_grp[k]){_grp[k].count++;return;}f.send=true;f.count=1;_grp[k]=f;}
+    _merged.push(f);
+  });
+  const _since=new Date(_today.getFullYear(),_today.getMonth(),_today.getDate()-6);
+  const allFeed=_merged.filter(f=>new Date(f.date)>=_since).slice(0,12);
+  document.getElementById('dash-feed-count').textContent=`최근 7일 ${allFeed.length}건`;
   let lastDateLabel='';
   document.getElementById('dash-feed').innerHTML=allFeed.length?allFeed.map(f=>{
     const org=cache.orgs.find(o=>o.id===f.org_id);
@@ -3223,23 +3234,24 @@ function renderDashboard(){
     const dateLabel=sameDay(fDate,today)?'오늘':sameDay(fDate,yesterday)?'어제':fDate.toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
     const timeStr=fDate.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     const groupHeader='';
-    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`openColdEntry()`:`openOrg(${f.org_id})`}">
+    return`${groupHeader}<div class="action-item" style="cursor:pointer;padding:9px 0;border-bottom:1px solid var(--border);" onclick="${isCold?`openColdEntry()`:(f.send&&f.count>1?`nav('orgs')`:`openOrg(${f.org_id})`)}">
       <span style="font-size:16px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <span style="font-size:12px;font-weight:700;color:${color};">${f.contact_type}</span>
-          <span style="font-size:13px;font-weight:700;">${orgName}</span>
+          <span style="font-size:13px;font-weight:700;">${f.send&&f.count>1?'일괄 발송':orgName}</span>
+          <span style="font-size:10px;font-weight:800;padding:1px 8px;border-radius:10px;${f.send?'background:#fff1de;color:#b54708;':'background:#e3f4ea;color:#0a6b46;'}">${f.send?'발송 성과':'실제 연락'}</span>
           ${isCold?'<span style="font-size:10px;background:#f1f4f9;color:var(--text3);padding:1px 6px;border-radius:4px;">신규컨택</span>':''}
           ${isInProgress?'<span style="font-size:10px;background:#fff7ed;color:#f97316;padding:1px 6px;border-radius:4px;font-weight:700;"> 진행중</span>':''}
         </div>
-        ${f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:''}
+        ${f.send?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.count>1?f.count+'개 기관에 발송 · ':''}실제 연락에는 미포함</div>`:(f.title&&f.title!==orgName?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">${f.title}</div>`:'')}
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:11px;font-weight:600;color:var(--text2);">${timeStr}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);">${sameDay(fDate,today)?timeStr:(fDate.getMonth()+1)+'/'+fDate.getDate()+' '+timeStr}</div>
         ${f.by?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${f.by}</div>`:''}
       </div>
     </div>`;
-  }).join(''):'<div class="empty" style="padding:1rem 0;">최근 컨택 활동 없음</div>';
+  }).join(''):'<div class="empty" style="padding:1rem 0;">최근 활동 없음</div>';
 
   // 기간별 보고 / 기간별 성과 현황은 버튼을 눌러야만 그려졌던 문제 수정 — 대시보드 진입 시 현재 선택된
   // 기간·차트 모드로 한 번 그려준다 (버튼 자체는 그대로 눌러서 다른 기간/모드로 바꿀 수 있음).
@@ -5881,13 +5893,16 @@ function renderContactNeed(){
   items.sort((a,b)=>(b.days==null?99999:b.days)-(a.days==null?99999:a.days));
   const cnt=document.getElementById('dash-contact-need-count');if(cnt)cnt.textContent=items.length+'곳';
   if(!items.length){el.innerHTML='<div class="empty">연락 기준을 넘긴 기관이 없어요</div>';return;}
-  const LIMIT=15,show=items.slice(0,LIMIT);
-  const th='style="padding:7px 8px;font-size:11px;color:var(--text3);font-weight:700;text-align:left;white-space:nowrap;border-bottom:2px solid var(--border);"';
-  const td='style="padding:8px;font-size:12px;"';
-  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">MOU 기관 ${CONTACT_SLA.mou}일 · 그 외 ${CONTACT_SLA.other}일 안에 실제 연락(전화·문자·개별 이메일·미팅)이 없는 기관이에요. 오래된 순이에요.</div>
-  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:620px;"><thead><tr><th ${th}>기관</th><th ${th}>담당자</th><th ${th}>단계</th><th ${th}>마지막 실제 연락</th><th ${th}>미연락일</th><th ${th}>적용 기준</th></tr></thead><tbody>${show.map(i=>{const o=i.org;
-    const last=i.basis==='contact'?`${i.last_real_contact_at.slice(5).replace('-','/')} · ${i.last_real_contact_type||'연락'}`:(i.basis==='created'?'실제 연락 없음':'연락 기록 없음');
-    return `<tr onclick="openOrg(${o.id})" style="cursor:pointer;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"><td ${td}><b>${relEsc(o.name)}</b></td><td ${td}>${relEsc(o.member||'미배정')}</td><td ${td}>${relEsc(STAGES[o.stage]||'')}</td><td ${td}>${relEsc(last)}</td><td ${td}><b style="color:var(--red);">${i.days==null?'—':i.days+'일'}</b>${i.relationship_contact_overdue_days?` <span style="color:var(--text3);">(+${i.relationship_contact_overdue_days})</span>`:''}</td><td ${td}>${i.relationship_contact_limit_days}일</td></tr>`;}).join('')}</tbody></table></div>${items.length>LIMIT?`<div style="font-size:11px;color:var(--text3);margin-top:8px;">외 ${items.length-LIMIT}곳 — 전체는 분석 > 연락 현황 또는 할 일에서 볼 수 있어요.</div>`:''}`;
+  const LIMIT=6,show=items.slice(0,LIMIT);
+  const tile=i=>{const o=i.org;
+    const big=i.days==null?'기록 없음':(i.basis==='created'?`등록 후 ${i.days}일`:`${i.days}일 전`);
+    const sub=i.basis==='contact'?`마지막 ${i.last_real_contact_type||'연락'} ${i.last_real_contact_at.slice(5).replace('-','/')}`:(i.basis==='created'?'실제 연락 기록 없음':'');
+    return `<div onclick="openOrg(${o.id})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;min-width:0;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+      <div style="font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${relEsc(o.name)}">${relEsc(o.name)}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">${relEsc(o.member||'미배정')} · ${relEsc(STAGES[o.stage]||'')}</div>
+      <div style="margin-top:8px;font-size:17px;font-weight:800;color:var(--red);">${big} <span style="font-size:11px;color:var(--text2);font-weight:600;">(기준 ${i.relationship_contact_limit_days}일)</span></div>
+      ${sub?`<div style="font-size:11px;color:var(--text3);margin-top:3px;">${relEsc(sub)}</div>`:''}</div>`;};
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;">${show.map(tile).join('')}</div>${items.length>LIMIT?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--text3);"><span>외 ${items.length-LIMIT}곳 (MOU ${CONTACT_SLA.mou}일 · 그 외 ${CONTACT_SLA.other}일 기준, 오래된 순)</span><button type="button" class="btn btn-ghost btn-sm" onclick="nav('actions')">할 일에서 전체 보기</button></div>`:`<div style="font-size:11px;color:var(--text3);margin-top:10px;">MOU ${CONTACT_SLA.mou}일 · 그 외 ${CONTACT_SLA.other}일 기준, 오래된 순</div>`}`;
 }
 async function renderContactGap(force){
   const el=document.getElementById('an-contact-gap');if(!el)return;
