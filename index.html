@@ -2988,6 +2988,7 @@ async function sendGChatDailySummary(){
   // ── 메시지 4: 예정 행사 (14일 이내) ──
   const upcomingEvents=(cache.events||[]).filter(e=>{
     if(!e.date)return false;
+    if(String(e.name||'').includes('[테스트]'))return false; // 테스트 행사는 알림 제외
     const d=Math.floor((new Date(e.date)-now)/864e5);
     return d>=0&&d<=14;
   }).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -3048,6 +3049,7 @@ function checkAlerts(manual=false){
   // 4. 행사 1주일 전
   if(cache.events){
     cache.events.forEach(e=>{
+      if(String(e.name||'').includes('[테스트]'))return; // 테스트 행사는 알림 제외
       const days=Math.floor((new Date(e.date)-now)/864e5);
       if(days>=0&&days<=7){
         alerts.push({type:'info',icon:'ti-calendar-event',title:`행사 D-${days}`,msg:`${e.name} · ${fDate(e.date)} · ${e.location||''}`,link:'events'});
