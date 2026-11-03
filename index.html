@@ -4416,7 +4416,7 @@ async function saveBulkQuickContact(){
     const type=document.getElementById('bulk-quick-type')?.value||'채용공고 발송';
     const channel=document.getElementById('bulk-quick-channel')?.value||'';
     const memo=document.getElementById('bulk-quick-memo')?.value.trim()||null;
-    const summary=channel?`${type} · ${channel}`:type;
+    const summary=(channel?`${type} · ${channel}`:type)+' (일괄)'; // '(일괄)' 표시로 개별 안부와 구분
     const dateStr=today();
     const nowIso=new Date().toISOString();
     const myName=currentProfile?.name||currentUser?.email||'알 수 없음';
@@ -5785,9 +5785,9 @@ async function cgLoadLast(force){
   _cgLoading=(async()=>{
     const map={},types={};const PAGE=1000;
     for(let from=0;;from+=PAGE){
-      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type,is_quick,threads').order('id').range(from,from+PAGE-1);
+      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type,is_quick,threads,summary').order('id').range(from,from+PAGE-1);
       if(error){console.error(error);return false;}
-      (data||[]).forEach(l=>{if(l.is_quick||['채용공고 발송','자료 전달','안부메세지 발송'].includes(l.contact_type))return; /* 공고·자료·안부 등 간편 발송은 연락으로 안 침 */ if(l.org_id==null)return;const put=(d,t)=>{if(d&&(!map[l.org_id]||String(d)>String(map[l.org_id]))){map[l.org_id]=d;types[l.org_id]=t||'';}};put(l.logged_at||l.created_at||l.date,l.contact_type);(l.threads||[]).forEach(t=>put(t&&t.date,l.contact_type));});
+      (data||[]).forEach(l=>{if((l.is_quick&&!(l.contact_type==='안부메세지 발송'&&!String(l.summary||'').includes('(일괄)')))||['채용공고 발송','자료 전달'].includes(l.contact_type))return; /* 공고·자료·안부 등 간편 발송은 연락으로 안 침 */ if(l.org_id==null)return;const put=(d,t)=>{if(d&&(!map[l.org_id]||String(d)>String(map[l.org_id]))){map[l.org_id]=d;types[l.org_id]=t||'';}};put(l.logged_at||l.created_at||l.date,l.contact_type);(l.threads||[]).forEach(t=>put(t&&t.date,l.contact_type));});
       if(!data||data.length<PAGE)break;
     }
     _cgLast=map;_cgLastType=types;_cgLoadedAt=Date.now();return true;
@@ -9756,7 +9756,8 @@ async function saveQuickContact(orgId){
     }).select().single();
     if(error){toast('저장 실패: '+error.message);return;}
     cache.logs.unshift(data);
-    // 간편 발송(공고·자료·안부 등)은 '실제 연락'이 아니므로 기관의 마지막 연락일을 갱신하지 않는다 (2026-11-03).
+    // 간편 발송(공고·자료 등)은 '실제 연락'이 아니므로 기관의 마지막 연락일을 갱신하지 않는다. 한 기관에 직접 남긴 안부는 실제 연락으로 센다 (2026-11-03).
+    cgAfterLogChange();
     // 빠른 접촉은 간편 접촉이라 미팅완료 자동승격/파이프라인 단계 변경을 절대 트리거하지 않는다 (명세).
     const logList=document.getElementById('contact-log-list');
     if(logList)logList.innerHTML=renderContactLogs(orgId);
