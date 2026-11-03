@@ -5924,7 +5924,7 @@ function renderAnalytics(){
   const iEl=document.getElementById('an-insight');
   if(iEl){
     const ins=[];
-    const mn=allOrgs.filter(o=>o.stage>=4&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);
+    const mn=allOrgs.filter(o=>(o.stage===5||o.stage===6)&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);
     if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:''),items:mn.map(o=>({id:o.id,name:o.name,open:'org'}))});
     const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&a.status==='최종합격').length===0);
     if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:''),items:tn.map(o=>({id:o.id,name:o.name,open:'org'}))});
