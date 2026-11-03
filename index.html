@@ -2036,6 +2036,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
 <script>
 // 미연락 알림 기준일: 마지막 연락 후 이 일수 이상 지나면 알림 (2026-11-02 7일→14일로 완화)
 const CONTACT_ALERT_DAYS=14;
+// 연락 기준(일): MOU 기관은 더 자주, 그 외는 20일 안에 실제 연락(전화·문자·이메일·미팅). 숫자만 바꾸면 모든 화면에 반영된다 (2026-11-03)
+const CONTACT_SLA={mou:14,other:20};
+function cgSlaOf(o){return (o.stage===5||o.stage===6)?CONTACT_SLA.mou:CONTACT_SLA.other;}
 const STAGES={0:'발굴',1:'컨택 시도',2:'미팅 완료',3:'관계 형성',4:'MOU 예정',5:'MOU 완료',6:'인재영입 완료',9:'보류'};
 const STAGE_CLS={0:'b-gray',1:'b-blue',2:'b-purple',3:'b-amber',4:'b-teal',5:'b-green',6:'b-green',9:'b-red'};
 const STAGE_COLORS=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'];
@@ -3088,6 +3091,7 @@ function checkAlerts(manual=false){
 }
 
 function renderDashboard(){
+  if(!_cgLast)cgLoadLast().then(ok=>{if(ok&&_cgLast)renderDashboard();});
   const now=new Date();
   document.getElementById('today-date').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   const orgs=cache.orgs,acts=cache.actions,tals=cache.talents;
@@ -3097,12 +3101,12 @@ function renderDashboard(){
   const total=metricOrgs.length,mou=metricOrgs.filter(o=>o.stage===5||o.stage===6).length,active=metricOrgs.filter(o=>o.stage>=1&&o.stage<=3).length;
   const placed=metricTals.filter(t=>t.status==='최종합격').length,failed=metricTals.filter(t=>t.status==='서류불합격'||t.status==='최종불합격').length,recruiting=metricTals.filter(t=>t.status==='지원중'||t.status==='면접').length;
   // 보류(stage 9) 기관은 의도적으로 연락을 중단한 것이므로 미연락 알림에서 제외 (2026-09-01)
-  const needContactCount=metricOrgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30)).length;
+  const needContactCount=metricOrgs.filter(o=>{const r=cgOver(o);return r&&r.over;}).length;
   const mouSoon=metricOrgs.filter(o=>o.stage===4&&o.mou_date&&Math.floor((new Date(o.mou_date)-now)/864e5)<=7&&Math.floor((new Date(o.mou_date)-now)/864e5)>=0).length;
   const pendingActs=acts.filter(a=>!a.done).length;
   const thisMonth=metricOrgs.filter(o=>o.created_at&&new Date(o.created_at).getMonth()===now.getMonth()&&new Date(o.created_at).getFullYear()===now.getFullYear()).length;
   document.getElementById('metrics').innerHTML=`
-    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--red);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">오늘 연락 필요</div><div class="metric-value" style="color:var(--red);">${needContactCount}</div><div class="metric-sub">30일 이상 미연락</div></div>
+    <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--red);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">오늘 연락 필요</div><div class="metric-value" style="color:var(--red);">${needContactCount}</div><div class="metric-sub">연락 기준 초과 (MOU ${CONTACT_SLA.mou}일·그 외 ${CONTACT_SLA.other}일)</div></div>
     <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--accent);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">이번주 MOU 예정</div><div class="metric-value" style="color:var(--accent);">${mouSoon}</div><div class="metric-sub">7일 이내 일정</div></div>
     <div class="metric metric-clickable" onclick="nav('actions')" style="border-top:3px solid var(--amber);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">미완료 후속액션</div><div class="metric-value" style="color:${pendingActs>5?'var(--red)':'var(--amber)'};">${pendingActs}</div><div class="metric-sub">처리 대기 중</div></div>
     <div class="metric metric-clickable" onclick="nav('orgs')" style="border-top:3px solid var(--orange);"><div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">30일 이상 미연락</div><div class="metric-value" style="color:var(--orange);">${needContactCount}</div><div class="metric-sub">관계 관리 필요</div></div>
@@ -5775,14 +5779,22 @@ async function cgLoadLast(force){
   _cgLoading=(async()=>{
     const map={};const PAGE=1000;
     for(let from=0;;from+=PAGE){
-      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type').order('id').range(from,from+PAGE-1);
+      const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type,is_quick').order('id').range(from,from+PAGE-1);
       if(error){console.error(error);return false;}
-      (data||[]).forEach(l=>{if(l.contact_type==='채용공고 발송')return; /* 공고 발송은 연락으로 안 침 */ const d=l.logged_at||l.created_at||l.date;if(!d||l.org_id==null)return;if(!map[l.org_id]||d>map[l.org_id])map[l.org_id]=d;});
+      (data||[]).forEach(l=>{if(l.is_quick||['채용공고 발송','자료 전달','안부메세지 발송'].includes(l.contact_type))return; /* 공고·자료·안부 등 간편 발송은 연락으로 안 침 */ const d=l.logged_at||l.created_at||l.date;if(!d||l.org_id==null)return;if(!map[l.org_id]||d>map[l.org_id])map[l.org_id]=d;});
       if(!data||data.length<PAGE)break;
     }
     _cgLast=map;_cgLoadedAt=Date.now();return true;
   })().catch(err=>{console.error(err);return false;}).finally(()=>{_cgLoading=null;});
   return _cgLoading;
+}
+function cgOver(o){
+  if(!o||o.stage===9)return null;
+  const ld=_cgLast?cgKstDay(_cgLast[o.id]):cgKstDay(o.lastcontact);
+  const sla=cgSlaOf(o);
+  if(!ld)return {over:true,days:null,sla};
+  const days=Math.max(0,Math.round((cgKstDay(new Date())-ld)/864e5));
+  return {over:days>sla,days,sla};
 }
 function cgCalc(){
   const lastMap=_cgLast||{};
@@ -5790,16 +5802,17 @@ function cgCalc(){
   const rows={};
   (getMetricOrgs()||[]).forEach(o=>{
     const m=(o.member||'').trim()||'미배정';
-    const r=rows[m]||(rows[m]={name:m,total:0,hold:0,active:0,sumDays:0,withLog:0,b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}});
+    const r=rows[m]||(rows[m]={name:m,total:0,hold:0,active:0,sumDays:0,withLog:0,over:[],b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}});
     r.total++;
     if(o.stage===9){r.hold++;return;}
     r.active++;
     const ld=cgKstDay(lastMap[o.id]);
-    if(!ld){r.b.none.push({o,days:null});return;}
+    if(!ld){r.b.none.push({o,days:null});r.over.push({o,days:null,sla:cgSlaOf(o)});return;}
     const days=Math.max(0,Math.round((today-ld)/864e5));
     r.sumDays+=days;r.withLog++;
     const bk=CG_BUCKETS.find(x=>x.max!=null&&days<=x.max);
     r.b[bk.k].push({o,days});
+    if(days>cgSlaOf(o))r.over.push({o,days,sla:cgSlaOf(o)});
   });
   return Object.values(rows).sort((a,b)=>b.active-a.active);
 }
@@ -5816,11 +5829,12 @@ async function renderContactGap(force){
   const th='style="padding:8px 10px;font-size:11px;color:var(--text3);font-weight:700;text-align:right;white-space:nowrap;border-bottom:2px solid var(--border);background:var(--bg);"';
   const thl=th.replace('text-align:right','text-align:left');
   const cell=(r,k,n,warn)=>n?`<td style="text-align:right;padding:8px 10px;"><button type="button" onclick="cgPick('${String(r.name).replace(/'/g,"\\'")}','${k}')" style="border:none;background:${_cgSel&&_cgSel.m===r.name&&_cgSel.k===k?'var(--accent-bg)':'transparent'};cursor:pointer;font-size:13px;font-weight:700;padding:2px 8px;border-radius:6px;color:${warn?'var(--red)':'var(--text)'};">${n}</button></td>`:`<td style="text-align:right;padding:8px 10px;color:var(--text3);font-size:13px;">0</td>`;
-  const sum={name:'전체',total:0,hold:0,active:0,sumDays:0,withLog:0,b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}};
-  data.forEach(r=>{sum.total+=r.total;sum.hold+=r.hold;sum.active+=r.active;sum.sumDays+=r.sumDays;sum.withLog+=r.withLog;Object.keys(r.b).forEach(k=>sum.b[k]=sum.b[k].concat(r.b[k]));});
+  const sum={name:'전체',total:0,hold:0,active:0,sumDays:0,withLog:0,over:[],b:{b7:[],b14:[],b30:[],b60:[],b61:[],none:[]}};
+  data.forEach(r=>{sum.over=sum.over.concat(r.over);sum.total+=r.total;sum.hold+=r.hold;sum.active+=r.active;sum.sumDays+=r.sumDays;sum.withLog+=r.withLog;Object.keys(r.b).forEach(k=>sum.b[k]=sum.b[k].concat(r.b[k]));});
   const line=(r,bold)=>`<tr style="${bold?'background:var(--bg);font-weight:800;':''}border-bottom:1px solid var(--border);">
     <td style="padding:8px 10px;font-size:13px;font-weight:700;">${relEsc(r.name)}</td>
     <td style="text-align:right;padding:8px 10px;font-size:13px;">${r.active}</td>
+    ${cell(r,'over',r.over.length,true)}<td style="text-align:right;padding:8px 10px;font-size:12px;color:var(--text2);">${r.active?Math.round(r.over.length/r.active*100)+'%':'—'}</td>
     ${CG_BUCKETS.map(b=>cell(r,b.k,r.b[b.k].length,b.k==='b61'||b.k==='none')).join('')}
     <td style="text-align:right;padding:8px 10px;font-size:13px;">${r.withLog?Math.round(r.sumDays/r.withLog)+'일':'—'}</td>
     <td style="text-align:right;padding:8px 10px;font-size:13px;color:var(--text2);">${r.hold}</td></tr>`;
@@ -5831,14 +5845,17 @@ async function renderContactGap(force){
   let detail='';
   if(_cgSel){
     const src=_cgSel.m==='전체'?sum:data.find(r=>r.name===_cgSel.m);
-    const items=src?(src.b[_cgSel.k]||[]).slice().sort((a,b)=>(b.days==null?9999:b.days)-(a.days==null?9999:a.days)):[];
-    const bl=CG_BUCKETS.find(b=>b.k===_cgSel.k).l;
+    const items=src?((_cgSel.k==='over'?src.over:src.b[_cgSel.k])||[]).slice().sort((a,b)=>(b.days==null?9999:b.days)-(a.days==null?9999:a.days)):[];
+    const bl=_cgSel.k==='over'?'연락 기준 초과':CG_BUCKETS.find(b=>b.k===_cgSel.k).l;
     detail=`<div style="margin-top:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b style="font-size:13px;">${relEsc(_cgSel.m)} · ${bl} (${items.length}곳, 오래된 순)</b><button type="button" onclick="cgPick(null,null)" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:12px;">닫기</button></div>
       <div style="max-height:260px;overflow-y:auto;">${items.map(x=>`<div onclick="openOrg(${x.o.id})" style="display:flex;gap:10px;padding:6px 2px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;"><span style="flex:1;font-weight:600;">${relEsc(x.o.name||'')}</span><span style="color:var(--text3);">${relEsc(STAGES[x.o.stage]||'')}</span><span style="width:70px;text-align:right;color:${x.days==null||x.days>60?'var(--red)':'var(--text2)'};">${x.days==null?'기록 없음':x.days+'일 전'}</span></div>`).join('')||'<div class="empty">없음</div>'}</div></div>`;
   }
-  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">기관별 <b>마지막 연락 기록</b>(채용공고 발송은 연락에서 뺌)으로부터 오늘까지 지난 날(한국 시간)로 나눈 기관 수예요. 보류 단계 기관은 활성 기관에서 빼고 맨 오른쪽에 따로 세요. 숫자를 누르면 기관 목록이 나와요.</div>
-    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:640px;"><thead><tr><th ${thl}>담당자</th><th ${th}>활성 기관</th>${CG_BUCKETS.map(b=>`<th ${th}>${b.l}</th>`).join('')}<th ${th}>평균 경과</th><th ${th}>보류 전환</th></tr></thead>
+  const ovM=sum.over.filter(x=>x.o.stage===5||x.o.stage===6).length,ovO=sum.over.length-ovM;
+  const tile=(t,v,c)=>`<div style="flex:1;min-width:130px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;"><div style="font-size:11px;color:var(--text3);font-weight:600;">${t}</div><div style="font-size:22px;font-weight:800;color:${c};">${v}</div></div>`;
+  const tiles=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">${tile('연락 기준 초과 기관(전체)',sum.over.length+'곳 · '+(sum.active?Math.round(sum.over.length/sum.active*100):0)+'%','var(--red)')}${tile('MOU 기관 ('+CONTACT_SLA.mou+'일 기준)',ovM+'곳','#f79009')}${tile('그 외 기관 ('+CONTACT_SLA.other+'일 기준)',ovO+'곳','#f79009')}</div>`;
+  el.innerHTML=tiles+`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5;">기관별 <b>마지막 연락 기록</b>(공고·자료·안부 등 간편 발송은 연락에서 뺌)으로부터 오늘까지 지난 날(한국 시간)로 나눈 기관 수예요. 보류 단계 기관은 활성 기관에서 빼고 맨 오른쪽에 따로 세요. 숫자를 누르면 기관 목록이 나와요.</div>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:640px;"><thead><tr><th ${thl}>담당자</th><th ${th}>활성 기관</th><th ${th}>연락 기준 초과</th><th ${th}>초과율</th>${CG_BUCKETS.map(b=>`<th ${th}>${b.l}</th>`).join('')}<th ${th}>평균 경과</th><th ${th}>보류 전환</th></tr></thead>
     <tbody>${data.map(r=>line(r,false)).join('')}${line(sum,true)}</tbody></table></div>
     <div style="margin-top:14px;">${bars}<div style="margin-top:6px;">${legend}</div></div>${detail}`;
 }
@@ -5876,6 +5893,7 @@ function renderRouteCard(el,orgs,tals,apps){
   el.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">지원자를 데려온 <b>기관의 발굴 경로</b> 기준이에요. 입사 = 최종합격한 지원자 수, 입사율 = 입사 ÷ 유입.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+st.map(r=>`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${relEsc(r.route)}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${r.rate>20?'var(--green-bg)':r.rate>10?'var(--amber-bg)':'var(--bg2)'};color:${r.rate>20?'var(--green)':r.rate>10?'var(--amber)':'var(--text3)'};">${r.rate}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);flex-wrap:wrap;"><span>기관 <b style="color:var(--text);">${r.orgs}</b></span><span>유입 <b style="color:var(--amber);">${r.tals}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${r.hired}</b></span></div></div>`).join('')+'</div>';
 }
 function renderAnalytics(){
+  if(!_cgLast)cgLoadLast().then(ok=>{if(ok&&_cgLast&&document.getElementById('an-insight'))renderAnalytics();});
   const memberSel=document.getElementById('an-member');
   if(memberSel&&cache.profiles.length&&memberSel.options.length<=1){cache.profiles.forEach(p=>{const o=document.createElement('option');o.value=p.name;o.textContent=p.name;memberSel.appendChild(o);});}
   const filterMember=memberSel?.value||'';
@@ -5930,8 +5948,8 @@ function renderAnalytics(){
     if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:''),items:tn.map(o=>({id:o.id,name:o.name,open:'org'}))});
     const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);
     if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요',items:exp.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);const days=Math.ceil((new Date(a.contract_end_date)-now)/864e5);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:`D-${days}`,open:'talent'};})});
-    const nc=allOrgs.filter(o=>o.stage!==9&&(!o.lastcontact||(now-new Date(o.lastcontact))/864e5>=30));
-    if(nc.length)ins.push({t:'danger',msg:`30일 이상 미연락 기관 ${nc.length}곳`,sub:'재연락 권장',items:nc.map(o=>({id:o.id,name:o.name,extra:o.lastcontact?`${Math.floor((now-new Date(o.lastcontact))/864e5)}일 전`:'연락 기록 없음',open:'org'}))});
+    const nc=allOrgs.filter(o=>{const r=cgOver(o);return r&&r.over;});
+    if(nc.length)ins.push({t:'danger',msg:`연락 기준 초과 기관 ${nc.length}곳 (MOU ${CONTACT_SLA.mou}일·그 외 ${CONTACT_SLA.other}일)`,sub:'재연락 권장',items:nc.map(o=>{const r=cgOver(o);return {id:o.id,name:o.name,extra:r.days==null?'연락 기록 없음':`${r.days}일 전 (기준 ${r.sla}일)`,open:'org'};})});
     const chStats=routeStats(allOrgs,allTals,allApps).filter(x=>x.tals>0&&x.route!=='기관 미연결'&&x.route!=='경로 미입력').map(x=>({ch:x.route,rate:x.rate,t:x.tals,h:x.hired})).sort((a,b)=>b.rate-a.rate);
     if(chStats.length)ins.push({t:'success',msg:`전환율 TOP 발굴경로: ${chStats[0].ch}`,sub:`전환율 ${chStats[0].rate}% — 집중 권장`,items:chStats.map(c=>({name:c.ch,extra:`입사율 ${c.rate}% (유입 ${c.t}명 중 ${c.h}명 입사)`}))});
     const thisM=new Date(now.getFullYear(),now.getMonth(),1);
