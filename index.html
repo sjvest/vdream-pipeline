@@ -4542,8 +4542,8 @@ function renderOrgs(){try{cgEnsureFresh(renderOrgs);}catch(e){}try{updateOrgSort
     const daysFw=days===null||days>=7?'800':'400';
     return`<tr onclick="openOrg(${o.id})" style="cursor:pointer;transition:background .1s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:14px 10px;" onclick="event.stopPropagation();"><input type="checkbox" class="org-row-checkbox" data-org-id="${o.id}" ${selectedOrgIds.has(o.id)?'checked':''} onchange="toggleSelectOrg(${o.id},this.checked)" style="width:15px;height:15px;cursor:pointer;"></td>
-      <td style="padding:14px 16px;max-width:280px;overflow:hidden;">
-        <div class="nm-wrap" style="display:flex;align-items:center;gap:10px;min-width:0;">
+      <td style="padding:14px 16px;width:380px;max-width:380px;overflow:hidden;">
+        <div class="nm-wrap" style="display:flex;align-items:center;gap:10px;min-width:0;width:340px;max-width:100%;">
           ${(o.business_card_thumb||o.business_card_url)?`<img src="${(o.business_card_thumb||o.business_card_url)}" style="width:36px;height:26px;object-fit:contain;border-radius:4px;border:1px solid #e2e8f0;flex-shrink:0;">`:'<div style="width:36px;height:26px;flex-shrink:0;"></div>'}
           <span style="font-weight:700;font-size:13px;color:#0d1b2a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;" title="${o.name}">${o.name}</span><span style="flex-shrink:0;">${cpIcon(o.name)}${awardBadge(o.id)}${o.always_contact?'<span style="font-size:9px;font-weight:800;color:#1d4ed8;background:#e0ecff;padding:1px 6px;border-radius:8px;margin-left:4px;">상시</span>':''}${o.is_test?'<span style="font-size:9px;font-weight:800;color:#fff;background:#f59e0b;padding:1px 6px;border-radius:4px;margin-left:6px;">TEST</span>':''}${o.school==1?'<span class="badge b-purple" style="margin-left:6px;font-size:10px;">직무협의</span>':''}</span><span onclick="showHealthDetail(${o.id},event)" style="flex-shrink:0;width:46px;text-align:center;">${healthBadge(calcHealthScore(o.id).score,true)}</span>
         </div>
