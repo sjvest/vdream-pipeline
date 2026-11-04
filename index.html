@@ -1474,6 +1474,7 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
     <div class="card-body" id="an-member-kpi-v2"></div>
   </div>
   <div class="card" style="margin-bottom:16px;"><div class="card-header">담당자별 연락 현황 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">마지막 연락 후 경과일 · 방치 기관 확인</span></div><div class="card-body" id="an-contact-gap"></div></div>
+  <div class="card" style="margin-bottom:16px;"><div class="card-header">월별 미연락(기준 초과) 이력 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">최근 6개월 · 팀원 피드백용</span></div><div class="card-body" id="an-contact-hist"></div></div>
   <div class="card"><div class="card-header">⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
 </div>
 
@@ -5795,19 +5796,19 @@ const CG_BUCKETS=[{k:'b7',l:'7일 이내',max:7},{k:'b14',l:'8~14일',max:14},{k
 let _cgSel=null;
 function cgKstDay(d){if(!d)return null;const t=new Date(d);if(isNaN(t))return null;return new Date(t.toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'})+'T00:00:00Z');}
 // 연락 기록은 1,000건을 넘으면 한 번에 다 못 받아오므로, 이 카드 전용으로 나눠서 전부 읽는다 (기관별 마지막 연락일만 보관)
-let _cgLast=null,_cgLoadedAt=0,_cgLoading=null,_cgLastType={};
+let _cgLast=null,_cgLoadedAt=0,_cgLoading=null,_cgLastType={},_cgDates={};
 async function cgLoadLast(force){
   if(!force&&_cgLast&&Date.now()-_cgLoadedAt<60000)return true;
   if(_cgLoading)return _cgLoading;
   _cgLoading=(async()=>{
-    const map={},types={};const PAGE=1000;
+    const map={},types={},dates={};const PAGE=1000;
     for(let from=0;;from+=PAGE){
       const {data,error}=await sb.from('contact_logs').select('org_id,logged_at,created_at,date,contact_type,is_quick,threads,summary').order('id').range(from,from+PAGE-1);
       if(error){console.error(error);return false;}
-      (data||[]).forEach(l=>{if((l.is_quick&&!(l.contact_type==='안부메세지 발송'&&!String(l.summary||'').includes('(일괄)')))||['채용공고 발송','자료 전달'].includes(l.contact_type))return; /* 공고·자료·안부 등 간편 발송은 연락으로 안 침 */ if(l.org_id==null)return;const put=(d,t)=>{if(d&&(!map[l.org_id]||String(d)>String(map[l.org_id]))){map[l.org_id]=d;types[l.org_id]=t||'';}};put(l.logged_at||l.created_at||l.date,l.contact_type);(l.threads||[]).forEach(t=>put(t&&t.date,l.contact_type));});
+      (data||[]).forEach(l=>{if((l.is_quick&&!(l.contact_type==='안부메세지 발송'&&!String(l.summary||'').includes('(일괄)')))||['채용공고 발송','자료 전달'].includes(l.contact_type))return; /* 공고·자료·안부 등 간편 발송은 연락으로 안 침 */ if(l.org_id==null)return;const put=(d,t)=>{if(d)(dates[l.org_id]||(dates[l.org_id]=[])).push(d);if(d&&(!map[l.org_id]||String(d)>String(map[l.org_id]))){map[l.org_id]=d;types[l.org_id]=t||'';}};put(l.logged_at||l.created_at||l.date,l.contact_type);(l.threads||[]).forEach(t=>put(t&&t.date,l.contact_type));});
       if(!data||data.length<PAGE)break;
     }
-    _cgLast=map;_cgLastType=types;_cgLoadedAt=Date.now();return true;
+    _cgLast=map;_cgLastType=types;_cgDates=dates;_cgLoadedAt=Date.now();return true;
   })().catch(err=>{console.error(err);return false;}).finally(()=>{_cgLoading=null;});
   return _cgLoading;
 }
@@ -5856,7 +5857,7 @@ function cgEnsureFresh(fn){
 // 연락 기록을 저장·삭제한 직후: 다시 읽어서 초과 목록·관계 유지 업무에서 바로 빠지게 한다
 function cgAfterLogChange(){
   _cgLoadedAt=0;
-  cgLoadLast(true).then(ok=>{if(!ok)return;[()=>renderDashboard(),()=>renderOrgs(),()=>renderActions(),()=>renderContactGap()].forEach(f=>{try{f();}catch(e){console.error(e);}});});
+  cgLoadLast(true).then(ok=>{if(!ok)return;[()=>renderDashboard(),()=>renderOrgs(),()=>renderActions(),()=>renderContactGap(),()=>renderContactHist()].forEach(f=>{try{f();}catch(e){console.error(e);}});});
 }
 // 내 할 일: 기준을 넘긴 기관마다 '관계 유지 연락' 업무를 자동으로 보여준다.
 // 저장된 업무가 아니라 기관당 항상 1건만 계산되므로 중복 생성이 없고, 실제 연락을 기록하면 목록에서 바로 사라진다.
@@ -5955,6 +5956,51 @@ async function renderContactGap(force){
     <tbody>${data.map(r=>line(r,false)).join('')}${line(sum,true)}</tbody></table></div>
     <div style="margin-top:14px;">${bars}<div style="margin-top:6px;">${legend}</div></div>${detail}`;
 }
+// ── 월별 미연락(기준 초과) 이력 (2026-11-04) ──
+// 연락 기록의 날짜로 과거를 다시 계산한다. 연락을 해서 해소돼도 그 달 기록에서 사라지지 않는다.
+// 담당자·단계·보류·상시 연락 지정은 '현재 값' 기준으로 과거를 추정한다 (과거 값을 따로 저장해 두지 않았기 때문).
+function cgDayNum(d){const t=cgKstDay(d);return t?Math.round(t.getTime()/864e5):null;}
+function cgHistCalc(monthsBack){
+  const today=cgDayNum(new Date());
+  const tk=new Date(cgKstDay(new Date()));const y0=tk.getUTCFullYear(),m0=tk.getUTCMonth();
+  const months=[];
+  for(let k=monthsBack;k>=0;k--){
+    const first=Date.UTC(y0,m0-k,1)/864e5,last=Math.min(Date.UTC(y0,m0-k+1,0)/864e5,today);
+    const dt=new Date(Date.UTC(y0,m0-k,1));
+    months.push({label:`${dt.getUTCFullYear()}년 ${dt.getUTCMonth()+1}월`+(k===0?' (현재)':''),m1:first,m2:last,cur:k===0,tot:{active:0,over:0,born:0,solved:0},by:{}});
+  }
+  (getMetricOrgs()||[]).forEach(o=>{
+    if(o.stage===9||o.always_contact)return;
+    const cd=cgDayNum(o.created_at);
+    const pts=[...new Set([...(cd!=null?[cd]:[]),...((_cgDates&&_cgDates[o.id])||[]).map(cgDayNum).filter(x=>x!=null)])].sort((a,b)=>a-b);
+    if(!pts.length)return;
+    const limit=cgSlaOf(o),mem=(o.member||'').trim()||'미배정';
+    const iv=[];
+    pts.forEach((p,i)=>{const s=p+limit+1,e=i+1<pts.length?pts[i+1]-1:Infinity;if(s<=e)iv.push([s,e]);});
+    months.forEach(M=>{
+      if(pts[0]>M.m2)return;
+      const b=M.by[mem]||(M.by[mem]={active:0,over:0,born:0,solved:0});
+      b.active++;M.tot.active++;
+      if(iv.some(x=>x[0]<=M.m2&&x[1]>=M.m2)){b.over++;M.tot.over++;}
+      if(iv.some(x=>x[0]>=M.m1&&x[0]<=M.m2)){b.born++;M.tot.born++;}
+      if(iv.some(x=>x[1]!==Infinity&&x[1]+1>=M.m1&&x[1]+1<=M.m2)){b.solved++;M.tot.solved++;}
+    });
+  });
+  return months;
+}
+async function renderContactHist(){
+  const el=document.getElementById('an-contact-hist');if(!el)return;
+  if(!_cgLast){el.innerHTML='<div class="loading"><div class="spin"></div></div>';const ok=await cgLoadLast();if(!ok&&!_cgLast){el.innerHTML='<span style="font-size:12px;color:var(--red);">연락 기록을 불러오지 못했어요.</span> <button type="button" class="btn btn-ghost btn-sm" onclick="renderContactHist()">다시 시도</button>';return;}}
+  let months;try{months=cgHistCalc(5);}catch(e){console.error(e);el.innerHTML='<span style="font-size:12px;color:var(--red);">월별 이력을 계산하지 못했어요.</span>';return;}
+  const mem={};months.forEach(M=>Object.keys(M.by).forEach(n=>{mem[n]=(mem[n]||0)+M.by[n].active;}));
+  const names=Object.keys(mem).sort((a,b)=>mem[b]-mem[a]);
+  const th='style="padding:8px 10px;font-size:11px;color:var(--text3);font-weight:700;text-align:left;white-space:nowrap;border-bottom:2px solid var(--border);background:var(--bg);"';
+  const cell=(c)=>{if(!c||!c.active)return '<td style="padding:8px 10px;color:var(--text3);font-size:12px;">—</td>';const pct=Math.round(c.over/c.active*100);
+    return `<td style="padding:8px 10px;vertical-align:top;"><div style="font-size:14px;font-weight:800;color:${c.over?'var(--red)':'var(--green)'};">${c.over}곳 <span style="font-size:11px;font-weight:600;color:var(--text2);">(${pct}%)</span></div><div style="font-size:11px;color:var(--text3);margin-top:2px;">발생 ${c.born} · 해소 ${c.solved}</div></td>`;};
+  el.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">월말(이번 달은 오늘) 기준으로 <b>연락 기준(MOU ${CONTACT_SLA.mou}일·그 외 ${CONTACT_SLA.other}일)을 넘긴 기관 수</b>예요. <b>발생</b> = 그 달에 새로 기준을 넘긴 기관, <b>해소</b> = 그 달에 연락해서 정상으로 돌아온 기관. 연락해서 해소돼도 기록에서 사라지지 않아요.<br>※ 담당자·단계·보류·상시 연락 지정은 <b>현재 값 기준 추정</b>이에요(과거 값은 따로 저장돼 있지 않아요).</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;min-width:520px;"><thead><tr><th ${th}>월</th><th ${th}>전체</th>${names.map(n=>`<th ${th}>${relEsc(n)}</th>`).join('')}</tr></thead>
+  <tbody>${months.slice().reverse().map(M=>`<tr style="border-bottom:1px solid var(--border);${M.cur?'background:var(--accent-bg);':''}"><td style="padding:8px 10px;font-size:13px;font-weight:700;white-space:nowrap;">${M.label}</td>${cell(M.tot)}${names.map(n=>cell(M.by[n])).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
 function cgPick(m,k){_cgSel=m?{m,k}:null;renderContactGap();}
 // ── 발굴 경로별 성과 (2026-11-02) ──
 // 기준: 지원자를 데려온 '기관'의 발굴 경로(기관의 source). 지원자 개인에게 적힌 유입 채널과는 별개다.
@@ -6031,6 +6077,7 @@ function renderAnalytics(){
     mEl2.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--bg);"><th style="padding:7px 8px;text-align:left;color:var(--text3);">담당자</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">담당 채용건</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">서칭목표</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">실제서칭</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">지원전환</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">합격기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">입사기여</th><th style="padding:7px 8px;text-align:center;color:var(--text3);">목표달성률</th></tr></thead><tbody>${ms2.map(m=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 8px;font-weight:700;">${m.name}</td><td style="padding:7px 8px;text-align:center;color:var(--accent);">${m.assignedJobCount}</td><td style="padding:7px 8px;text-align:center;color:var(--text3);">${m.sourcingTargetTotal||'—'}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--teal);">${m.actualSourcedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--amber);">${m.applicationConvertedCount}</td><td style="padding:7px 8px;text-align:center;color:var(--green);">${m.passedCount}</td><td style="padding:7px 8px;text-align:center;font-weight:800;color:var(--green);">${m.hiredCount}</td><td style="padding:7px 8px;text-align:center;">${m.targetAchievementRate===null?'—':m.targetAchievementRate+'%'}</td></tr>`).join('')}</tbody></table>`;
   }
   renderContactGap();
+  renderContactHist();
   const rEl=document.getElementById('an-route');
   if(rEl)renderRouteCard(rEl,allOrgs,allTals,allApps);
   const rgEl=document.getElementById('an-region');
