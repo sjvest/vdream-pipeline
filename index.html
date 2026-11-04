@@ -4604,9 +4604,13 @@ function renderActions(){
     {key:'upcoming',label:'예정',color:'var(--text3)',items:undone.filter(a=>a.diff>3),open:false},
     {key:'done',label:'완료',color:'var(--green)',items:done,open:false,isDone:true},
   ].filter(g=>g.items.length>0);
+  // 담당자별 건수 (기한 초과 / 전체 미완료) — 이름을 누르면 그 담당자만 보기 (2026-11-04)
+  const _mc={};
+  all.filter(a=>!a.done).forEach(a=>{const m=a.member||'미지정';const c=_mc[m]||(_mc[m]={n:m,late:0,open:0});c.open++;if(a.diff<0)c.late++;});
+  const memberStrip=Object.values(_mc).length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">${Object.values(_mc).sort((a,b)=>b.late-a.late||b.open-a.open||a.n.localeCompare(b.n,'ko')).map(c=>{const on=F.member===c.n;const clickable=c.n!=='미지정';return `<button type="button" ${clickable?`onclick="setActionMember(${on?"''":"'"+c.n.replace(/'/g,"\\'")+"'"})"`:'disabled'} style="font-size:12px;padding:6px 12px;border:1.5px solid ${on?'var(--accent)':'var(--border)'};border-radius:20px;background:${on?'var(--accent-bg)':'var(--surface)'};cursor:${clickable?'pointer':'default'};"><b>${relEsc(c.n)}</b> : <span style="color:${c.late?'var(--red)':'var(--text2)'};font-weight:800;">기한 초과 ${c.late}건</span> <span style="color:var(--text3);">· 전체 ${c.open}건</span></button>`;}).join('')}</div>`:'';
   const inboxEl=document.getElementById('action-inbox');
   if(!groups.length){inboxEl.innerHTML='<div class="empty" style="padding:3rem 0;">모든 액션 완료</div>';return;}
-  inboxEl.innerHTML=groups.map(g=>`<div style="margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+  inboxEl.innerHTML=memberStrip+groups.map(g=>`<div style="margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
     <div onclick="toggleActionGroup('${g.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);cursor:pointer;user-select:none;">
       <span style="font-size:13px;font-weight:700;color:${g.color};">${g.label} <span style="font-size:12px;font-weight:400;color:var(--text3);">(${g.items.length}건)</span></span>
       <span id="action-icon-${g.key}" style="color:var(--text3);font-size:12px;">${g.open?'접기':'펼치기'}</span>
