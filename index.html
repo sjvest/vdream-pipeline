@@ -4953,6 +4953,8 @@ function switchDrawerTab(tab){
       ${appBlocksHtml}
       <div style="font-size:12px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--border);"> 시스템 기록</div>
       ${renderTimeline(systemEvents)}
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin:18px 0 6px;padding-top:14px;border-top:1px dashed var(--border);">변경 기록 <span style="font-weight:400;font-size:11px;">(수정해도 지워지지 않고 계속 쌓입니다)</span></div>
+      ${appLogHtml(t)}
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px;">날짜 입력/수정 (최신 지원 건 기준)</div>
         ${dateRow('지원일','app-applied',latestApp?.applied_date,latestApp?.applied_date_is_estimated)}
@@ -5032,7 +5034,7 @@ async function saveTalentBasicInfo(){
       const keepHistory=tApps.length&&resolved.includes(tApps[0].status)&&tApps[0].hire_company&&newCompany;
       if(keepHistory){toast('이미 결과가 난 지원 건의 기업은 바꾸지 않았어요. 다른 회사 재지원은 채용 건 관리에서 등록해주세요');}
       else{
-        if(tApps.length){const{error:cErr}=await sb.from('candidate_applications').update({hire_company:newCompany||null}).eq('id',tApps[0].id);if(!cErr)tApps[0].hire_company=newCompany||null;else toast('기업명 저장 오류: '+cErr.message);}
+        if(tApps.length){const _old={...tApps[0]};const{error:cErr}=await sb.from('candidate_applications').update({hire_company:newCompany||null}).eq('id',tApps[0].id);if(!cErr){tApps[0].hire_company=newCompany||null;await saveAppChangeLog(currentDrawerTalentId,appChangeEntries(_old,{hire_company:newCompany||null},{app_id:tApps[0].id}));}else toast('기업명 저장 오류: '+cErr.message);}
         const{error:tErr}=await sb.from('talents').update({hire_company:newCompany||null}).eq('id',currentDrawerTalentId);
         if(!tErr)t.hire_company=newCompany||null;
       }
@@ -5156,6 +5158,40 @@ async function quickUpdateTalentMemo(talentId,memo){
   t.memo=memo;
   toast('비고 저장됨');
 }
+// 지원이력 변경 기록: 날짜·회사명·단계가 바뀔 때마다 이전 값을 지우지 않고 talents.status_history에 한 줄씩 쌓는다 (2026-11-09)
+const APP_LOG_FIELDS=[['applied_date','지원일'],['hire_company','회사명'],['pass_date','합격일'],['join_date','입사일'],['rejected_at','불합격일'],['status','단계']];
+function appChangeEntries(oldApp,payload,extra){
+  const out=[];const now=new Date().toISOString();const by=currentProfile?.name||currentUser?.email||'—';
+  const norm=v=>(v===undefined||v===null||v==='')?'':String(v);
+  APP_LOG_FIELDS.forEach(([k,label])=>{
+    if(!(k in payload))return;
+    const a=norm(oldApp?oldApp[k]:''),b=norm(payload[k]);
+    if(a===b)return;
+    out.push({kind:'edit',field:k,label,from:a||null,to:b||null,date:now,by,company:(payload.hire_company||oldApp?.hire_company||'')||null,...(extra||{})});
+  });
+  return out;
+}
+async function saveAppChangeLog(talentId,entries){
+  if(!entries||!entries.length)return;
+  const t=cache.talents.find(x=>x.id===talentId);if(!t)return;
+  const hist=[...(t.status_history||[]),...entries];
+  const{error}=await sb.from('talents').update({status_history:hist}).eq('id',talentId);
+  if(error){console.error('[Supabase Error] 지원이력 변경 기록 저장 실패:',error);toast('변경 기록 저장 중 오류가 있었어요 (수정 내용은 저장됨)');return;}
+  t.status_history=hist;
+}
+function appLogHtml(t){
+  const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const logs=[...(t.status_history||[])].reverse();
+  if(!logs.length)return'<div style="font-size:12px;color:var(--text3);">아직 변경 기록이 없습니다</div>';
+  return logs.map(h=>{
+    const when=new Date(h.date).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'2-digit',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const who=h.by?` · <span style="color:var(--accent);font-weight:600;">${esc(h.by)}</span>`:'';
+    const body=h.kind==='edit'
+      ?`<b>${esc(h.label)}</b> ${h.from?esc(h.from):'<span style="color:var(--text3);">(없음)</span>'} → ${h.to?esc(h.to):'<span style="color:var(--text3);">(삭제)</span>'}${h.company&&h.field!=='hire_company'?` <span style="color:var(--text3);">(${esc(h.company)})</span>`:''}`
+      :`<b>단계</b> ${esc(h.from||'—')} → ${esc(h.to||'—')}`;
+    return`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);">${body}<div style="font-size:11px;color:var(--text3);margin-top:2px;">${when}${who}</div></div>`;
+  }).join('');
+}
 // 지원일/합격일/입사일/불합격일 + 추정여부 저장. 지원이력(candidate_applications)이 없으면 새로 생성한다(job_id는 비워둠).
 // 입사일이 합격일보다 빠르면 '충족입사'를 자동으로 체크한다 (워크데이 충족용으로 근로시작일을 앞당긴 경우)
 function autoFulfilledJoin(){
@@ -5192,9 +5228,11 @@ async function saveApplicationDates(){
     // (날짜만 넣고 단계는 그대로여서 합격이 집계/표시에서 빠지던 문제, 2026-10-07).
     const newlyPassed=(payload.pass_date&&!latestApp.pass_date)||(payload.join_date&&!latestApp.join_date);
     if(newlyPassed&&['인재등록','채용지원','서류합격'].includes(latestApp.status)){payload.status='최종합격';autoStatus='최종합격';}
+    const oldSnap={...latestApp};
     const{error}=await sb.from('candidate_applications').update(payload).eq('id',latestApp.id);
     if(error){toast('오류: '+error.message);return;}
     Object.assign(latestApp,payload);
+    await saveAppChangeLog(currentDrawerTalentId,appChangeEntries(oldSnap,payload,{app_id:latestApp.id}));
     if(autoStatus){
       const{error:tErr}=await sb.from('talents').update({status:autoStatus}).eq('id',currentDrawerTalentId);
       const tt=cache.talents.find(x=>x.id===currentDrawerTalentId);
@@ -5208,6 +5246,7 @@ async function saveApplicationDates(){
     const{data,error}=await sb.from('candidate_applications').insert(insertRow).select().single();
     if(error){toast('오류: '+error.message);return;}
     cache.applications.unshift(data);
+    await saveAppChangeLog(currentDrawerTalentId,appChangeEntries(null,payload,{app_id:data.id}));
   }
   toast(autoStatus?'날짜 저장됨 · 현재 단계를 최종합격으로 변경했어요':'날짜 저장됨');
   switchDrawerTab('history');
@@ -7360,9 +7399,9 @@ function renderStatusTimeline(t){
         <div style="position:relative;margin-bottom:10px;padding-left:12px;">
           <div style="position:absolute;left:-17px;top:3px;width:10px;height:10px;border-radius:50%;background:${STATUS_COLOR[h.to]||'var(--text3)'};border:2px solid #fff;"></div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            ${h.from?`<span class="badge b-gray" style="font-size:10px;">${h.from}</span>
+            ${h.kind==='edit'?`<span style="font-size:11px;"><b>${h.label}</b> ${h.from||'(없음)'} → ${h.to||'(삭제)'}</span>`:`${h.from?`<span class="badge b-gray" style="font-size:10px;">${h.from}</span>
             <span style="font-size:10px;color:var(--text3);">→</span>`:''}
-            <span class="badge ${STATUS_CLS[h.to]||'b-blue'}" style="font-size:10px;">${h.to}</span>
+            <span class="badge ${STATUS_CLS[h.to]||'b-blue'}" style="font-size:10px;">${h.to}</span>`}
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px;">
             ${new Date(h.date).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
