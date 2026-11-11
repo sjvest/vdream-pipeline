@@ -10488,7 +10488,7 @@ async function toggleAlwaysContact(id){
   openOrg(id);
   [()=>renderOrgs(),()=>renderDashboard(),()=>renderActions(),()=>renderContactGap()].forEach(fn=>{try{fn();}catch(e){console.error(e);}});
 }
-function ownerLabel(m){return m==='임세진'?'임세진 본부장':(m||'담당자');}
+function ownerLabel(m){return m||'담당자';}
 function ownerOnlyBanner(o){
   if(!o.owner_only_contact)return'';
   const L=ownerLabel(o.member);
