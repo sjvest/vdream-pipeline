@@ -1299,6 +1299,8 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
         <div class="fg"><label>행사명 *</label><input id="ev-name" placeholder="예: 2026 장애인 취업박람회"></div>
         <div class="fg"><label>행사 유형</label>
           <select id="ev-category">
+            <option>자체 행사</option>
+            <option>외부 초청 행사</option>
             <option>전국 행사</option>
             <option>구청/시청 행사</option>
             <option>연합·협단체 행사</option>
@@ -8128,7 +8130,7 @@ async function renderEvents(){
     // "행사로 발굴한 기관을 통해 영입된 인재"를 기관 연결고리(source_org_id)로 대신 집계한다 (2026-08-03 수정).
     const eventOrgIds=new Set(cache.orgs.filter(o=>Number(o.event_id)===Number(e.id)).map(o=>o.id));
     const recruited=cache.talents.filter(t=>eventOrgIds.has(t.source_org_id||t.org_id)||Number(t.event_id)===Number(e.id)).length;
-    const CAT_CLS={'전국 행사':'b-red','구청/시청 행사':'b-blue','연합·협단체 행사':'b-teal','장애인 모임':'b-green','취업박람회':'b-purple','문화·예술 행사':'b-amber','기타':'b-gray'};
+    const CAT_CLS={'자체 행사':'b-green','외부 초청 행사':'b-teal','전국 행사':'b-red','구청/시청 행사':'b-blue','연합·협단체 행사':'b-teal','장애인 모임':'b-green','취업박람회':'b-purple','문화·예술 행사':'b-amber','기타':'b-gray'};
     return`<tr onclick="openEvent(${e.id})" style="cursor:pointer;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
       <td style="padding:13px 16px;font-weight:700;">${e.name}</td>
       <td style="padding:13px 16px;font-size:12px;color:var(--text2);">${fDate(e.date)}</td>
@@ -8392,8 +8394,8 @@ function applyEvHostUI(){
   const isV=document.getElementById('ev-host-sel').value==='브이드림';
   document.getElementById('ev-host').style.display=isV?'none':'';
   document.getElementById('ev-invite-section').style.display=isV?'':'none';
-  // 브이드림이 주최하는 행사는 발굴 방법·유형·규모를 선택하지 않는다 (칸을 회색으로 잠근다)
-  ['ev-discovery','ev-category','ev-scale'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=isV;el.style.opacity=isV?'.5':'';}});
+  // 브이드림이 주최하는 행사는 발굴 방법을 선택하지 않는다 (회색으로 잠금). 유형·규모는 그대로 선택 가능
+  ['ev-discovery'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=isV;el.style.opacity=isV?'.5':'';}});
   if(isV)renderEvInvite();
 }
 function onEvHostChange(){
@@ -8403,6 +8405,8 @@ function onEvHostChange(){
   else if(inp.value==='브이드림')inp.value='';
   const dsc=document.getElementById('ev-discovery');
   if(dsc){if(isV)dsc.value='자체 주최';else if(dsc.value==='자체 주최')dsc.value='기관 초대';}
+  const cat=document.getElementById('ev-category');
+  if(cat){if(isV&&cat.value==='전국 행사')cat.value='자체 행사';else if(!isV&&cat.value==='자체 행사')cat.value='전국 행사';}
   applyEvHostUI();
 }
 async function loadEvInvite(eventId){
