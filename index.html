@@ -10768,16 +10768,17 @@ function renderTeamTasks(){
               
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">미팅</span>':''}${t.title}</div>
+              <div style="font-size:13px;font-weight:600;white-space:pre-wrap;word-break:break-word;${t.done?'text-decoration:line-through;color:var(--text3);':'color:var(--text);'}">${t.task_type==='미팅'?'<span style="display:inline-block;font-size:10px;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;">미팅</span>':''}${t.title}</div>
               ${t.due_date?`<div style="font-size:11px;font-weight:600;margin-top:3px;" class="${dcls}">${dlbl}</div>`:''}
             </div>
           </div>`;
         }).join('')}
         ${!all.length?'<div class="empty" style="padding:1.2rem;font-size:12px;">할일 없음</div>':''}
         <div id="inline-form-${safeId}" style="display:none;background:#f8fafc;border:1.5px dashed var(--border);border-radius:8px;padding:10px;margin-top:2px;" data-assignee="${name}">
-          <input type="text" placeholder="할일 제목 입력..."
-            style="width:100%;font-size:13px;border:none;outline:none;background:transparent;margin-bottom:6px;color:var(--text);"
-            onkeydown="if(event.key==='Enter')saveInlineTask(this);if(event.key==='Escape')cancelInlineTask(this)">
+          <textarea rows="2" placeholder="할일 입력... (줄바꿈은 Shift+Enter)"
+            style="width:100%;font-size:13px;line-height:1.5;border:none;outline:none;background:transparent;margin-bottom:6px;color:var(--text);resize:vertical;min-height:44px;max-height:260px;font-family:inherit;display:block;"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,260)+'px'"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();saveInlineTask(this);}if(event.key==='Escape')cancelInlineTask(this)"></textarea>
           <div style="display:flex;gap:6px;align-items:center;">
             <select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;flex-shrink:0;">
               <option value="할일">할일</option>
@@ -10800,13 +10801,13 @@ function showInlineForm(safeId){
   if(!form)return;
   form.style.display='block';
   if(btn)btn.style.display='none';
-  form.querySelector('input[type=text]').focus();
+  form.querySelector('textarea').focus();
 }
 
 async function saveInlineTask(el){
   const form=el.closest('[data-assignee]');
   const assigned_to=form.dataset.assignee;
-  const titleEl=form.querySelector('input[type=text]');
+  const titleEl=form.querySelector('textarea');
   const dueEl=form.querySelector('input[type=date]');
   const typeEl=form.querySelector('select');
   const title=titleEl.value.trim();
@@ -10829,7 +10830,7 @@ function cancelInlineTask(el){
   form.style.display='none';
   const btn=document.getElementById(`inline-btn-${safeId}`);
   if(btn)btn.style.display='';
-  form.querySelector('input[type=text]').value='';
+  form.querySelector('textarea').value='';form.querySelector('textarea').style.height='';
   form.querySelector('input[type=date]').value='';
 }
 
