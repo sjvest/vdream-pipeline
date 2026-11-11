@@ -9399,7 +9399,7 @@ async function openOrg(id){
         <option value="부정적" ${o.contact_tier==='부정적'?'selected':''}> 부정적</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="toggleAlwaysContact(${id})" title="자주 연락하는 기관은 연락 기준(14/20일) 알림에서 빼고 따로 관리해요" style="${o.always_contact?'background:#e0ecff;color:#1d4ed8;border-color:#93b4f5;font-weight:800;':''}">${o.always_contact?'상시 연락 기관 (해제)':'상시 연락 기관으로'}</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleOwnerOnlyContact(${id})" title="담당자만 연락해야 하는 기관 — 다른 팀원에게 '연락하지 않기' 표시를 보여줘요 (동작을 막지는 않아요)" style="${o.owner_only_contact?'background:#fef3c7;color:#b45309;border-color:#f3c76b;font-weight:800;':''}">${o.owner_only_contact?(ownerLabel(o.member)+' 담당 전용 연락 (해제)'):'담당자 전용 연락으로'}</button>
+      ${window.PLA?'':`<button class="btn btn-ghost btn-sm" onclick="toggleOwnerOnlyContact(${id})" title="담당자만 연락해야 하는 기관 — 다른 팀원에게 '연락하지 않기' 표시를 보여줘요 (동작을 막지는 않아요)" style="${o.owner_only_contact?'background:#fef3c7;color:#b45309;border-color:#f3c76b;font-weight:800;':''}">${o.owner_only_contact?(ownerLabel(o.member)+' 담당 전용 연락 (해제)'):'담당자 전용 연락으로'}</button>`}
       <button class="btn btn-ghost btn-sm" onclick="markContacted(${id})">연락 완료</button>
       <button class="btn btn-ghost btn-sm" onclick="goEditOrg(${id})">정보 수정</button>
       ${currentUser?.email === 'sjvest@vdream.co.kr' ? `<button class="btn btn-sm" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;" onclick="confirmDeleteOrg(${id})">기관 삭제</button>` : ''}
