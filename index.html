@@ -1479,6 +1479,9 @@ input[type=datetime-local]{-webkit-font-smoothing:antialiased;font-family:'Prete
   </div>
   <div class="card" style="margin-bottom:16px;"><div class="card-header">담당자별 연락 현황 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">마지막 연락 후 경과일 · 방치 기관 확인</span></div><div class="card-body" id="an-contact-gap"></div></div>
   <div class="card" style="margin-bottom:16px;"><div class="card-header">월별 미연락(기준 초과) 이력 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">최근 6개월 · 팀원 피드백용</span></div><div class="card-body" id="an-contact-hist"></div></div>
+  <div class="card" style="margin-bottom:16px;"><div class="card-header">지역별 기관 지도 <span style="font-size:10px;font-weight:700;color:var(--text3);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:6px;">시·도 기준</span>
+    <span style="margin-left:auto;display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" id="rm-all" onclick="setRegionMapMode('all')">전체 기관</button><button class="btn btn-ghost btn-sm" id="rm-mou" onclick="setRegionMapMode('mou')">MOU 이상</button></span></div>
+    <div class="card-body"><div id="region-map" style="height:440px;border-radius:10px;overflow:hidden;background:var(--bg);"></div><div id="region-map-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;"></div><div style="font-size:11px;color:var(--text3);margin-top:8px;">원을 누르면 그 지역 기관 목록으로 이동해요 · 기관의 '지역' 칸 기준이라 지역이 비어 있는 기관은 지도에 나오지 않아요</div></div></div>
   <div class="card"><div class="card-header">⑥ 지역별 성과</div><div class="card-body" id="an-region"></div></div>
 </div>
 
@@ -6079,6 +6082,63 @@ function renderRouteCard(el,orgs,tals,apps){
   const st=routeStats(orgs,tals,apps);
   el.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">지원자를 데려온 <b>기관의 발굴 경로</b> 기준이에요. 입사 = 최종합격한 지원자 수, 입사율 = 입사 ÷ 유입.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+st.map(r=>`<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">${relEsc(r.route)}</span><span style="margin-left:auto;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;background:${r.rate>20?'var(--green-bg)':r.rate>10?'var(--amber-bg)':'var(--bg2)'};color:${r.rate>20?'var(--green)':r.rate>10?'var(--amber)':'var(--text3)'};">${r.rate}%</span></div><div style="display:flex;gap:10px;font-size:11px;color:var(--text3);flex-wrap:wrap;"><span>기관 <b style="color:var(--text);">${r.orgs}</b></span><span>유입 <b style="color:var(--amber);">${r.tals}</b></span><span>입사 <b style="color:var(--green);font-weight:800;">${r.hired}</b></span></div></div>`).join('')+'</div>';
 }
+/* ===== 지역별 기관 지도 (시·도 단위, Leaflet + OpenStreetMap) ===== */
+const RM_COORD={'서울':[37.5665,126.9780],'경기':[37.4138,127.5183],'인천':[37.4563,126.7052],'강원':[37.8228,128.1555],'충북':[36.6357,127.4917],'충남':[36.5184,126.8000],'대전':[36.3504,127.3845],'세종':[36.4800,127.2890],'전북':[35.7175,127.1530],'전남':[34.8161,126.4629],'광주':[35.1595,126.8526],'경북':[36.4919,128.8889],'대구':[35.8714,128.6014],'경남':[35.4606,128.2132],'부산':[35.1796,129.0756],'울산':[35.5384,129.3114],'제주':[33.4996,126.5312]};
+const RM_ALIAS={'충청북도':'충북','충청남도':'충남','전라북도':'전북','전북특별자치도':'전북','전라남도':'전남','경상북도':'경북','경상남도':'경남','강원특별자치도':'강원','강원도':'강원','경기도':'경기','제주특별자치도':'제주','제주도':'제주','서울특별시':'서울','부산광역시':'부산','대구광역시':'대구','인천광역시':'인천','광주광역시':'광주','대전광역시':'대전','울산광역시':'울산','세종특별자치시':'세종'};
+let _rmMode='all',_rmMap=null,_rmLayer=null,_rmLoading=null;
+function rmNorm(r){r=String(r||'').trim();if(!r)return'';if(RM_COORD[r])return r;if(RM_ALIAS[r])return RM_ALIAS[r];const k=Object.keys(RM_COORD).find(x=>r.startsWith(x));return k||'';}
+function rmLoadLeaflet(){
+  if(window.L&&window.L.map)return Promise.resolve();
+  if(_rmLoading)return _rmLoading;
+  _rmLoading=new Promise((res,rej)=>{
+    const css=document.createElement('link');css.rel='stylesheet';css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(css);
+    const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=()=>res();sc.onerror=()=>{_rmLoading=null;rej(new Error('지도 라이브러리를 불러오지 못했어요'));};document.head.appendChild(sc);
+  });
+  return _rmLoading;
+}
+function rmStats(){
+  const stats={};let none=0;
+  (cache.orgs||[]).filter(o=>!(o.is_test||String(o.name||'').includes('[테스트]'))).forEach(o=>{
+    const k=rmNorm(o.region);
+    if(!k){if(_rmMode==='all'||o.stage>=5&&o.stage!==9)none++;return;}
+    const s=stats[k]||(stats[k]={all:0,mou:0});s.all++;if(o.stage===5||o.stage===6)s.mou++;
+  });
+  return{stats,none};
+}
+function setRegionMapMode(m){_rmMode=m;renderRegionMap();}
+async function goOrgsByRegion(r){
+  await nav('orgs');
+  const el=document.getElementById('filter-region');if(el){el.value=r;}
+  try{renderOrgs();}catch(e){console.error(e);}
+}
+async function renderRegionMap(){
+  const box=document.getElementById('region-map');if(!box)return;
+  ['all','mou'].forEach(m=>{const b=document.getElementById('rm-'+m);if(b){b.style.background=_rmMode===m?'var(--accent)':'';b.style.color=_rmMode===m?'#fff':'';}});
+  const{stats,none}=rmStats();
+  const key=_rmMode==='mou'?'mou':'all';
+  const rows=Object.entries(stats).map(([r,s])=>[r,s[key],s]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const chips=document.getElementById('region-map-chips');
+  if(chips)chips.innerHTML=rows.map(([r,n])=>`<button class="btn btn-ghost btn-sm" onclick="goOrgsByRegion('${r}')" style="font-size:11px;">${r} <b>${n}</b></button>`).join('')+(none?`<span style="font-size:11px;color:var(--text3);align-self:center;margin-left:4px;">지역 미입력 ${none}곳</span>`:'')||'<span style="font-size:12px;color:var(--text3);">표시할 기관이 없어요</span>';
+  try{await rmLoadLeaflet();}catch(e){box.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3);font-size:12px;">'+e.message+' · 아래 지역 버튼으로 기관 목록을 볼 수 있어요</div>';return;}
+  if(!_rmMap||_rmMap._container!==box){
+    if(_rmMap){try{_rmMap.remove();}catch(e){}}
+    box.innerHTML='';
+    _rmMap=L.map(box,{scrollWheelZoom:false}).setView([36.3,127.8],7);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'© OpenStreetMap'}).addTo(_rmMap);
+    _rmLayer=L.layerGroup().addTo(_rmMap);
+  }
+  _rmLayer.clearLayers();
+  const max=Math.max(1,...rows.map(x=>x[1]));
+  rows.forEach(([r,n,s])=>{
+    const size=Math.round(40+34*Math.sqrt(n/max));
+    const color=_rmMode==='mou'?'rgba(5,150,105,.88)':'rgba(37,99,235,.88)';
+    const icon=L.divIcon({className:'',iconSize:[size,size],iconAnchor:[size/2,size/2],html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);font-size:10px;line-height:1.15;font-weight:700;cursor:pointer;"><span>${r}</span><span style="font-size:14px;font-weight:800;">${n}</span></div>`});
+    const m=L.marker(RM_COORD[r],{icon}).addTo(_rmLayer);
+    m.bindTooltip(`${r} · 전체 ${s.all}곳 · MOU 이상 ${s.mou}곳`,{direction:'top',offset:[0,-size/2]});
+    m.on('click',()=>goOrgsByRegion(r));
+  });
+  setTimeout(()=>{try{_rmMap.invalidateSize();}catch(e){}},50);
+}
 function renderAnalytics(){
   cgEnsureFresh(renderAnalytics);
   const memberSel=document.getElementById('an-member');
@@ -6123,6 +6183,7 @@ function renderAnalytics(){
   }
   renderContactGap();
   renderContactHist();
+  try{renderRegionMap();}catch(e){console.error(e);}
   const rEl=document.getElementById('an-route');
   if(rEl)renderRouteCard(rEl,allOrgs,allTals,allApps);
   const rgEl=document.getElementById('an-region');
