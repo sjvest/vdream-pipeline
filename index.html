@@ -6105,11 +6105,6 @@ function rmStats(){
   return{stats,none};
 }
 function setRegionMapMode(m){_rmMode=m;renderRegionMap();}
-async function goOrgsByRegion(r){
-  await nav('orgs');
-  const el=document.getElementById('filter-region');if(el){el.value=r;}
-  try{renderOrgs();}catch(e){console.error(e);}
-}
 async function renderRegionMap(){
   const box=document.getElementById('region-map');if(!box)return;
   ['all','mou'].forEach(m=>{const b=document.getElementById('rm-'+m);if(b){b.style.background=_rmMode===m?'var(--accent)':'';b.style.color=_rmMode===m?'#fff':'';}});
