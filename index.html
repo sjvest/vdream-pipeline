@@ -3953,6 +3953,13 @@ async function downloadTalentList(){
     exportTalentExcel(list);
   }finally{_dataDownloading=false;btns.forEach(b=>b.disabled=false);}
 }
+// 입사 여부: 지원 기록의 최종합격/계약종료 + 인재 상태(운영페이지 입사 처리로 바뀐 값)도 함께 본다.
+// (운영페이지에서 합격 처리해도 예전 '채용지원' 지원 기록이 남아 있으면 지원 기록만으로는 입사가 안 잡힘)
+function orgHasHire(orgId,tals,apps){
+  const HIRED=s=>s==='최종합격'||s==='계약종료';
+  if(apps.some(a=>a.org_id===orgId&&HIRED(a.status)))return true;
+  return tals.some(t=>(t.source_org_id||t.org_id)===orgId&&HIRED(t.status));
+}
 // 운영 인사이트 "지원자 있지만 입사 없는 기관"과 같은 조건(인재 3명 이상 + 최종합격 0)으로 기관·지원자 명단을 내려받는다
 async function downloadNoHireOrgs(){
   if(_dataDownloading)return;
@@ -3961,7 +3968,7 @@ async function downloadNoHireOrgs(){
     await ensureTalentDataLoaded();
     const orgs=getMetricOrgs(),apps=getMetricApplications(),tals=getMetricTalents();
     const orgOf=t=>t.source_org_id||t.org_id;
-    const targets=orgs.filter(o=>tals.filter(t=>orgOf(t)===o.id).length>2&&apps.filter(a=>a.org_id===o.id&&a.status==='최종합격').length===0)
+    const targets=orgs.filter(o=>tals.filter(t=>orgOf(t)===o.id).length>2&&!orgHasHire(o.id,tals,apps))
       .sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
     if(!targets.length){toast('해당하는 기관이 없어요');return;}
     const sum=[['기관명','기관 종류','지역','담당자','인재 영입수','지원 건수','최종합격']];
@@ -6188,7 +6195,7 @@ function renderAnalytics(){
     const ins=[];
     const mn=allOrgs.filter(o=>(o.stage===5||o.stage===6)&&allTals.filter(t=>(t.source_org_id||t.org_id)===o.id).length===0);
     if(mn.length)ins.push({t:'warning',msg:`MOU 후 지원자 유입 없는 기관 ${mn.length}곳`,sub:mn.slice(0,2).map(o=>o.name).join(', ')+(mn.length>2?` 외 ${mn.length-2}곳`:''),items:mn.map(o=>({id:o.id,name:o.name,open:'org'}))});
-    const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&allApps.filter(a=>a.org_id===o.id&&a.status==='최종합격').length===0);
+    const tn=allOrgs.filter(o=>allTals.filter(x=>(x.source_org_id||x.org_id)===o.id).length>2&&!orgHasHire(o.id,allTals,allApps));
     if(tn.length)ins.push({t:'warning',msg:`지원자 있지만 입사 없는 기관 ${tn.length}곳`,sub:tn.slice(0,2).map(o=>o.name).join(', ')+(tn.length>2?` 외 ${tn.length-2}곳`:''),items:tn.map(o=>({id:o.id,name:o.name,open:'org'}))});
     const exp=allApps.filter(a=>a.contract_end_date&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)<=30&&Math.ceil((new Date(a.contract_end_date)-now)/864e5)>=0);
     if(exp.length)ins.push({t:'danger',msg:`계약 만료 30일 이내 ${exp.length}명`,sub:'재계약 또는 신규 매칭 검토 필요',items:exp.map(a=>{const tl=allTals.find(x=>x.id===a.talent_id);const days=Math.ceil((new Date(a.contract_end_date)-now)/864e5);return{id:a.talent_id,name:tl?.name||'이름 없음',extra:`D-${days}`,open:'talent'};})});
